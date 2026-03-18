@@ -1,0 +1,23 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Privacy Policy | Talvo</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <main class="max-w-3xl mx-auto px-6 py-12">
+    <a href="{% url 'landing' %}" class="text-sm text-indigo-700 hover:underline">Back to home</a>
+    <h1 class="text-3xl font-bold mt-4 mb-4">Privacy Policy</h1>
+    <p class="text-gray-600">Talvo stores interview practice activity to provide score trends and actionable coaching. Audio/video processing is limited to delivering interview simulation and feedback.</p>
+    <ul class="list-disc pl-6 mt-4 space-y-2 text-gray-700">
+      <li>Profile and session history can be updated from settings.</li>
+      <li>Interview analysis data is used only for product improvement and personalization.</li>
+      <li>You can request data removal by contacting support.</li>
+    </ul>
+  </main>
+  {% include 'partials/global_ui_enhancements.html' %}
+</body>
+</html>
+

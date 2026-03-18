@@ -1,0 +1,22 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Contact | Talvo</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <main class="max-w-3xl mx-auto px-6 py-12">
+    <a href="{% url 'landing' %}" class="text-sm text-indigo-700 hover:underline">Back to home</a>
+    <h1 class="text-3xl font-bold mt-4 mb-4">Contact</h1>
+    <p class="text-gray-600 mb-6">Need help with interview setup, feedback quality, or account settings? Reach out below.</p>
+    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p><strong>Email:</strong> support@talvo.ai</p>
+      <p class="mt-2"><strong>Response time:</strong> within 24 hours</p>
+    </div>
+  </main>
+  {% include 'partials/global_ui_enhancements.html' %}
+</body>
+</html>
+

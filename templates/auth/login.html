@@ -1,0 +1,36 @@
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Sign In | Talvo</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-900">
+  <div class="relative isolate flex min-h-screen items-center justify-center overflow-hidden px-6 py-10">
+    <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.18),_transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(30,41,59,0.08),_transparent_45%)]"></div>
+    <div class="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
+      <a href="{% url 'landing' %}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">Back to home</a>
+      <h1 class="mt-5 text-3xl font-black tracking-tight">Welcome to Talvo</h1>
+      <p class="mt-2 text-sm text-gray-600">Sign in with Google to continue. First-time visitors will complete a short registration setup.</p>
+
+      <a href="{% provider_login_url 'google' process='login' %}" class="mt-8 flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.8 3.3 14.6 2.4 12 2.4 6.8 2.4 2.6 6.6 2.6 11.8S6.8 21.2 12 21.2c6.9 0 9.1-4.8 9.1-7.2 0-.5-.1-.9-.1-1.3H12z"/>
+          <path fill="#34A853" d="M3.7 7.3l3.2 2.3c.9-1.8 2.7-3 5.1-3 1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.8 3.3 14.6 2.4 12 2.4 8.3 2.4 5.2 4.5 3.7 7.3z"/>
+          <path fill="#4A90E2" d="M12 21.2c2.5 0 4.6-.8 6.2-2.2l-2.9-2.4c-.8.6-1.9 1-3.3 1-2.4 0-4.5-1.6-5.2-3.8l-3.1 2.4c1.5 2.9 4.5 5 8.3 5z"/>
+          <path fill="#FBBC05" d="M3.7 16.2l3.1-2.4c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2L3.7 7.3c-.7 1.4-1.1 2.9-1.1 4.5s.4 3.1 1.1 4.4z"/>
+        </svg>
+        Continue with Google
+      </a>
+
+      <p class="mt-6 text-xs leading-relaxed text-gray-500">By continuing, you agree to Talvo's <a href="{% url 'terms_of_service' %}" class="font-medium text-gray-700 hover:text-gray-900">Terms of Service</a> and <a href="{% url 'privacy_policy' %}" class="font-medium text-gray-700 hover:text-gray-900">Privacy Policy</a>.</p>
+    </div>
+  </div>
+</body>
+</html>

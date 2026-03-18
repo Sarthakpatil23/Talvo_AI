@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Talvo Feedback Intelligence</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>body{font-family:'Plus Jakarta Sans',sans-serif;}</style>
+</head>
+<body class="bg-gray-50 text-gray-900 flex min-h-screen">
+  {% include 'partials/sidebar.html' %}
+  <div class="flex-1 min-w-0 flex flex-col min-h-screen">
+    <main class="mx-auto max-w-7xl p-6 lg:p-8">
+      <header class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p class="text-xs uppercase tracking-[0.16em] text-gray-500">AI Feedback</p>
+        <h1 class="mt-1 text-3xl font-black tracking-tight">Actionable performance insights</h1>
+      </div>
+      <a href="{% url 'interview_setup' %}" class="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200">Practice this weakness</a>
+    </header>
+    <section class="mt-7 grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
+      <article class="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold">Category Scores</h2>
+        <div id="feedbackRadarChart" class="mt-4 h-44 w-full rounded-xl bg-gray-50 border border-gray-200"></div>
+        <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Structure: <strong>82%</strong></div>
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Confidence: <strong>76%</strong></div>
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Depth: <strong>69%</strong></div>
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Clarity: <strong>84%</strong></div>
+        </div>
+      </article>
+      <article class="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold">Top Recommendations</h2>
+        <ul class="mt-4 space-y-3 text-sm text-gray-600">
+          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">Use concrete numbers when explaining outcomes.</li>
+          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">Shorten setup of STAR stories to under 25 seconds.</li>
+          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">Add stakeholder perspective before solution details.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+  <script>
+    (function () {
+      var chartTarget = document.querySelector('#feedbackRadarChart');
+      if (!chartTarget || typeof ApexCharts === 'undefined') return;
+
+      var feedbackRadar = new ApexCharts(chartTarget, {
+        chart: {
+          type: 'radar',
+          height: '100%',
+          toolbar: { show: false }
+        },
+        series: [
+          { name: 'Current', data: [82, 76, 69, 84, 73] },
+          { name: 'Target', data: [90, 88, 85, 90, 86] }
+        ],
+        labels: ['Structure', 'Confidence', 'Depth', 'Clarity', 'Delivery'],
+        colors: ['#4f46e5', '#22c55e'],
+        fill: { opacity: 0.2 },
+        stroke: { width: 2 },
+        markers: { size: 3, strokeWidth: 2, strokeColors: '#fff' },
+        yaxis: { min: 40, max: 100, tickAmount: 3, labels: { show: false } },
+        xaxis: { labels: { style: { colors: '#6b7280', fontSize: '11px' } } },
+        tooltip: { y: { formatter: function (val) { return val + '%'; } } },
+        legend: {
+          show: true,
+          position: 'top',
+          horizontalAlign: 'right',
+          labels: { colors: '#4b5563' },
+          markers: { radius: 8 }
+        },
+        plotOptions: { radar: { polygons: { strokeColors: '#e5e7eb', fill: { colors: ['#ffffff', '#f8fafc'] } } } }
+      });
+
+      feedbackRadar.render();
+    })();
+  </script>
+  {% include 'partials/global_ui_enhancements.html' %}
+  </div>
+</body>
+</html>

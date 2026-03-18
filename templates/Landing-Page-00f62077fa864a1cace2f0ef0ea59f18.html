@@ -1,0 +1,653 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Talvo AI | Interview Preparation Platform</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: "#f7f8fa",
+            "surface-soft": "#f1f3f5",
+            "surface-card": "#ffffff",
+            ink: "#171a1f",
+            "ink-soft": "#616977",
+            primary: "#4f46e5",
+            "primary-deep": "#4338ca",
+            accent: "#6366f1",
+            line: "#e5e7eb"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"]
+          },
+          boxShadow: {
+            soft: "0 18px 40px -28px rgba(17, 24, 39, 0.2)",
+            glow: "0 18px 36px -28px rgba(67, 56, 202, 0.45)"
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      background: #f7f8fa;
+      color: #171a1f;
+    }
+
+    .symbol {
+      font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+    }
+
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+      background:
+        radial-gradient(900px 520px at -12% -14%, rgba(79, 70, 229, 0.12), transparent 65%),
+        radial-gradient(700px 500px at 105% 16%, rgba(99, 102, 241, 0.08), transparent 62%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(247, 248, 250, 0.92));
+    }
+
+    .ambient-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.16) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: radial-gradient(circle at 30% 20%, black 30%, transparent 75%);
+      opacity: 0.2;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(55px);
+      opacity: 0.28;
+      animation: floatOrb 16s ease-in-out infinite;
+    }
+
+    .ambient-orb.one {
+      width: 280px;
+      height: 280px;
+      left: 7%;
+      top: 12%;
+      background: #4f46e5;
+    }
+
+    .ambient-orb.two {
+      width: 220px;
+      height: 220px;
+      right: 4%;
+      top: 28%;
+      background: #818cf8;
+      animation-delay: -6s;
+    }
+
+    .ambient-orb.three {
+      width: 190px;
+      height: 190px;
+      left: 34%;
+      bottom: 6%;
+      background: #c7d2fe;
+      animation-delay: -10s;
+    }
+
+    @keyframes floatOrb {
+      0%, 100% {
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+      50% {
+        transform: translate3d(0, -16px, 0) scale(1.06);
+      }
+    }
+
+    .section-title {
+      font-size: clamp(2rem, 4.8vw, 3rem);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+    }
+
+    .hero-title {
+      font-size: clamp(2.3rem, 6vw, 4.2rem);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+      font-weight: 900;
+    }
+
+    .card-shift {
+      transition: transform 170ms ease, box-shadow 170ms ease;
+    }
+
+    .card-shift:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 45px -24px rgba(17, 24, 39, 0.22);
+    }
+
+    .testimonial-track {
+      position: relative;
+      min-height: 390px;
+      overflow: hidden;
+    }
+
+    .testimonial-item {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      width: min(760px, calc(100% - 20px));
+      border-radius: 24px;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      padding: 24px;
+      box-shadow: 0 20px 45px -24px rgba(17, 24, 39, 0.2);
+      opacity: 0;
+      transform: translateX(-50%) scale(0.88);
+      pointer-events: none;
+      transition: opacity 320ms ease, transform 320ms ease, filter 320ms ease;
+      filter: grayscale(0.1) brightness(0.95);
+    }
+
+    .testimonial-item.is-active {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+      filter: grayscale(0) brightness(1);
+      pointer-events: auto;
+      z-index: 3;
+    }
+
+    .testimonial-item.is-left {
+      opacity: 0.56;
+      transform: translateX(calc(-50% - 33%)) scale(0.86);
+      filter: grayscale(0.2) brightness(0.88);
+      pointer-events: auto;
+      z-index: 2;
+      cursor: pointer;
+    }
+
+    .testimonial-item.is-right {
+      opacity: 0.56;
+      transform: translateX(calc(-50% + 33%)) scale(0.86);
+      filter: grayscale(0.2) brightness(0.88);
+      pointer-events: auto;
+      z-index: 2;
+      cursor: pointer;
+    }
+
+    .testimonial-item.is-hidden {
+      opacity: 0;
+      transform: translateX(-50%) scale(0.84);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .testimonial-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      border: 0;
+      background: rgba(117, 124, 125, 0.35);
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    .testimonial-dot.active {
+      background: #4f46e5;
+      transform: scale(1.2);
+    }
+
+    .testimonial-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .testimonial-avatar-wrap {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      flex: 0 0 56px;
+    }
+
+    .testimonial-avatar-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 999px;
+      border: 1px solid rgba(79, 70, 229, 0.35);
+      animation: avatarPulse 2.8s ease-in-out infinite;
+    }
+
+    .testimonial-avatar {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #3730a3;
+      letter-spacing: 0.02em;
+      background: linear-gradient(145deg, rgba(224, 231, 255, 0.95), rgba(243, 244, 246, 0.9));
+      box-shadow: 0 10px 24px -16px rgba(67, 56, 202, 0.42);
+      overflow: hidden;
+    }
+
+    .testimonial-avatar-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      animation: avatarFloat 3.4s ease-in-out infinite;
+    }
+
+    @keyframes avatarPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.72;
+      }
+      50% {
+        transform: scale(1.08);
+        opacity: 0.3;
+      }
+    }
+
+    @keyframes avatarFloat {
+      0%, 100% {
+        transform: scale(1.02) translateY(0);
+      }
+      50% {
+        transform: scale(1.05) translateY(-2px);
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .testimonial-track {
+        min-height: 430px;
+      }
+
+      .testimonial-item.is-left,
+      .testimonial-item.is-right {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(-50%) scale(0.9);
+      }
+    }
+  </style>
+</head>
+<body class="selection:bg-primary/15">
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="ambient-grid"></div>
+    <div class="ambient-orb one"></div>
+    <div class="ambient-orb two"></div>
+    <div class="ambient-orb three"></div>
+  </div>
+
+  <header class="fixed top-0 inset-x-0 z-50 border-b border-white/60 bg-white/75 backdrop-blur-xl">
+    <div class="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
+      <a href="{% url 'landing' %}" class="text-2xl font-black tracking-tight">Talvo<span class="text-primary">AI</span></a>
+      <nav class="hidden items-center gap-7 text-sm font-medium md:flex">
+        <a href="#features" class="text-ink-soft transition-colors hover:text-primary">Features</a>
+        <a href="#how" class="text-ink-soft transition-colors hover:text-primary">How it works</a>
+        <a href="#roles" class="text-ink-soft transition-colors hover:text-primary">Role tracks</a>
+        <a href="{% url 'auth_login' %}" class="text-ink-soft transition-colors hover:text-primary">Login</a>
+      </nav>
+      <a href="{% url 'auth_login' %}" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition-all hover:bg-primary-deep">Start Interview</a>
+    </div>
+  </header>
+
+  <main class="pt-24">
+    <section class="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8">
+      <div>
+        <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-white/85 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+          <span class="symbol material-symbols-outlined text-base">radio_button_checked</span>
+          Personalized AI Interview Coaching
+        </p>
+        <h1 class="hero-title mb-6 text-ink">Practice high-stakes interviews with clarity, not guesswork.</h1>
+        <p class="mb-9 max-w-xl text-lg leading-relaxed text-ink-soft">Talvo simulates realistic conversations, analyzes your responses, and gives precise next actions so every practice session leads to measurable progress.</p>
+        <div class="flex flex-wrap items-center gap-4">
+          <a href="{% url 'auth_login' %}" class="rounded-2xl bg-primary px-7 py-4 text-base font-bold text-white shadow-glow transition-all hover:bg-primary-deep">Start Interview</a>
+          <a href="{% url 'replay_page' %}" class="rounded-2xl border border-line bg-white px-7 py-4 text-base font-semibold text-ink transition-colors hover:bg-surface-soft">Watch Sample Replay</a>
+        </div>
+        <div class="mt-9 flex flex-wrap items-center gap-6 text-sm text-ink-soft">
+          <div class="rounded-xl border border-line bg-white px-4 py-2">12,400+ practice sessions this month</div>
+          <div class="rounded-xl border border-line bg-white px-4 py-2">Average confidence lift: +21%</div>
+        </div>
+      </div>
+
+      <div class="rounded-[2rem] border border-line bg-white/88 p-6 shadow-soft backdrop-blur-xl">
+        <div class="mb-5 flex items-center justify-between">
+          <p class="text-xs font-semibold uppercase tracking-[0.15em] text-ink-soft">Live Mock Session</p>
+          <p class="rounded-full bg-surface-soft px-3 py-1 text-xs font-semibold text-ink">04:12</p>
+        </div>
+        <div class="rounded-2xl border border-line bg-surface p-5">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="h-11 w-11 rounded-full bg-primary/10"></div>
+            <div>
+              <p class="text-sm font-bold">Talvo Interviewer</p>
+              <p class="text-xs text-ink-soft">Product Management - Mid level</p>
+            </div>
+          </div>
+          <p class="mb-5 rounded-xl bg-white p-4 text-sm text-ink-soft">Tell me about a time you had to influence a skeptical stakeholder with limited data.</p>
+          <div class="mb-5 flex items-end gap-1.5 h-14" aria-hidden="true">
+            <span class="w-1.5 rounded-full bg-primary/25 h-4"></span>
+            <span class="w-1.5 rounded-full bg-primary/35 h-7"></span>
+            <span class="w-1.5 rounded-full bg-primary/55 h-11"></span>
+            <span class="w-1.5 rounded-full bg-primary h-14"></span>
+            <span class="w-1.5 rounded-full bg-primary/70 h-10"></span>
+            <span class="w-1.5 rounded-full bg-primary/40 h-6"></span>
+            <span class="w-1.5 rounded-full bg-primary/22 h-4"></span>
+          </div>
+          <div class="flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3">
+            <span class="text-sm text-ink-soft">Confidence score (live)</span>
+            <span class="text-lg font-extrabold text-accent">7.8 / 10</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
+      <div class="grid gap-4 rounded-3xl border border-line bg-white/80 p-5 shadow-soft sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-2xl bg-surface p-4">
+          <p class="text-xs uppercase tracking-[0.14em] text-ink-soft">Interview Types</p>
+          <p class="mt-2 text-xl font-extrabold">Behavioral, PM, SDE</p>
+        </div>
+        <div class="rounded-2xl bg-surface p-4">
+          <p class="text-xs uppercase tracking-[0.14em] text-ink-soft">Feedback Depth</p>
+          <p class="mt-2 text-xl font-extrabold">Speech + Structure + Impact</p>
+        </div>
+        <div class="rounded-2xl bg-surface p-4">
+          <p class="text-xs uppercase tracking-[0.14em] text-ink-soft">Session Length</p>
+          <p class="mt-2 text-xl font-extrabold">10 to 35 min</p>
+        </div>
+        <div class="rounded-2xl bg-surface p-4">
+          <p class="text-xs uppercase tracking-[0.14em] text-ink-soft">Actionability</p>
+          <p class="mt-2 text-xl font-extrabold">1-click next practice</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+      <div class="mb-12 max-w-2xl">
+        <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-primary">What you get</p>
+        <h2 class="section-title mb-4">Every section is designed to move your interview performance forward.</h2>
+        <p class="text-lg text-ink-soft">From realistic sessions to tactical feedback, Talvo compresses weeks of preparation into daily focused practice.</p>
+      </div>
+      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <article class="card-shift rounded-3xl border border-line bg-white p-6">
+          <span class="symbol material-symbols-outlined text-3xl text-primary">forum</span>
+          <h3 class="mt-4 text-xl font-bold">Adaptive questioning</h3>
+          <p class="mt-3 text-sm leading-relaxed text-ink-soft">Questions branch based on your answers so each session mirrors real interviewer behavior.</p>
+        </article>
+        <article class="card-shift rounded-3xl border border-line bg-white p-6">
+          <span class="symbol material-symbols-outlined text-3xl text-primary">mic</span>
+          <h3 class="mt-4 text-xl font-bold">Voice first simulation</h3>
+          <p class="mt-3 text-sm leading-relaxed text-ink-soft">Practice speaking out loud with timed prompts, follow-ups, and interviewer interruptions.</p>
+        </article>
+        <article class="card-shift rounded-3xl border border-line bg-white p-6">
+          <span class="symbol material-symbols-outlined text-3xl text-primary">analytics</span>
+          <h3 class="mt-4 text-xl font-bold">Signal-rich scorecards</h3>
+          <p class="mt-3 text-sm leading-relaxed text-ink-soft">Track clarity, structure, confidence, and specificity with trend-level visibility.</p>
+        </article>
+        <article class="card-shift rounded-3xl border border-line bg-white p-6">
+          <span class="symbol material-symbols-outlined text-3xl text-primary">tactic</span>
+          <h3 class="mt-4 text-xl font-bold">Next-step coaching</h3>
+          <p class="mt-3 text-sm leading-relaxed text-ink-soft">Get practical drills you can start immediately instead of generic feedback summaries.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="how" class="bg-white/70 py-20">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="mb-14 text-center">
+          <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-primary">How it works</p>
+          <h2 class="section-title">Three steps from uncertainty to confidence</h2>
+        </div>
+        <div class="grid gap-6 md:grid-cols-3">
+          <article class="rounded-3xl border border-line bg-surface-card p-7 shadow-soft">
+            <p class="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-lg font-black text-white">1</p>
+            <h3 class="text-xl font-bold">Configure your goal</h3>
+            <p class="mt-3 text-sm leading-relaxed text-ink-soft">Choose target role, experience level, and interview type so the session context fits your objective.</p>
+          </article>
+          <article class="rounded-3xl border border-line bg-surface-card p-7 shadow-soft">
+            <p class="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-lg font-black text-white">2</p>
+            <h3 class="text-xl font-bold">Run a realistic interview</h3>
+            <p class="mt-3 text-sm leading-relaxed text-ink-soft">Answer naturally while Talvo evaluates response structure, reasoning, and communication quality.</p>
+          </article>
+          <article class="rounded-3xl border border-line bg-surface-card p-7 shadow-soft">
+            <p class="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-lg font-black text-white">3</p>
+            <h3 class="text-xl font-bold">Practice the exact weak spots</h3>
+            <p class="mt-3 text-sm leading-relaxed text-ink-soft">Convert feedback into focused follow-up rounds so your next interview answers are tighter and clearer.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="roles" class="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+      <div class="mb-12 flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-primary">Role tracks</p>
+          <h2 class="section-title">Built for the interviews you are actually preparing for.</h2>
+        </div>
+        <a href="{% url 'interview_setup' %}" class="rounded-xl border border-line bg-white px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface-soft">Create custom track</a>
+      </div>
+      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <article class="rounded-3xl border border-line bg-white p-6">
+          <h3 class="text-lg font-bold">Software Engineering</h3>
+          <p class="mt-2 text-sm text-ink-soft">Architecture explanation, debugging thought process, and trade-off communication.</p>
+        </article>
+        <article class="rounded-3xl border border-line bg-white p-6">
+          <h3 class="text-lg font-bold">Product Management</h3>
+          <p class="mt-2 text-sm text-ink-soft">Product sense, metrics thinking, and stakeholder influence narratives.</p>
+        </article>
+        <article class="rounded-3xl border border-line bg-white p-6">
+          <h3 class="text-lg font-bold">Design and UX</h3>
+          <p class="mt-2 text-sm text-ink-soft">Portfolio storytelling, decision rationale, and collaboration examples.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-7xl px-6 pb-14 lg:px-8">
+      <article class="rounded-3xl border border-line bg-white p-8 shadow-soft" id="testimonial-carousel">
+        <div class="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Candidate stories</p>
+            <h3 class="mt-2 text-2xl font-black leading-tight text-ink">Trusted by job seekers across product, engineering, and design.</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:bg-surface-soft" id="testimonial-prev" type="button" aria-label="Previous testimonial">
+              <span class="symbol material-symbols-outlined text-lg">arrow_back</span>
+            </button>
+            <button class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:bg-surface-soft" id="testimonial-next" type="button" aria-label="Next testimonial">
+              <span class="symbol material-symbols-outlined text-lg">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="testimonial-track">
+          <article class="testimonial-item is-active" data-index="0">
+            <div class="testimonial-profile">
+              <div class="testimonial-avatar-wrap" aria-hidden="true">
+                <span class="testimonial-avatar-ring"></span>
+                <div class="testimonial-avatar">
+                  <img class="testimonial-avatar-image" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80" alt="Riya Sharma"/>
+                </div>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-ink">Riya Sharma</p>
+                <p class="text-xs text-ink-soft">Associate Product Manager, Finovate</p>
+              </div>
+            </div>
+            <h2 class="text-3xl font-black leading-tight">"I stopped memorizing scripts and started answering like a leader."</h2>
+            <p class="mt-5 text-base leading-relaxed text-ink-soft">After 11 focused sessions in Talvo, my responses became tighter and less repetitive. The replay timeline and follow-up drills were the difference between sounding prepared and sounding rehearsed.</p>
+            <p class="mt-5 inline-flex rounded-full bg-surface px-3 py-1 text-xs font-semibold text-ink-soft">Offer secured in 5 weeks</p>
+          </article>
+
+          <article class="testimonial-item" data-index="1">
+            <div class="testimonial-profile">
+              <div class="testimonial-avatar-wrap" aria-hidden="true">
+                <span class="testimonial-avatar-ring"></span>
+                <div class="testimonial-avatar">
+                  <img class="testimonial-avatar-image" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80" alt="Ankit Verma"/>
+                </div>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-ink">Ankit Verma</p>
+                <p class="text-xs text-ink-soft">Software Engineer, Northline Labs</p>
+              </div>
+            </div>
+            <h2 class="text-3xl font-black leading-tight">"The feedback was specific enough that I could fix one weakness each day."</h2>
+            <p class="mt-5 text-base leading-relaxed text-ink-soft">Before Talvo, my interview prep felt random. The structured scorecards showed exactly where I lost clarity. In two weeks, my mock scores climbed and my real interview anxiety dropped.</p>
+            <p class="mt-5 inline-flex rounded-full bg-surface px-3 py-1 text-xs font-semibold text-ink-soft">Confidence score improved from 6.1 to 8.3</p>
+          </article>
+
+          <article class="testimonial-item" data-index="2">
+            <div class="testimonial-profile">
+              <div class="testimonial-avatar-wrap" aria-hidden="true">
+                <span class="testimonial-avatar-ring"></span>
+                <div class="testimonial-avatar">
+                  <img class="testimonial-avatar-image" src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=200&q=80" alt="Megha Nair"/>
+                </div>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-ink">Megha Nair</p>
+                <p class="text-xs text-ink-soft">UX Designer, Framecraft Studio</p>
+              </div>
+            </div>
+            <h2 class="text-3xl font-black leading-tight">"It felt like having a coach between every interview round."</h2>
+            <p class="mt-5 text-base leading-relaxed text-ink-soft">The transition from replay to targeted practice is brilliant. I could revisit one weak answer, retry it immediately, and hear the difference. My final round responses were much sharper.</p>
+            <p class="mt-5 inline-flex rounded-full bg-surface px-3 py-1 text-xs font-semibold text-ink-soft">Portfolio round converted on first attempt</p>
+          </article>
+        </div>
+
+        <div class="mt-4 flex items-center gap-2" id="testimonial-dots" aria-label="Testimonial navigation">
+          <button class="testimonial-dot active" type="button" data-target="0" aria-label="Show testimonial 1"></button>
+          <button class="testimonial-dot" type="button" data-target="1" aria-label="Show testimonial 2"></button>
+          <button class="testimonial-dot" type="button" data-target="2" aria-label="Show testimonial 3"></button>
+        </div>
+      </article>
+    </section>
+
+    <section class="mx-auto max-w-7xl px-6 pb-20 lg:px-8">
+      <article class="rounded-3xl border border-line bg-white p-8 shadow-soft">
+        <p class="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-primary">Quick FAQ</p>
+        <div class="grid gap-5 text-sm text-ink-soft md:grid-cols-2">
+          <div class="rounded-2xl border border-line bg-surface p-5">
+            <p class="font-semibold text-ink">Do I need special hardware?</p>
+            <p class="mt-2">A basic mic and stable connection are enough.</p>
+          </div>
+          <div class="rounded-2xl border border-line bg-surface p-5">
+            <p class="font-semibold text-ink">Can I review old sessions?</p>
+            <p class="mt-2">Yes, every session appears in history with replay and score trends.</p>
+          </div>
+          <div class="rounded-2xl border border-line bg-surface p-5 md:col-span-2">
+            <p class="font-semibold text-ink">Is it only for tech roles?</p>
+            <p class="mt-2">No. You can configure custom role tracks for most interview formats.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="mx-auto max-w-7xl px-6 pb-20 lg:px-8">
+      <div class="relative overflow-hidden rounded-[2.2rem] border border-line bg-ink px-8 py-14 text-center text-white shadow-soft sm:px-14">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(79,70,229,0.28),transparent_55%)]"></div>
+        <div class="relative z-10">
+          <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-white/75">Ready when you are</p>
+          <h2 class="mx-auto max-w-3xl text-4xl font-black leading-tight sm:text-5xl">Turn each practice into a measurable interview advantage.</h2>
+          <p class="mx-auto mt-5 max-w-2xl text-sm text-white/80 sm:text-base">Start with one role-specific session and get immediate, tactical feedback you can apply in your next real interview.</p>
+          <div class="mt-9 flex flex-wrap items-center justify-center gap-4">
+            <a href="{% url 'interview_setup' %}" class="rounded-2xl bg-primary px-7 py-4 text-base font-bold text-white transition-colors hover:bg-primary-deep">Start for free</a>
+            <a href="{% url 'dashboard' %}" class="rounded-2xl border border-white/30 px-7 py-4 text-base font-semibold text-white transition-colors hover:bg-white/10">View Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-line bg-white/65">
+    <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-6 py-10 text-sm md:flex-row lg:px-8">
+      <div>
+        <p class="text-lg font-black">Talvo AI</p>
+        <p class="text-xs text-ink-soft">Copyright 2024 Talvo AI. All rights reserved.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-6 text-ink-soft">
+        <a href="{% url 'privacy_policy' %}" class="transition-colors hover:text-primary">Privacy Policy</a>
+        <a href="{% url 'terms_of_service' %}" class="transition-colors hover:text-primary">Terms of Service</a>
+        <a href="{% url 'contact_page' %}" class="transition-colors hover:text-primary">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var carousel = document.getElementById("testimonial-carousel");
+      if (!carousel) return;
+
+      var items = Array.prototype.slice.call(carousel.querySelectorAll(".testimonial-item"));
+      var dots = Array.prototype.slice.call(carousel.querySelectorAll(".testimonial-dot"));
+      var prev = document.getElementById("testimonial-prev");
+      var next = document.getElementById("testimonial-next");
+      var current = 0;
+
+      function show(index) {
+        current = (index + items.length) % items.length;
+
+        items.forEach(function (item, i) {
+          item.classList.remove("is-active", "is-left", "is-right", "is-hidden");
+
+          var relative = (i - current + items.length) % items.length;
+          if (relative === 0) {
+            item.classList.add("is-active");
+          } else if (relative === 1) {
+            item.classList.add("is-right");
+          } else if (relative === items.length - 1) {
+            item.classList.add("is-left");
+          } else {
+            item.classList.add("is-hidden");
+          }
+        });
+
+        dots.forEach(function (dot, i) {
+          dot.classList.toggle("active", i === current);
+        });
+      }
+
+      prev.addEventListener("click", function () {
+        show(current - 1);
+      });
+
+      next.addEventListener("click", function () {
+        show(current + 1);
+      });
+
+      dots.forEach(function (dot) {
+        dot.addEventListener("click", function () {
+          var target = Number(dot.getAttribute("data-target"));
+          show(target);
+        });
+      });
+
+      items.forEach(function (item, i) {
+        item.addEventListener("click", function () {
+          if (i !== current) show(i);
+        });
+      });
+
+      show(0);
+
+      setInterval(function () {
+        show(current + 1);
+      }, 7000);
+    })();
+  </script>
+
+  {% include 'partials/global_ui_enhancements.html' %}
+</body>
+</html>

@@ -1,0 +1,342 @@
+<style>
+  :root {
+    --ui-focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.22);
+    --ui-mobile-z: 80;
+  }
+
+  body.ui-page-ready {
+    animation: uiFadeIn 220ms ease-out;
+  }
+
+  @keyframes uiFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+    border-radius: 10px;
+  }
+
+  .ui-primary-cta {
+    box-shadow: 0 12px 20px -14px rgba(55, 48, 163, 0.42);
+  }
+
+  .ui-secondary-cta {
+    border: 1px solid rgba(209, 213, 219, 0.95);
+    background: #ffffff;
+  }
+
+  .ui-mobile-toggle {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: calc(var(--ui-mobile-z) + 2);
+    border: 0;
+    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #1f2937;
+    box-shadow: 0 12px 28px -18px rgba(45, 52, 53, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ui-mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.32);
+    z-index: var(--ui-mobile-z);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 170ms ease-out;
+  }
+
+  .ui-mobile-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .ui-nav-active {
+    background: rgba(238, 242, 255, 0.96) !important;
+    color: #4338ca !important;
+    box-shadow: 0 12px 24px -20px rgba(17, 24, 39, 0.3);
+  }
+
+  .ui-state-card {
+    border-radius: 16px;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+  }
+
+  @media (max-width: 1024px) {
+    .ui-mobile-toggle {
+      display: inline-flex;
+    }
+
+    body.ui-has-mobile-nav .ui-mobile-panel {
+      position: fixed !important;
+      left: 0;
+      top: 0;
+      height: 100vh !important;
+      transform: translateX(-102%);
+      transition: transform 180ms ease-out;
+      z-index: calc(var(--ui-mobile-z) + 1);
+    }
+
+    body.ui-has-mobile-nav .ui-mobile-panel.open {
+      transform: translateX(0);
+    }
+  }
+</style>
+<script>
+(function () {
+  var ROUTES = {
+    landing: "{% url 'landing' %}",
+    prep: "{% url 'talvo_ai_interview_prep' %}",
+    dashboard: "{% url 'dashboard' %}",
+    history: "{% url 'history_page' %}",
+    interviewSetup: "{% url 'interview_setup' %}",
+    live: "{% url 'live_interview' %}",
+    replay: "{% url 'replay_page' %}",
+    feedback: "{% url 'feedback_dashboard' %}",
+    settings: "{% url 'settings_page' %}",
+    privacy: "{% url 'privacy_policy' %}",
+    terms: "{% url 'terms_of_service' %}",
+    contact: "{% url 'contact_page' %}"
+  };
+
+  function normalize(text) {
+    return (text || "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+
+  function routeForText(text) {
+    var t = normalize(text);
+    if (!t) return null;
+
+    if (t.includes("privacy")) return ROUTES.privacy;
+    if (t.includes("terms")) return ROUTES.terms;
+    if (t.includes("contact")) return ROUTES.contact;
+    if (t.includes("feature")) return ROUTES.prep;
+    if (t.includes("demo")) return ROUTES.replay;
+    if (t.includes("watch demo")) return ROUTES.replay;
+    if (t.includes("login")) return ROUTES.prep;
+    if (t.includes("start interview") || t.includes("practice now")) return ROUTES.interviewSetup;
+    if (t.includes("live interview")) return ROUTES.live;
+    if (t.includes("replay")) return ROUTES.replay;
+    if (t.includes("feedback")) return ROUTES.feedback;
+    if (t.includes("history")) return ROUTES.history;
+    if (t.includes("settings")) return ROUTES.settings;
+    if (t.includes("dashboard")) return ROUTES.dashboard;
+    if (t.includes("exit interview") || t.includes("close")) return ROUTES.dashboard;
+    return null;
+  }
+
+  function getCurrentKey() {
+    var p = window.location.pathname;
+    if (p === ROUTES.landing) return "landing";
+    if (p === ROUTES.prep) return "prep";
+    if (p === ROUTES.dashboard) return "dashboard";
+    if (p === ROUTES.history) return "history";
+    if (p === ROUTES.interviewSetup) return "interviewSetup";
+    if (p === ROUTES.live) return "live";
+    if (p === ROUTES.replay) return "replay";
+    if (p === ROUTES.feedback) return "feedback";
+    if (p === ROUTES.settings) return "settings";
+    return "";
+  }
+
+  function enhanceLinks() {
+    document.querySelectorAll('a[href="#"]').forEach(function (el) {
+      var route = routeForText(el.textContent);
+      if (route) el.setAttribute("href", route);
+    });
+  }
+
+  function enforceSidebarRoutes() {
+    var sidebar = document.querySelector("aside");
+    if (!sidebar) return;
+
+    var map = {
+      "dashboard": ROUTES.dashboard,
+      "interview setup": ROUTES.interviewSetup,
+      "history": ROUTES.history,
+      "preferences": ROUTES.settings,
+      "settings": ROUTES.settings
+    };
+
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      var text = normalize(a.textContent);
+      var matchedKey = Object.keys(map).find(function (key) {
+        return text.includes(key);
+      });
+      if (!matchedKey) return;
+
+      var target = map[matchedKey];
+      a.setAttribute("href", target);
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = target;
+      });
+    });
+  }
+
+  function enhanceButtons() {
+    document.querySelectorAll("button").forEach(function (el) {
+      if (el.closest("form")) return;
+      var route = routeForText(el.textContent);
+      if (!route) return;
+
+      var label = normalize(el.textContent);
+      if (label.includes("start interview") || label.includes("practice now")) {
+        el.classList.add("ui-primary-cta");
+      } else if (label.includes("watch demo") || label.includes("login") || label.includes("feature") || label.includes("demo")) {
+        el.classList.add("ui-secondary-cta");
+      }
+
+      el.addEventListener("click", function () {
+        window.location.href = route;
+      });
+    });
+  }
+
+  function setActiveNav() {
+    var current = getCurrentKey();
+    if (!current) return;
+
+    var keyToTerms = {
+      dashboard: ["dashboard"],
+      history: ["history"],
+      interviewSetup: ["interview setup", "start interview", "practice now"],
+      feedback: ["feedback"],
+      settings: ["settings", "preferences"],
+      replay: ["replay"],
+      live: ["live interview"]
+    };
+
+    document.querySelectorAll("a").forEach(function (a) {
+      var text = normalize(a.textContent);
+      var terms = keyToTerms[current] || [];
+      if (terms.some(function (term) { return text.includes(term); })) {
+        a.classList.add("ui-nav-active");
+        a.setAttribute("aria-current", "page");
+      }
+    });
+  }
+
+  function addMobileNavigation() {
+    var sidebar = document.querySelector("aside.h-screen.w-64, nav.h-screen.w-64");
+    if (!sidebar) return;
+
+    document.body.classList.add("ui-has-mobile-nav");
+    sidebar.classList.add("ui-mobile-panel");
+
+    var toggle = document.createElement("button");
+    toggle.className = "ui-mobile-toggle";
+    toggle.type = "button";
+    toggle.setAttribute("aria-label", "Open navigation");
+    toggle.textContent = "Menu";
+
+    var backdrop = document.createElement("div");
+    backdrop.className = "ui-mobile-backdrop";
+
+    function closeNav() {
+      sidebar.classList.remove("open");
+      backdrop.classList.remove("open");
+      toggle.textContent = "Menu";
+      toggle.setAttribute("aria-label", "Open navigation");
+    }
+
+    function openNav() {
+      sidebar.classList.add("open");
+      backdrop.classList.add("open");
+      toggle.textContent = "Close";
+      toggle.setAttribute("aria-label", "Close navigation");
+    }
+
+    toggle.addEventListener("click", function () {
+      if (sidebar.classList.contains("open")) closeNav(); else openNav();
+    });
+
+    backdrop.addEventListener("click", closeNav);
+    window.addEventListener("resize", function () {
+      if (window.innerWidth > 1024) closeNav();
+    });
+
+    document.body.appendChild(toggle);
+    document.body.appendChild(backdrop);
+  }
+
+  function addStatesAndMetrics() {
+    var path = window.location.pathname;
+
+    if (path === ROUTES.dashboard) {
+      var header = document.querySelector("main section, main .grid, main div");
+      if (header && !document.querySelector("[data-ui-metrics]")) {
+        var wrap = document.createElement("div");
+        wrap.setAttribute("data-ui-metrics", "true");
+        wrap.className = "ui-state-card";
+        wrap.style.margin = "1.2rem 2.5rem 0";
+        wrap.innerHTML = "<div style='display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;'><div><p style='font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b7280;margin:0;'>Progress Pulse</p><h3 style='margin:.35rem 0 0;font-size:1.05rem;font-weight:700;color:#111827;'>You improved +12% this week</h3></div><div style='display:flex;gap:10px;flex-wrap:wrap;'><span style='padding:8px 10px;border-radius:999px;background:#f3f4f6;font-size:12px;color:#111827;'>12 interviews</span><span style='padding:8px 10px;border-radius:999px;background:#f3f4f6;font-size:12px;color:#111827;'>Avg score: 7.9/10</span><span style='padding:8px 10px;border-radius:999px;background:#f3f4f6;font-size:12px;color:#111827;'>Top strength: Clarity</span></div></div>";
+        header.parentNode.insertBefore(wrap, header);
+      }
+    }
+
+    if (path === ROUTES.history && !document.querySelector("[data-ui-empty-history]")) {
+      var empty = document.createElement("div");
+      empty.setAttribute("data-ui-empty-history", "true");
+      empty.className = "ui-state-card";
+      empty.style.margin = "1rem 2.5rem";
+      empty.innerHTML = "<p style='font-size:12px;color:#6b7280;margin:0 0 .35rem;'>History helper</p><h3 style='margin:0 0 .5rem;font-size:1rem;color:#111827;'>Need a clean slate?</h3><p style='margin:0;color:#6b7280;'>No filters are active. Use date or role filters to find specific sessions faster.</p>";
+      var historyMain = document.querySelector("main");
+      if (historyMain) historyMain.insertBefore(empty, historyMain.firstChild.nextSibling || historyMain.firstChild);
+    }
+
+    if (path === ROUTES.feedback && !document.querySelector("[data-ui-next-actions]")) {
+      var panel = document.createElement("div");
+      panel.setAttribute("data-ui-next-actions", "true");
+      panel.className = "ui-state-card";
+      panel.style.margin = "1rem 2.5rem";
+      panel.innerHTML = "<p style='font-size:12px;color:#6b7280;margin:0 0 .35rem;'>Next best action</p><h3 style='margin:0 0 .6rem;font-size:1rem;color:#111827;'>Practice weak area: Stakeholder communication</h3><button type='button' style='border:0;background:#4338ca;color:#fff;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;' onclick='window.location.href=\"" + ROUTES.interviewSetup + "\"'>Start focused practice</button>";
+      var feedbackMain = document.querySelector("main");
+      if (feedbackMain) feedbackMain.insertBefore(panel, feedbackMain.firstChild.nextSibling || feedbackMain.firstChild);
+    }
+  }
+
+  function labelIconButtons() {
+    document.querySelectorAll("button").forEach(function (btn) {
+      var text = normalize(btn.textContent);
+      if (text) return;
+      var icon = btn.querySelector(".material-symbols-outlined");
+      if (icon && !btn.getAttribute("aria-label")) {
+        btn.setAttribute("aria-label", normalize(icon.textContent).replace(/_/g, " ") || "action");
+      }
+    });
+  }
+
+  enhanceLinks();
+  enforceSidebarRoutes();
+  enhanceButtons();
+  setActiveNav();
+  addMobileNavigation();
+  addStatesAndMetrics();
+  labelIconButtons();
+  document.body.classList.add("ui-page-ready");
+})();
+</script>

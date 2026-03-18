@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,6 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'talvo1',
 ]
 
@@ -46,6 +52,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -55,7 +62,7 @@ ROOT_URLCONF = 'talvo.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -68,6 +75,42 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'talvo.wsgi.application'
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SITE_ID = 1
+
+LOGIN_URL = '/auth/login/'
+LOGIN_REDIRECT_URL = '/auth/post-login/'
+LOGOUT_REDIRECT_URL = '/'
+
+ACCOUNT_SIGNUP_FIELDS = ['email*']
+ACCOUNT_LOGIN_METHODS = {'email'}
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'APPS': [
+            {
+                'client_id': os.getenv('GOOGLE_OAUTH_CLIENT_ID', '618393753126-jjpkij7uomdat0mlvpkoq691vhb7l607.apps.googleusercontent.com'),
+                'secret': os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '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'),
+                'key': '',
+            }
+        ],
+    }
+}
 
 
 # Database
@@ -116,3 +159,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

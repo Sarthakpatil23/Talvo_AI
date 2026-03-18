@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Talvo Replay Center</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>body{font-family:'Plus Jakarta Sans',sans-serif;}</style>
+</head>
+<body class="bg-gray-50 text-gray-900 flex min-h-screen">
+  {% include 'partials/sidebar.html' %}
+  <div class="flex-1 min-w-0 flex flex-col min-h-screen">
+    <main class="mx-auto max-w-7xl p-6 lg:p-8">
+      <header class="flex flex-wrap items-center justify-between gap-3">
+      <div><p class="text-xs uppercase tracking-[0.16em] text-gray-500">Replay</p><h1 class="mt-1 text-3xl font-black tracking-tight">Session timeline and marker insights</h1></div>
+      <a href="{% url 'feedback_dashboard' %}" class="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200">View Feedback</a>
+    </header>
+    <section class="mt-6 grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
+      <article class="rounded-3xl border border-gray-200 bg-gray-900 p-4 text-white shadow-sm">
+        <div class="aspect-video rounded-2xl bg-gray-800 grid place-items-center text-gray-300">Replay Video Player</div>
+        <div class="mt-4 rounded-xl bg-gray-800 p-3 text-sm">Marker @08:32 - Excellent stakeholder framing</div>
+      </article>
+      <article class="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold">Timeline Markers</h2>
+        <ul class="mt-4 space-y-3 text-sm">
+          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">02:14 - Strong opening</li>
+          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">05:09 - Could be more concise</li>
+          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">08:32 - High-impact answer</li>
+          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">12:48 - Missed quantified outcome</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+  {% include 'partials/global_ui_enhancements.html' %}
+  </div>
+</body>
+</html>

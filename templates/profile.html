@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Talvo Profile</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>body{font-family:'Plus Jakarta Sans',sans-serif;}</style>
+</head>
+<body class="bg-gray-50 text-gray-900 flex min-h-screen">
+  {% include 'partials/sidebar.html' %}
+  <div class="flex-1 min-w-0 flex flex-col min-h-screen">
+    <main class="max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
+      <header class="space-y-2">
+        <p class="text-sm text-gray-500 uppercase tracking-wide">Account</p>
+        <h1 class="text-3xl font-semibold tracking-tight">Profile</h1>
+        <p class="text-sm text-gray-600">Your personal details and interview preferences.</p>
+      </header>
+
+      <section class="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 class="text-lg font-bold text-gray-900">Basic Information</h2>
+          <dl class="mt-4 space-y-4 text-sm">
+            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+              <dt class="text-gray-500">Full Name</dt>
+              <dd class="font-medium text-gray-900 text-right">{{ request.user.get_full_name|default:'Not set' }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+              <dt class="text-gray-500">Email</dt>
+              <dd class="font-medium text-gray-900 text-right">{{ request.user.email|default:'Not set' }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-gray-500">Member Since</dt>
+              <dd class="font-medium text-gray-900 text-right">{{ request.user.date_joined|date:'M d, Y' }}</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 class="text-lg font-bold text-gray-900">Interview Preferences</h2>
+          <dl class="mt-4 space-y-4 text-sm">
+            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+              <dt class="text-gray-500">Target Role</dt>
+              <dd class="font-medium text-gray-900 text-right">{{ profile.target_role|default:'Not set' }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+              <dt class="text-gray-500">Experience Level</dt>
+              <dd class="font-medium text-gray-900 text-right">{{ profile.get_experience_level_display|default:'Not set' }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+              <dt class="text-gray-500">Target Company</dt>
+              <dd class="font-medium text-gray-900 text-right">{{ profile.target_company|default:'Not set' }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+              <dt class="text-gray-500">Interview Focus</dt>
+              <dd class="font-medium text-gray-900 text-right">{{ profile.interview_focus|default:'Not set' }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-gray-500">Confidence Level</dt>
+              <dd class="font-medium text-gray-900 text-right">{{ profile.confidence_level|default:'Not set' }}</dd>
+            </div>
+          </dl>
+        </article>
+      </section>
+    </main>
+
+    {% include 'partials/global_ui_enhancements.html' %}
+  </div>
+</body>
+</html>
