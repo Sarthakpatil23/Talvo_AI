@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f2f4f4",
+                        "secondary": "#005bc4",
+                        "surface-container": "#ebeeef",
+                        "on-secondary-fixed": "#003c86",
+                        "on-error-container": "#752121",
+                        "surface-dim": "#d4dbdd",
+                        "tertiary-fixed": "#6df5e1",
+                        "secondary-container": "#d8e2ff",
+                        "surface-variant": "#dde4e5",
+                        "outline": "#757c7d",
+                        "on-tertiary-fixed": "#00463e",
+                        "on-primary": "#f7f7ff",
+                        "inverse-primary": "#d9dff5",
+                        "on-error": "#fff7f6",
+                        "on-secondary-container": "#004eaa",
+                        "surface-container-highest": "#dde4e5",
+                        "on-tertiary": "#e2fff8",
+                        "on-background": "#2d3435",
+                        "primary-fixed": "#dce2f7",
+                        "on-primary-container": "#4b5263",
+                        "surface": "#f9f9f9",
+                        "tertiary-container": "#6df5e1",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f9f9f9",
+                        "error-dim": "#4e0309",
+                        "error-container": "#fe8983",
+                        "on-tertiary-fixed-variant": "#00655b",
+                        "outline-variant": "#adb3b4",
+                        "inverse-surface": "#0c0f0f",
+                        "primary-container": "#dce2f7",
+                        "on-surface-variant": "#5a6061",
+                        "tertiary-dim": "#005e54",
+                        "primary-fixed-dim": "#ced4e9",
+                        "tertiary-fixed-dim": "#5de7d3",
+                        "on-surface": "#2d3435",
+                        "primary-dim": "#4b5264",
+                        "primary": "#575e70",
+                        "error": "#9f403d",
+                        "surface-tint": "#575e70",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#005b51",
+                        "inverse-on-surface": "#9c9d9d",
+                        "on-secondary-fixed-variant": "#0057bd",
+                        "secondary-dim": "#004fad",
+                        "secondary-fixed-dim": "#c3d4ff",
+                        "on-secondary": "#f9f8ff",
+                        "tertiary": "#006b60",
+                        "on-primary-fixed-variant": "#545b6d",
+                        "surface-bright": "#f9f9f9",
+                        "on-primary-fixed": "#383f50",
+                        "surface-container-high": "#e4e9ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9f9;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low flex flex-col p-6 gap-2 z-50">
+<div class="mb-8">
+<h1 class="text-xl font-black text-on-surface">Talvo AI</h1>
+<p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Interview Prep</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all font-inter text-sm font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all font-inter text-sm font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="videocam">videocam</span>
+                Start Interview
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-surface-container-lowest text-secondary rounded-lg shadow-sm font-inter text-sm font-semibold transition-transform active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+                History
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all font-inter text-sm font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+                Feedback
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all font-inter text-sm font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-outline-variant/10">
+<button class="w-full py-3 px-4 bg-secondary text-on-secondary rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+                Practice Now
+            </button>
+</div>
+</aside>
+<!-- TopNavBar (Dashboard Variant) -->
+<header class="flex justify-between items-center px-10 h-16 ml-64 sticky top-0 w-full z-40 bg-surface">
+<div class="flex items-center gap-4">
+<h2 class="font-inter text-lg font-semibold text-on-surface">History</h2>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant/20">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Close up portrait of a smiling young professional man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCe38KBIodm5J0h5UNV56oHjqRpOINPSO8tQMgkTJwx58MNZTtKtzVTDF6wFpjPmw5eEZBJGapDZRxF6kN1FjFEs_-8I0pwTOnZETLiuaVywi3-aiOsZ48p0R5vI2kEC01MG9z0bNG-REUkhMk9r8BHy-mFaHkVyTfltmr553MI7nwd1NVCbZ0pjSWvQc93x8H_uDh8qf7XobexGXqPGEN5gaq6OqSmsh8kAk74_T9M9BVXWC3CwQSktmY6iBAOVEh2FES--vb8hVhz"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-10 min-h-screen">
+<div class="max-w-6xl mx-auto">
+<!-- Filters & Stats Bento Section -->
+<div class="grid grid-cols-12 gap-6 mb-10">
+<!-- Search & Filter Bar -->
+<div class="col-span-12 lg:col-span-8 p-1 bg-surface-container-low rounded-xl flex items-center gap-2">
+<div class="flex-1 flex items-center px-4 gap-3 bg-surface-container-lowest rounded-lg h-12">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-on-surface-variant/50" placeholder="Search by role or company..." type="text"/>
+</div>
+<div class="flex items-center gap-2 px-2">
+<select class="bg-transparent border-none text-xs font-semibold text-on-surface-variant focus:ring-0 cursor-pointer">
+<option>All Roles</option>
+<option>Frontend Engineer</option>
+<option>Product Manager</option>
+<option>UX Designer</option>
+</select>
+<div class="w-[1px] h-6 bg-outline-variant/20"></div>
+<select class="bg-transparent border-none text-xs font-semibold text-on-surface-variant focus:ring-0 cursor-pointer">
+<option>Any Score</option>
+<option>90% +</option>
+<option>80% +</option>
+</select>
+</div>
+</div>
+<!-- Small Stat Card -->
+<div class="col-span-12 lg:col-span-4 bg-secondary-container/30 p-4 rounded-xl flex items-center justify-between border border-secondary/5">
+<div>
+<p class="text-[10px] font-bold uppercase tracking-widest text-on-secondary-container/60">Total Sessions</p>
+<h3 class="text-2xl font-black text-on-secondary-container">24 Interviews</h3>
+</div>
+<span class="material-symbols-outlined text-secondary text-3xl opacity-40" data-icon="bar_chart">bar_chart</span>
+</div>
+</div>
+<!-- History List View -->
+<section class="bg-surface-container-lowest rounded-2xl overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Date</th>
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Interview Type</th>
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Score</th>
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Duration</th>
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1 -->
+<tr class="group hover:bg-surface transition-colors">
+<td class="px-8 py-6">
+<span class="text-sm font-medium text-on-surface">Oct 24, 2024</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="corporate_fare">corporate_fare</span>
+</div>
+<span class="text-sm font-semibold text-on-surface">Google-style (L5)</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary-container text-on-tertiary-container">
+                                        92/100
+                                    </span>
+</td>
+<td class="px-8 py-6">
+<span class="text-xs font-medium text-on-surface-variant">30m 12s</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex items-center justify-end gap-3">
+<button class="text-xs font-bold text-secondary hover:underline transition-all">View Feedback</button>
+<button class="h-8 w-8 rounded-full border border-outline-variant/20 flex items-center justify-center hover:bg-surface-container-high transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="replay">replay</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-surface transition-colors">
+<td class="px-8 py-6">
+<span class="text-sm font-medium text-on-surface">Oct 21, 2024</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="code">code</span>
+</div>
+<span class="text-sm font-semibold text-on-surface">Frontend Architect</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
+                                        85/100
+                                    </span>
+</td>
+<td class="px-8 py-6">
+<span class="text-xs font-medium text-on-surface-variant">45m 00s</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex items-center justify-end gap-3">
+<button class="text-xs font-bold text-secondary hover:underline transition-all">View Feedback</button>
+<button class="h-8 w-8 rounded-full border border-outline-variant/20 flex items-center justify-center hover:bg-surface-container-high transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="replay">replay</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-surface transition-colors">
+<td class="px-8 py-6">
+<span class="text-sm font-medium text-on-surface">Oct 18, 2024</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="psychology">psychology</span>
+</div>
+<span class="text-sm font-semibold text-on-surface">Behavioral (STAR)</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary-container text-on-tertiary-container">
+                                        98/100
+                                    </span>
+</td>
+<td class="px-8 py-6">
+<span class="text-xs font-medium text-on-surface-variant">22m 15s</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex items-center justify-end gap-3">
+<button class="text-xs font-bold text-secondary hover:underline transition-all">View Feedback</button>
+<button class="h-8 w-8 rounded-full border border-outline-variant/20 flex items-center justify-center hover:bg-surface-container-high transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="replay">replay</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-surface transition-colors">
+<td class="px-8 py-6">
+<span class="text-sm font-medium text-on-surface">Oct 15, 2024</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="architecture">architecture</span>
+</div>
+<span class="text-sm font-semibold text-on-surface">System Design</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-error-container/20 text-error">
+                                        64/100
+                                    </span>
+</td>
+<td class="px-8 py-6">
+<span class="text-xs font-medium text-on-surface-variant">58m 10s</span>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex items-center justify-end gap-3">
+<button class="text-xs font-bold text-secondary hover:underline transition-all">View Feedback</button>
+<button class="h-8 w-8 rounded-full border border-outline-variant/20 flex items-center justify-center hover:bg-surface-container-high transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg" data-icon="replay">replay</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-8 py-6 border-t border-surface-container flex items-center justify-between">
+<p class="text-xs text-on-surface-variant">Showing <span class="font-bold text-on-surface">1-4</span> of 24 results</p>
+<div class="flex gap-2">
+<button class="h-8 px-3 border border-outline-variant/20 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container transition-all">Previous</button>
+<button class="h-8 px-3 border border-outline-variant/20 rounded-lg text-xs font-bold text-on-surface hover:bg-surface-container transition-all">Next</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer Component -->
+<footer class="ml-64 bg-surface border-t border-outline-variant/20 py-8 px-8 flex flex-col md:flex-row justify-between items-center">
+<div class="mb-4 md:mb-0">
+<span class="text-sm font-bold text-on-surface">Talvo AI</span>
+<p class="text-xs text-on-surface-variant mt-1">© 2024 Talvo AI. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="font-inter text-xs text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Privacy Policy</a>
+<a class="font-inter text-xs text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Terms of Service</a>
+<a class="font-inter text-xs text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Contact</a>
+</div>
+</footer>
+</body></html>

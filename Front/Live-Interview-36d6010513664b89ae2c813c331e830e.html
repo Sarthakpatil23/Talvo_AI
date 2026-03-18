@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Talvo AI - Live Interview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f2f4f4",
+                        "secondary": "#005bc4",
+                        "surface-container": "#ebeeef",
+                        "on-secondary-fixed": "#003c86",
+                        "on-error-container": "#752121",
+                        "surface-dim": "#d4dbdd",
+                        "tertiary-fixed": "#6df5e1",
+                        "secondary-container": "#d8e2ff",
+                        "surface-variant": "#dde4e5",
+                        "outline": "#757c7d",
+                        "on-tertiary-fixed": "#00463e",
+                        "on-primary": "#f7f7ff",
+                        "inverse-primary": "#d9dff5",
+                        "on-error": "#fff7f6",
+                        "on-secondary-container": "#004eaa",
+                        "surface-container-highest": "#dde4e5",
+                        "on-tertiary": "#e2fff8",
+                        "on-background": "#2d3435",
+                        "primary-fixed": "#dce2f7",
+                        "on-primary-container": "#4b5263",
+                        "surface": "#f9f9f9",
+                        "tertiary-container": "#6df5e1",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f9f9f9",
+                        "error-dim": "#4e0309",
+                        "error-container": "#fe8983",
+                        "on-tertiary-fixed-variant": "#00655b",
+                        "outline-variant": "#adb3b4",
+                        "inverse-surface": "#0c0f0f",
+                        "primary-container": "#dce2f7",
+                        "on-surface-variant": "#5a6061",
+                        "tertiary-dim": "#005e54",
+                        "primary-fixed-dim": "#ced4e9",
+                        "tertiary-fixed-dim": "#5de7d3",
+                        "on-surface": "#2d3435",
+                        "primary-dim": "#4b5264",
+                        "primary": "#575e70",
+                        "error": "#9f403d",
+                        "surface-tint": "#575e70",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#005b51",
+                        "inverse-on-surface": "#9c9d9d",
+                        "on-secondary-fixed-variant": "#0057bd",
+                        "secondary-dim": "#004fad",
+                        "secondary-fixed-dim": "#c3d4ff",
+                        "on-secondary": "#f9f8ff",
+                        "tertiary": "#006b60",
+                        "on-primary-fixed-variant": "#545b6d",
+                        "surface-bright": "#f9f9f9",
+                        "on-primary-fixed": "#383f50",
+                        "surface-container-high": "#e4e9ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .waveform-bar {
+            width: 3px;
+            background: #005bc4;
+            border-radius: 2px;
+            transition: height 0.3s ease;
+        }
+        .glass-panel {
+            background: rgba(249, 249, 249, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-secondary/10 overflow-hidden h-screen flex flex-col">
+<!-- Top Navigation (Sub-page/Task-focused Header) -->
+<!-- Note: Suppression of global nav as per "Destination Rule" for Task-Focused screens -->
+<header class="h-16 flex items-center justify-between px-8 z-50">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">close</span>
+<span class="text-sm font-medium">Exit Interview</span>
+</button>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 bg-surface-container-high px-3 py-1.5 rounded-full">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="text-xs font-mono font-bold tracking-widest text-on-surface">04:12</span>
+</div>
+<div class="h-8 w-8 rounded-full overflow-hidden bg-surface-container-highest">
+<img alt="User Profile" data-alt="Professional user profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaGBZoFFvtzUZMjEKcDFLSesk1ALltgzwyejv9t4sYp4OkVHSmUaYreCgtmogNPFg4nvNjBHWPoiudXfyQCPL7SuHPFywMOKthNezZ_5nTk-9MUEx0Hxzntq_6B8t4p2_19aVVABc1Y5sLa_ZPz0vBfLwTeVVOu-oQ8DcCY9TXSm97SJRLvw9a605Rg3KWTzXdjy3G4hnJBcydjkkB0yf98i5vAYx4nuc2lSvxceuXsUPQAcdcIzjsrpStfoj6N6GorZ57ppafFslq"/>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col max-w-7xl mx-auto w-full px-8 relative">
+<!-- Top Center: Current Question Card -->
+<div class="mt-8 flex justify-center">
+<div class="max-w-2xl w-full p-8 rounded-2xl bg-surface-container-lowest border border-outline-variant/10 shadow-[0_20px_50px_-12px_rgba(45,52,53,0.06)]">
+<div class="flex items-center gap-2 mb-4">
+<span class="text-[10px] uppercase tracking-[0.2em] font-bold text-secondary">Question 03 of 10</span>
+</div>
+<h1 class="text-2xl md:text-3xl font-headline font-extrabold tracking-tight text-on-surface leading-tight">
+                    Tell me about a time you had to handle a difficult stakeholder.
+                </h1>
+</div>
+</div>
+<!-- Middle Section: AI and User View -->
+<div class="flex-1 flex items-center justify-between gap-12 py-12">
+<!-- Left: AI Interviewer Avatar -->
+<div class="flex-1 flex flex-col items-center justify-center">
+<div class="relative group">
+<div class="absolute -inset-4 bg-secondary/5 rounded-full blur-2xl transition-all group-hover:bg-secondary/10"></div>
+<div class="relative w-48 h-48 md:w-64 md:h-64 rounded-full border-4 border-surface-container-lowest bg-surface-container shadow-sm overflow-hidden flex items-center justify-center">
+<!-- Minimalist Avatar Placeholder -->
+<div class="text-secondary/20 scale-[4]">
+<span class="material-symbols-outlined" style="font-size: 48px;">smart_toy</span>
+</div>
+<img alt="AI Interviewer" class="absolute inset-0 object-cover opacity-60 mix-blend-luminosity" data-alt="AI human-like assistant portrait placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeqNnyvlhMdiYQuwYu9Esz4VopLB3IOrhCMMsUXUj6UKrvLN6svBSdEV3aFhm1plh3fHk5lAT71XCUIhkK3hW7RALvK8Lm3X7bWBEuK79mpXehSIyvQKMhINji1FI2aoYwV4vA6LTc3b6zNfEMG6eSuLNlA5rJT6F7nA5l0S8vvB30ike1Q9oTrujteRFZCiDcGlHByVQzdvv8YXVaPCBTo0wqEKSu9Di312aOCfB0gmOtxqoCMgrPBJYet2zUOrJQGIJOvuxqvYB7"/>
+</div>
+<div class="mt-8 text-center">
+<p class="text-sm font-semibold text-on-surface tracking-wide">Talvo AI</p>
+<p class="text-xs text-on-surface-variant">Listening intently...</p>
+</div>
+</div>
+</div>
+<!-- Right: User Audio/Status -->
+<div class="flex-1 flex flex-col items-center justify-center">
+<div class="w-full max-w-sm flex flex-col items-center gap-12">
+<!-- Audio Waveform Visualization -->
+<div class="h-32 flex items-center justify-center gap-1 w-full">
+<div class="waveform-bar" style="height: 20%;"></div>
+<div class="waveform-bar" style="height: 40%;"></div>
+<div class="waveform-bar" style="height: 70%;"></div>
+<div class="waveform-bar" style="height: 50%;"></div>
+<div class="waveform-bar" style="height: 90%;"></div>
+<div class="waveform-bar" style="height: 30%;"></div>
+<div class="waveform-bar" style="height: 60%;"></div>
+<div class="waveform-bar" style="height: 80%;"></div>
+<div class="waveform-bar" style="height: 40%;"></div>
+<div class="waveform-bar" style="height: 100%;"></div>
+<div class="waveform-bar" style="height: 50%;"></div>
+<div class="waveform-bar" style="height: 70%;"></div>
+<div class="waveform-bar" style="height: 30%;"></div>
+<div class="waveform-bar" style="height: 60%;"></div>
+<div class="waveform-bar" style="height: 20%;"></div>
+<div class="waveform-bar" style="height: 80%;"></div>
+<div class="waveform-bar" style="height: 40%;"></div>
+<div class="waveform-bar" style="height: 60%;"></div>
+<div class="waveform-bar" style="height: 20%;"></div>
+</div>
+<div class="flex flex-col items-center gap-4">
+<div class="flex items-center gap-3 bg-secondary-container/30 px-4 py-2 rounded-full border border-secondary/10">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">mic</span>
+<span class="text-sm font-bold text-on-secondary-container">Microphone Active</span>
+</div>
+<p class="text-xs text-on-surface-variant text-center px-8">Your audio is being processed in real-time for feedback.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Transcription Preview -->
+<div class="w-full max-w-3xl mx-auto mb-32 h-20 overflow-hidden relative">
+<div class="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-surface to-transparent z-10"></div>
+<div class="text-center space-y-2 opacity-40 select-none">
+<p class="text-sm text-on-surface-variant italic">"...and then I approached the project manager to discuss the misalignment on the project scope, ensuring we had a clear path forward..."</p>
+<p class="text-sm text-on-surface-variant font-medium">"I prioritized transparent communication by setting up a weekly sync..."</p>
+</div>
+<div class="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface to-transparent z-10"></div>
+</div>
+</main>
+<!-- Bottom Controls: Floating pill-shaped bar -->
+<footer class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50">
+<div class="glass-panel flex items-center gap-2 p-2 rounded-full border border-outline-variant/20 shadow-[0_20px_50px_-12px_rgba(45,52,53,0.1)]">
+<button class="flex items-center gap-2 px-6 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95 group">
+<span class="material-symbols-outlined transition-transform group-hover:rotate-12">skip_next</span>
+<span class="text-sm font-semibold">Skip question</span>
+</button>
+<div class="h-8 w-px bg-outline-variant/20 mx-1"></div>
+<button class="bg-secondary text-on-secondary flex items-center gap-3 px-8 py-3.5 rounded-full shadow-lg shadow-secondary/20 hover:bg-secondary-dim transition-all active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stop_circle</span>
+<span class="text-sm font-bold tracking-tight">Stop answer</span>
+</button>
+<div class="h-8 w-px bg-outline-variant/20 mx-1"></div>
+<button class="flex items-center gap-2 px-6 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-semibold">Audio Settings</span>
+</button>
+</div>
+</footer>
+<!-- Subtle Texture Overlay -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] mix-blend-multiply" data-alt="Very subtle grainy paper texture for editorial feel" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCkk13gMDdUX2t1Pk8Od8K5it1IVfXccOLDvxywjOsANEyT5P4NS4bOaKbtuPVhJC_crWqlm9C4LdwVBQsAvREJQ_onXNcECv8ZFl2zslrkKpzpAgf-RRSv_cEUBepaEvBHrFhKt8b8fk7Zy0cNljpXnO3kDJhLo7LlPwvtpEYspH_4-8RaWW0d0GnT0DVkPeQwgkcD8vQCSScspMr0_nzyn5avonMbwghyft8DY-U25i8sDEzEKUTeABWfucN8OMtD4pgev7Wv5yeC');"></div>
+</body></html>

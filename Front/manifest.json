@@ -1,0 +1,47 @@
+﻿[
+    {
+        "title":  "Talvo AI Interview Prep",
+        "screenId":  "1ef0427fbbae4f41bdb3c4e538160e37",
+        "htmlFile":  "Talvo-AI-Interview-Prep-1ef0427fbbae4f41bdb3c4e538160e37.html"
+    },
+    {
+        "title":  "History Page",
+        "screenId":  "a3d819cc716944daa8cb80c50d943ada",
+        "htmlFile":  "History-Page-a3d819cc716944daa8cb80c50d943ada.html"
+    },
+    {
+        "title":  "Replay Page",
+        "screenId":  "4014a9e4ef52443eb457663a353786b0",
+        "htmlFile":  "Replay-Page-4014a9e4ef52443eb457663a353786b0.html"
+    },
+    {
+        "title":  "Interview Setup",
+        "screenId":  "82549d84a8874a5d8a6eac01c3e830e0",
+        "htmlFile":  "Interview-Setup-82549d84a8874a5d8a6eac01c3e830e0.html"
+    },
+    {
+        "title":  "Live Interview",
+        "screenId":  "36d6010513664b89ae2c813c331e830e",
+        "htmlFile":  "Live-Interview-36d6010513664b89ae2c813c331e830e.html"
+    },
+    {
+        "title":  "Landing Page",
+        "screenId":  "00f62077fa864a1cace2f0ef0ea59f18",
+        "htmlFile":  "Landing-Page-00f62077fa864a1cace2f0ef0ea59f18.html"
+    },
+    {
+        "title":  "Dashboard",
+        "screenId":  "5405ed6ef83247c3bd20866b24684c91",
+        "htmlFile":  "Dashboard-5405ed6ef83247c3bd20866b24684c91.html"
+    },
+    {
+        "title":  "Feedback Dashboard",
+        "screenId":  "e357383ccf44499a9e9039de4a019dab",
+        "htmlFile":  "Feedback-Dashboard-e357383ccf44499a9e9039de4a019dab.html"
+    },
+    {
+        "title":  "Settings",
+        "screenId":  "f0098eb3e15f4b279780bd050d42ab32",
+        "htmlFile":  "Settings-f0098eb3e15f4b279780bd050d42ab32.html"
+    }
+]
