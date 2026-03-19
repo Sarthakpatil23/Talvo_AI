@@ -16,28 +16,83 @@
       <header class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <p class="text-xs uppercase tracking-[0.16em] text-gray-500">AI Feedback</p>
-        <h1 class="mt-1 text-3xl font-black tracking-tight">Actionable performance insights</h1>
+        <h1 class="mt-1 text-3xl font-black tracking-tight">Actionable performance intelligence</h1>
       </div>
       <a href="{% url 'interview_setup' %}" class="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200">Practice this weakness</a>
     </header>
-    <section class="mt-7 grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
+    <section class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Communication</p>
+        <p class="mt-2 text-3xl font-black text-gray-900">84</p>
+        <p class="mt-1 text-xs font-semibold text-emerald-600">+6 vs last interview</p>
+      </article>
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Technical</p>
+        <p class="mt-2 text-3xl font-black text-gray-900">71</p>
+        <p class="mt-1 text-xs font-semibold text-amber-700">Primary gap</p>
+      </article>
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Clarity</p>
+        <p class="mt-2 text-3xl font-black text-gray-900">86</p>
+        <p class="mt-1 text-xs font-semibold text-emerald-600">Strong signal</p>
+      </article>
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Confidence</p>
+        <p class="mt-2 text-3xl font-black text-gray-900">78</p>
+        <p class="mt-1 text-xs font-semibold text-sky-700">Stable delivery</p>
+      </article>
+    </section>
+
+    <section class="mt-5 grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
       <article class="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 class="text-lg font-bold">Category Scores</h2>
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold">Category Scores vs Target</h2>
+          <a href="{% url 'replay_page' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Open replay evidence</a>
+        </div>
         <div id="feedbackRadarChart" class="mt-4 h-44 w-full rounded-xl bg-gray-50 border border-gray-200"></div>
-        <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
-          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Structure: <strong>82%</strong></div>
-          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Confidence: <strong>76%</strong></div>
-          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Depth: <strong>69%</strong></div>
-          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Clarity: <strong>84%</strong></div>
+        <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Coach Summary</p>
+          <p class="mt-1 text-sm text-gray-700">You communicate clearly and confidently, but your technical depth drops during pressure follow-ups. Anchor answers in architecture decisions and explicit trade-offs.</p>
         </div>
       </article>
+
       <article class="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 class="text-lg font-bold">Top Recommendations</h2>
-        <ul class="mt-4 space-y-3 text-sm text-gray-600">
-          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">Use concrete numbers when explaining outcomes.</li>
-          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">Shorten setup of STAR stories to under 25 seconds.</li>
-          <li class="rounded-xl bg-gray-50 border border-gray-200 p-3">Add stakeholder perspective before solution details.</li>
+        <h2 class="text-lg font-bold">Moment-by-Moment Trend</h2>
+        <div id="feedbackTrendChart" class="mt-4 h-44"></div>
+        <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Strongest: <strong>@08:32</strong></div>
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">Weakest: <strong>@12:48</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="mt-5 grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
+      <article class="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold">Evidence-Linked Recommendations</h2>
+        <ul class="mt-4 space-y-3 text-sm text-gray-700">
+          <li class="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+            <p class="font-semibold text-emerald-900">Keep: Outcome-first framing</p>
+            <p class="mt-1 text-emerald-800">At 08:32 you quantified impact clearly. Reuse this pattern in every behavioral answer.</p>
+          </li>
+          <li class="rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <p class="font-semibold text-amber-900">Improve: Technical specificity in follow-ups</p>
+            <p class="mt-1 text-amber-800">At 12:48 you described process but skipped architecture trade-offs. Add one concrete decision and one rejected alternative.</p>
+          </li>
+          <li class="rounded-xl border border-sky-200 bg-sky-50 p-3">
+            <p class="font-semibold text-sky-900">Refine: Conciseness under pressure</p>
+            <p class="mt-1 text-sky-800">At 05:09 setup ran long. Keep context under 20 seconds, then shift to action and impact.</p>
+          </li>
         </ul>
+      </article>
+
+      <article class="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold">Next Practice Plan</h2>
+        <ol class="mt-4 space-y-3 text-sm text-gray-700">
+          <li class="rounded-xl border border-gray-200 bg-gray-50 p-3"><span class="font-semibold">Round 1:</span> 3 technical trade-off questions (10 min)</li>
+          <li class="rounded-xl border border-gray-200 bg-gray-50 p-3"><span class="font-semibold">Round 2:</span> Stakeholder conflict drill with strict 90-sec answers (8 min)</li>
+          <li class="rounded-xl border border-gray-200 bg-gray-50 p-3"><span class="font-semibold">Round 3:</span> High-pressure follow-up simulation (12 min)</li>
+        </ol>
+        <a href="{% url 'interview_setup' %}" class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90">Start Focused Session</a>
       </article>
     </section>
   </main>
@@ -75,6 +130,29 @@
       });
 
       feedbackRadar.render();
+
+      var trendTarget = document.querySelector('#feedbackTrendChart');
+      if (trendTarget) {
+        var feedbackTrend = new ApexCharts(trendTarget, {
+          chart: { type: 'line', height: '100%', toolbar: { show: false } },
+          series: [
+            { name: 'Confidence', data: [72, 74, 76, 79, 82, 80, 78, 83, 85] },
+            { name: 'Clarity', data: [70, 73, 75, 77, 81, 83, 82, 85, 86] }
+          ],
+          xaxis: {
+            categories: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9'],
+            labels: { style: { colors: '#6b7280', fontSize: '11px' } }
+          },
+          yaxis: { min: 60, max: 90, tickAmount: 3, labels: { style: { colors: '#9ca3af', fontSize: '11px' } } },
+          colors: ['#4f46e5', '#22c55e'],
+          stroke: { width: 3, curve: 'smooth' },
+          markers: { size: 3, strokeWidth: 2, strokeColors: '#fff' },
+          grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
+          tooltip: { y: { formatter: function (val) { return val + '%'; } } },
+          legend: { position: 'top', horizontalAlign: 'right', labels: { colors: '#4b5563' } }
+        });
+        feedbackTrend.render();
+      }
     })();
   </script>
   {% include 'partials/global_ui_enhancements.html' %}

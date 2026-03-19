@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Talvo Interview Setup</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -194,11 +195,18 @@
                 <p class="text-xs uppercase tracking-wide text-gray-500">AI Recommendation</p>
                 <p id="aiRecommendation" class="mt-1 text-gray-700">Open with a crisp context, then quantify your impact in under 90 seconds.</p>
               </div>
+
+              <div class="rounded-xl border border-gray-200 bg-white p-3">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Conversation Preview</p>
+                <div class="mt-2 space-y-2 text-xs">
+                  <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-2 text-indigo-900">AI: Walk me through a stakeholder conflict where priorities were misaligned.</div>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-700">You: I mapped impact vs risk and aligned each team on one measurable goal.</div>
+                  <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-2 text-indigo-900">AI follow-up: What trade-off did you make and why?</div>
+                </div>
+              </div>
             </div>
 
-            <svg viewBox="0 0 100 40" class="mt-5 h-24 w-full rounded-xl border border-gray-200 bg-gray-50 p-3">
-              <polyline fill="none" stroke="#6366f1" stroke-width="2.8" points="0,34 16,30 32,27 48,22 64,18 80,14 100,10"></polyline>
-            </svg>
+            <div id="setupReadinessChart" class="mt-5 h-44 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-50"></div>
           </article>
 
           <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -237,6 +245,7 @@
 
       var topicChips = document.getElementById('topicChips');
       var topicInput = document.getElementById('topicInput');
+      var setupReadinessChart = null;
 
       function updateReadiness() {
         var diff = (difficultyBadge.textContent || '').trim();
@@ -251,6 +260,10 @@
 
         readinessBar.style.width = base + '%';
         readinessText.textContent = 'You are ' + base + '% ready for this session';
+
+        if (setupReadinessChart) {
+          setupReadinessChart.updateSeries([base]);
+        }
       }
 
       function setCompany(card) {
@@ -345,6 +358,38 @@
 
       setCompany(companyCards[0]);
       renderLength();
+
+      var chartTarget = document.querySelector('#setupReadinessChart');
+      if (chartTarget && typeof ApexCharts !== 'undefined') {
+        setupReadinessChart = new ApexCharts(chartTarget, {
+          chart: { type: 'radialBar', height: 176, toolbar: { show: false } },
+          series: [74],
+          labels: ['Readiness'],
+          colors: ['#6366f1'],
+          plotOptions: {
+            radialBar: {
+              startAngle: -135,
+              endAngle: 135,
+              hollow: { size: '58%' },
+              track: { background: '#e5e7eb' },
+              dataLabels: {
+                name: { offsetY: 26, color: '#6b7280', fontSize: '11px' },
+                value: {
+                  offsetY: -4,
+                  color: '#111827',
+                  fontSize: '22px',
+                  fontWeight: 700,
+                  formatter: function (val) { return Math.round(val) + '%'; }
+                }
+              }
+            }
+          },
+          stroke: { lineCap: 'round' },
+          tooltip: { y: { formatter: function (val) { return Math.round(val) + '%'; } } }
+        });
+        setupReadinessChart.render();
+        updateReadiness();
+      }
     })();
   </script>
 </body>

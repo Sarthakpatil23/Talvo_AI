@@ -292,7 +292,10 @@
 
   <header class="fixed top-0 inset-x-0 z-50 border-b border-white/60 bg-white/75 backdrop-blur-xl">
     <div class="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-      <a href="{% url 'landing' %}" class="text-2xl font-black tracking-tight">Talvo<span class="text-primary">AI</span></a>
+      <a href="{% url 'landing' %}" class="inline-flex items-center gap-3 text-2xl font-black tracking-tight text-ink">
+        {% include 'partials/talvo_mark.html' %}
+        <span>Talvo<span class="text-primary">AI</span></span>
+      </a>
       <nav class="hidden items-center gap-7 text-sm font-medium md:flex">
         <a href="#features" class="text-ink-soft transition-colors hover:text-primary">Features</a>
         <a href="#how" class="text-ink-soft transition-colors hover:text-primary">How it works</a>

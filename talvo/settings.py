@@ -13,8 +13,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -159,5 +162,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+GROQ_MODEL_NAME = os.getenv('GROQ_MODEL_NAME', 'llama-3.1-8b-instant')
+WHISPER_MODEL_SIZE = os.getenv('WHISPER_MODEL_SIZE', 'base')
+COQUI_TTS_MODEL = os.getenv('COQUI_TTS_MODEL', 'tts_models/en/ljspeech/vits')
+SPEECH_WORKER_URL = os.getenv('SPEECH_WORKER_URL', 'http://127.0.0.1:8001')
+SPEECH_WORKER_TIMEOUT_SECONDS = int(os.getenv('SPEECH_WORKER_TIMEOUT_SECONDS', '120'))
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

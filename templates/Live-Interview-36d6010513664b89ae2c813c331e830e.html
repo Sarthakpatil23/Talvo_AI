@@ -6,41 +6,678 @@
   <title>Talvo Live Interview</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <style>body{font-family:'Plus Jakarta Sans',sans-serif;} .pulse{animation:pulse 1.4s ease-in-out infinite;} @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}</style>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .control-btn {
+      height: 48px;
+      width: 48px;
+      border-radius: 9999px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #374151;
+      display: grid;
+      place-items: center;
+      transition: all .2s ease;
+    }
+    .control-btn:hover { background: #f9fafb; }
+    .control-btn.off {
+      border-color: #fdba74;
+      background: #fff7ed;
+      color: #c2410c;
+    }
+    .control-btn.on {
+      border-color: #c7d2fe;
+      background: #eef2ff;
+      color: #4338ca;
+    }
+    .control-btn.end {
+      border-color: #ef4444;
+      background: #ef4444;
+      color: #ffffff;
+    }
+    .control-btn.end:hover { background: #dc2626; }
+    .control-btn.ptt {
+      width: auto;
+      min-width: 168px;
+      padding: 0 16px;
+      border-color: #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .control-btn.ptt.active {
+      border-color: #f59e0b;
+      background: #f59e0b;
+      color: #ffffff;
+      box-shadow: 0 10px 24px rgba(245, 158, 11, 0.35);
+    }
+    .control-btn.ptt.disabled {
+      border-color: #e5e7eb;
+      background: #f9fafb;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+    .signal-bar {
+      width: 4px;
+      border-radius: 999px;
+      background: linear-gradient(to top, #6366f1, #a5b4fc);
+      transform-origin: bottom;
+      animation: voiceWave 1.1s ease-in-out infinite;
+    }
+    @keyframes voiceWave {
+      0%, 100% { transform: scaleY(0.25); opacity: 0.4; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+    .ring-pulse {
+      animation: ringPulse 2.4s ease-out infinite;
+    }
+    @keyframes ringPulse {
+      0% { transform: scale(0.95); opacity: 0.45; }
+      70% { transform: scale(1.25); opacity: 0; }
+      100% { transform: scale(1.25); opacity: 0; }
+    }
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
-  <div class="flex-1 min-w-0 flex flex-col min-h-screen">
-    <main class="max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
-      <header class="flex items-center justify-between">
-        <button onclick="window.location.href='{% url 'dashboard' %}'" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">Exit Interview</button>
-        <div class="rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1.5 text-xs font-semibold tracking-[0.14em] text-indigo-700">LIVE 04:12</div>
+<body class="min-h-screen bg-gray-50 text-gray-900">
+  <div class="relative min-h-screen overflow-hidden">
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.12),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.08),transparent_38%)]"></div>
+    <main class="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-28 pt-5 sm:px-6 lg:px-8">
+      <header class="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:px-5">
+        <div class="flex items-center gap-3">
+          <button onclick="window.location.href='{% url 'dashboard' %}'" class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50">Exit</button>
+          <p class="hidden text-sm text-gray-500 sm:block">Google PM L4 | Behavioral + Execution</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="turnBadge" class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">YOUR TURN</span>
+          <span id="timer" class="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold tracking-[0.14em] text-indigo-700">07:42</span>
+        </div>
       </header>
 
-      <section class="grid gap-6 lg:grid-cols-2">
-        <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <p class="text-sm text-gray-500 uppercase tracking-wide">Current Prompt</p>
-          <h1 class="mt-2 text-3xl font-semibold tracking-tight">Tell me about a time you had to handle a difficult stakeholder.</h1>
-          <div class="mt-8 flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div class="h-12 w-12 rounded-full bg-indigo-600"></div>
-            <div>
-              <p class="font-semibold">Talvo Interviewer</p>
-              <p class="text-sm text-gray-600">Listening...</p>
+      <section id="meetingLayout" class="mt-4 grid h-[calc(100vh-180px)] min-h-[560px] gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <article class="relative overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+          <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_35%),linear-gradient(160deg,#f5f7ff_0%,#eef2ff_35%,#f8fafc_100%)]"></div>
+          <div class="relative flex h-full flex-col p-4 sm:p-6">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-xs uppercase tracking-[0.16em] text-gray-500">Interviewer Prompt</p>
+                <h1 id="currentQuestion" class="mt-2 max-w-3xl text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">Tell me about a time you had to handle a difficult stakeholder disagreement.</h1>
+              </div>
+              <span id="latencyBadge" class="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">Latency --</span>
+            </div>
+
+            <div class="relative mt-4 flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/50">
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="relative">
+                  <span id="aiPulse" class="ring-pulse absolute inset-0 rounded-full border border-indigo-300/70"></span>
+                  <div class="relative grid h-36 w-36 place-items-center rounded-full border border-indigo-200 bg-white text-indigo-700 shadow-[0_20px_60px_rgba(99,102,241,0.25)]">
+                    <svg class="h-14 w-14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3a9 9 0 100 18 9 9 0 000-18zm-2.5 7.5h5m-5 3h3"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="absolute left-4 top-4 rounded-xl border border-white/50 bg-white/80 px-3 py-2 text-xs font-semibold text-gray-700 backdrop-blur">
+                Talvo Interviewer
+                <p id="interviewerState" class="mt-0.5 font-medium text-gray-500">Listening to your response...</p>
+              </div>
+
+              <div id="userTile" class="absolute bottom-4 right-4 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md">
+                <div id="userTileBody" class="relative grid h-32 place-items-center bg-gradient-to-br from-gray-100 to-gray-200">
+                  <video id="userVideo" class="hidden h-full w-full object-cover" autoplay muted playsinline></video>
+                  <div id="userAvatar" class="grid h-12 w-12 place-items-center rounded-full bg-gray-900 text-sm font-bold text-white">SP</div>
+                  <div class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/45 px-2 py-1 text-[11px] text-white">
+                    <span>You</span>
+                    <span id="cameraStateText">Camera on</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-xl border border-gray-200 bg-white/80 p-3">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Adaptive Follow-Up Queue</p>
+                <ul id="followupQueue" class="mt-2 space-y-2 text-sm text-gray-700">
+                  <li class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">What was the business impact of your decision?</li>
+                  <li class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">How did you align the engineering and sales teams?</li>
+                </ul>
+              </div>
+              <div class="rounded-xl border border-gray-200 bg-white/80 p-3">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Live Coaching Nudge</p>
+                <p id="liveTip" class="mt-2 text-sm text-gray-700">Lead with a measurable outcome first, then explain your influence strategy.</p>
+              </div>
             </div>
           </div>
         </article>
 
-        <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 class="text-2xl font-semibold tracking-tight">Your Live Signal</h2>
-          <div class="mt-6 flex h-28 items-end justify-center gap-2">
-            <span class="pulse h-8 w-2 rounded-full bg-indigo-500"></span><span class="pulse h-14 w-2 rounded-full bg-indigo-500" style="animation-delay:.1s"></span><span class="pulse h-20 w-2 rounded-full bg-indigo-500" style="animation-delay:.2s"></span><span class="pulse h-24 w-2 rounded-full bg-indigo-500" style="animation-delay:.3s"></span><span class="pulse h-16 w-2 rounded-full bg-indigo-500" style="animation-delay:.4s"></span>
+        <aside id="chatPanel" class="flex h-full min-h-0 flex-col rounded-3xl border border-gray-200 bg-white shadow-sm">
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+            <h2 class="text-sm font-semibold tracking-wide text-gray-900">Meeting Chat</h2>
+            <button id="chatHeaderToggle" type="button" class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">Hide</button>
           </div>
-          <div class="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">Tip: lead with outcome, then explain your influence strategy.</div>
-          <button class="mt-5 w-full rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 py-3 text-sm font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" onclick="window.location.href='{% url 'feedback_dashboard' %}'">End and Analyze</button>
-        </article>
+          <div id="transcriptFeed" class="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+            <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm">
+              <p class="text-xs uppercase tracking-wide text-indigo-700">AI</p>
+              <p class="mt-1 text-gray-800">Walk me through one difficult stakeholder situation where alignment was at risk.</p>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm">
+              <p class="text-xs uppercase tracking-wide text-gray-500">You</p>
+              <p class="mt-1 text-gray-800">In Q3, sales pushed a launch date we could not support with current reliability targets.</p>
+            </div>
+          </div>
+          <div class="border-t border-gray-200 px-4 py-3">
+            <div id="pipelineStatus" class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">Initializing interview...</div>
+            <div id="debugSignal" class="mt-2 text-xs text-gray-500">Debug: booting...</div>
+          </div>
+        </aside>
       </section>
-    </main>
 
-    {% include 'partials/global_ui_enhancements.html' %}
+      <footer class="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-6 py-3 backdrop-blur-xl lg:px-8">
+        <div class="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+          <div class="hidden items-center gap-2 text-xs text-gray-500 md:flex">
+            <span id="micState" class="rounded-full bg-gray-100 px-2.5 py-1">Mic on</span>
+            <span id="cameraBadge" class="rounded-full bg-gray-100 px-2.5 py-1">Camera on</span>
+            <span id="chatBadge" class="rounded-full bg-gray-100 px-2.5 py-1">Chat open</span>
+          </div>
+          <div class="mx-auto flex items-center gap-2 sm:gap-3">
+            <button id="toggleMic" type="button" class="control-btn" aria-label="Toggle microphone">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14a3 3 0 003-3V7a3 3 0 10-6 0v4a3 3 0 003 3zm0 0v4m-4 0h8"/></svg>
+            </button>
+            <button id="holdToTalk" type="button" class="control-btn ptt" aria-label="Hold to speak">Hold to Speak</button>
+            <button id="toggleCam" type="button" class="control-btn" aria-label="Toggle camera">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            </button>
+            <button id="toggleChat" type="button" class="control-btn on" aria-label="Toggle chat panel">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-7 6l-3-3H4a2 2 0 01-2-2V6a2 2 0 012-2h16a2 2 0 012 2v9a2 2 0 01-2 2H8l-3 3z"/></svg>
+            </button>
+            <button type="button" onclick="window.location.href='{% url 'feedback_dashboard' %}'" class="control-btn end" aria-label="End interview">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15.5c1.2-1.3 2.7-2.1 4.5-2.4a20 20 0 019 0c1.8.3 3.3 1.1 4.5 2.4M8 12l1.5-3m6.5 3L14.5 9"/></svg>
+            </button>
+          </div>
+        </div>
+      </footer>
+    </main>
   </div>
+
+  <script>
+    (function () {
+      var turnBadge = document.getElementById('turnBadge');
+      var interviewerState = document.getElementById('interviewerState');
+      var transcriptFeed = document.getElementById('transcriptFeed');
+      var liveTip = document.getElementById('liveTip');
+      var timer = document.getElementById('timer');
+      var latencyBadge = document.getElementById('latencyBadge');
+      var pipelineStatus = document.getElementById('pipelineStatus');
+      var debugSignal = document.getElementById('debugSignal');
+      var toggleMic = document.getElementById('toggleMic');
+      var holdToTalk = document.getElementById('holdToTalk');
+      var micState = document.getElementById('micState');
+      var toggleCam = document.getElementById('toggleCam');
+      var cameraBadge = document.getElementById('cameraBadge');
+      var cameraStateText = document.getElementById('cameraStateText');
+      var userTileBody = document.getElementById('userTileBody');
+      var userVideo = document.getElementById('userVideo');
+      var userAvatar = document.getElementById('userAvatar');
+      var toggleChat = document.getElementById('toggleChat');
+      var chatHeaderToggle = document.getElementById('chatHeaderToggle');
+      var chatPanel = document.getElementById('chatPanel');
+      var chatBadge = document.getElementById('chatBadge');
+      var meetingLayout = document.getElementById('meetingLayout');
+      var aiPulse = document.getElementById('aiPulse');
+      var currentQuestion = document.getElementById('currentQuestion');
+
+      var isUserTurn = true;
+      var isMuted = false;
+      var isCameraOn = true;
+      var isChatOpen = true;
+      var isProcessing = false;
+      var stream = null;
+      var recorderStream = null;
+      var audioTrack = null;
+      var videoTrack = null;
+      var mediaRecorder = null;
+      var recordTimer = null;
+      var inactivityTimer = null;
+      var isPushTalking = false;
+      var activeSessionId = null;
+      var latestAudio = null;
+      var mm = 7;
+      var ss = 42;
+      var inactivityMs = 15000;
+      var chunksCaptured = 0;
+      var turnsPosted = 0;
+
+      var startApiUrl = "{% url 'live_interview_start_api' %}";
+      var turnApiUrl = "{% url 'live_interview_turn_api' %}";
+      var initialRole = "{{ prefill_role|default:'Product Manager'|escapejs }}" || 'Product Manager';
+      var initialCompany = "{{ prefill_company|default:'Google'|escapejs }}" || 'Google';
+      var initialDifficulty = "{{ prefill_difficulty|default:'Medium'|escapejs }}" || 'Medium';
+      var initialType = "{{ prefill_type|default:'Behavioral'|escapejs }}" || 'Behavioral';
+
+      function setTurnState(userTurn) {
+        isUserTurn = userTurn;
+        if (userTurn) {
+          turnBadge.textContent = 'YOUR TURN';
+          turnBadge.className = 'rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700';
+          interviewerState.textContent = 'Hold the button and speak. Release to send.';
+          aiPulse.style.display = 'none';
+          armInactivityTimer();
+        } else {
+          turnBadge.textContent = 'AI SPEAKING';
+          turnBadge.className = 'rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700';
+          interviewerState.textContent = 'Generating follow-up based on your answer...';
+          aiPulse.style.display = 'block';
+          clearInactivityTimer();
+        }
+        updatePushToTalkState();
+      }
+
+      function clearInactivityTimer() {
+        if (inactivityTimer) {
+          clearTimeout(inactivityTimer);
+          inactivityTimer = null;
+        }
+      }
+
+      function armInactivityTimer() {
+        clearInactivityTimer();
+        if (!isUserTurn || isProcessing) return;
+        inactivityTimer = setTimeout(function () {
+          if (!isUserTurn || isProcessing) return;
+          var reason = '';
+          if (!activeSessionId) reason = 'Session is not initialized yet.';
+          else if (isMuted) reason = 'Your mic is muted.';
+          else if (!stream) reason = 'Microphone stream is unavailable.';
+          var nudge = 'Why are you not responding? I am here and listening.' + (reason ? ' ' + reason : '');
+          appendTranscript('AI', nudge);
+          currentQuestion.textContent = nudge;
+          liveTip.textContent = 'Quick check: confirm mic permission is allowed and speak for 6-8 seconds.';
+          setPipelineStatus('No response detected for 15 seconds. Prompted a follow-up check.');
+          setDebugSignal('session=' + (activeSessionId || 'none') + ', stream=' + (!!stream) + ', muted=' + isMuted + ', chunks=' + chunksCaptured + ', turns=' + turnsPosted);
+          armInactivityTimer();
+        }, inactivityMs);
+      }
+
+      function appendTranscript(role, text) {
+        var card = document.createElement('div');
+        var isAi = role === 'AI';
+        card.className = isAi
+          ? 'rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm'
+          : 'rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm';
+        card.innerHTML = '<p class="text-xs uppercase tracking-wide ' + (isAi ? 'text-indigo-700' : 'text-gray-500') + '">' + role + '</p><p class="mt-1 text-gray-800">' + text + '</p>';
+        transcriptFeed.appendChild(card);
+        transcriptFeed.scrollTop = transcriptFeed.scrollHeight;
+      }
+
+      function getCsrfToken() {
+        var name = 'csrftoken=';
+        var decodedCookie = decodeURIComponent(document.cookie || '');
+        var parts = decodedCookie.split(';');
+        for (var i = 0; i < parts.length; i += 1) {
+          var c = parts[i].trim();
+          if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
+        }
+        return '';
+      }
+
+      function updateLatencyFromTimings(timings) {
+        if (!timings || !timings.total_ms) return;
+        latencyBadge.textContent = 'Latency ' + timings.total_ms + 'ms';
+      }
+
+      function getPreferredMimeType() {
+        if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+        var candidates = [
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/ogg;codecs=opus',
+          'audio/ogg'
+        ];
+        for (var i = 0; i < candidates.length; i += 1) {
+          if (MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
+        }
+        return '';
+      }
+
+      function setPipelineStatus(text) {
+        pipelineStatus.textContent = text;
+      }
+
+      function setDebugSignal(text) {
+        if (debugSignal) {
+          debugSignal.textContent = 'Debug: ' + text;
+        }
+      }
+
+      function syncMicState() {
+        toggleMic.classList.toggle('off', isMuted);
+        micState.textContent = isMuted ? 'Mic off' : 'Mic on';
+        if (audioTrack) audioTrack.enabled = !isMuted;
+        updatePushToTalkState();
+      }
+
+      function updatePushToTalkState() {
+        if (!holdToTalk) return;
+        var canTalk = isUserTurn && !isProcessing && !isMuted && !!stream && !!activeSessionId;
+        holdToTalk.classList.toggle('disabled', !canTalk);
+        holdToTalk.classList.toggle('active', isPushTalking);
+        if (!canTalk) {
+          holdToTalk.textContent = isMuted ? 'Unmute to Speak' : (isUserTurn ? 'Hold to Speak' : 'Wait for AI');
+        } else {
+          holdToTalk.textContent = isPushTalking ? 'Release to Send' : 'Hold to Speak';
+        }
+      }
+
+      function syncCameraState() {
+        toggleCam.classList.toggle('off', !isCameraOn);
+        cameraBadge.textContent = isCameraOn ? 'Camera on' : 'Camera off';
+        cameraStateText.textContent = isCameraOn ? 'Camera on' : 'Camera off';
+        if (videoTrack) videoTrack.enabled = isCameraOn;
+
+        if (isCameraOn) {
+          userTileBody.className = 'relative grid h-32 place-items-center bg-gradient-to-br from-gray-100 to-gray-200';
+          if (stream) {
+            userVideo.classList.remove('hidden');
+            userAvatar.classList.add('hidden');
+          } else {
+            userVideo.classList.add('hidden');
+            userAvatar.classList.remove('hidden');
+          }
+        } else {
+          userTileBody.className = 'relative grid h-32 place-items-center bg-gray-900';
+          userVideo.classList.add('hidden');
+          userAvatar.classList.add('hidden');
+        }
+      }
+
+      function syncChatState() {
+        chatPanel.classList.toggle('hidden', !isChatOpen);
+        meetingLayout.classList.toggle('lg:grid-cols-[minmax(0,1fr)_360px]', isChatOpen);
+        meetingLayout.classList.toggle('lg:grid-cols-1', !isChatOpen);
+        toggleChat.classList.toggle('on', isChatOpen);
+        chatHeaderToggle.textContent = isChatOpen ? 'Hide' : 'Show';
+        chatBadge.textContent = isChatOpen ? 'Chat open' : 'Chat hidden';
+      }
+
+      function tickTimer() {
+        if (ss === 0) {
+          if (mm === 0) return;
+          mm -= 1;
+          ss = 59;
+        } else {
+          ss -= 1;
+        }
+        var m = String(mm).padStart(2, '0');
+        var s = String(ss).padStart(2, '0');
+        timer.textContent = m + ':' + s;
+      }
+
+      async function initMedia() {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+          audioTrack = stream.getAudioTracks()[0] || null;
+          videoTrack = stream.getVideoTracks()[0] || null;
+          recorderStream = audioTrack ? new MediaStream([audioTrack.clone()]) : null;
+          userVideo.srcObject = stream;
+          syncMicState();
+          syncCameraState();
+          setDebugSignal('media ready: audio+video');
+        } catch (error) {
+          try {
+            // If camera permission is denied, still allow interview with microphone-only mode.
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            audioTrack = stream.getAudioTracks()[0] || null;
+            videoTrack = null;
+            recorderStream = audioTrack ? new MediaStream([audioTrack.clone()]) : null;
+            isCameraOn = false;
+            userVideo.srcObject = null;
+            setPipelineStatus('Microphone connected. Camera is off; interview will run in audio mode.');
+            setDebugSignal('media ready: audio-only');
+            syncMicState();
+            syncCameraState();
+          } catch (audioOnlyError) {
+            setPipelineStatus('Microphone permission blocked. Enable mic access in browser site settings.');
+            setDebugSignal('media blocked: mic permission denied');
+            isMuted = true;
+            isCameraOn = false;
+            syncMicState();
+            syncCameraState();
+          }
+        }
+      }
+
+      async function startInterviewSession() {
+        setPipelineStatus('Starting interview session...');
+        setTurnState(false);
+
+        var response = await fetch(startApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+          },
+          body: JSON.stringify({
+            target_role: initialRole,
+            target_company: initialCompany,
+            difficulty: initialDifficulty,
+            interview_type: initialType
+          })
+        });
+
+        var data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Failed to initialize interview');
+        }
+
+        activeSessionId = data.session_id;
+        currentQuestion.textContent = data.ai_question;
+        appendTranscript('AI', data.ai_question);
+        if (data.ai_feedback) liveTip.textContent = data.ai_feedback;
+        updateLatencyFromTimings(data.timings);
+        setPipelineStatus('Interview live. Speak naturally in short 6-8 second chunks.');
+        setDebugSignal('session started id=' + activeSessionId);
+
+        await playAiAudio(data.ai_audio_url);
+        setTurnState(true);
+        updatePushToTalkState();
+      }
+
+      function stopRecorder() {
+        if (recordTimer) {
+          clearTimeout(recordTimer);
+          recordTimer = null;
+        }
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+        }
+      }
+
+      function beginPushToTalk() {
+        if (!isUserTurn || isMuted || isProcessing || !activeSessionId || !recorderStream || isPushTalking) {
+          updatePushToTalkState();
+          if (!recorderStream) setDebugSignal('waiting for microphone stream');
+          return;
+        }
+        clearInactivityTimer();
+        isPushTalking = true;
+        updatePushToTalkState();
+        setPipelineStatus('Recording... keep holding while you speak.');
+
+        if (!recorderStream || !activeSessionId || isProcessing) return;
+
+        var chunks = [];
+        var options = {};
+        var preferredMime = getPreferredMimeType();
+        if (preferredMime) options.mimeType = preferredMime;
+
+        try {
+          mediaRecorder = new MediaRecorder(recorderStream, options);
+        } catch (error) {
+          setPipelineStatus('Audio recorder is not available in this browser.');
+          isPushTalking = false;
+          updatePushToTalkState();
+          armInactivityTimer();
+          return;
+        }
+
+        mediaRecorder.ondataavailable = function (event) {
+          if (event.data && event.data.size > 0) chunks.push(event.data);
+        };
+        mediaRecorder.onstop = async function () {
+          isPushTalking = false;
+          updatePushToTalkState();
+          if (!chunks.length) {
+            appendTranscript('AI', 'Why did you not answer? Please hold the button and speak clearly.');
+            currentQuestion.textContent = 'Why did you not answer? Please hold the button and speak clearly.';
+            setPipelineStatus('No audio captured. Hold the button while speaking, then release.');
+            setDebugSignal('ptt released with empty audio chunk');
+            armInactivityTimer();
+            return;
+          }
+          chunksCaptured += 1;
+          setDebugSignal('captured chunk #' + chunksCaptured + ', posting turn');
+          var blob = new Blob(chunks, { type: preferredMime || chunks[0].type || 'audio/webm' });
+          await sendTurn(blob);
+        };
+        mediaRecorder.start();
+        recordTimer = setTimeout(function () {
+          if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+        }, 15000);
+      }
+
+      function endPushToTalk() {
+        if (!isPushTalking) return;
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          setPipelineStatus('Sending your response...');
+          mediaRecorder.stop();
+        }
+      }
+
+      async function sendTurn(audioBlob) {
+        if (!activeSessionId) return;
+        clearInactivityTimer();
+        isProcessing = true;
+        setTurnState(false);
+        setPipelineStatus('Processing (Whisper -> Llama 3 -> Coqui)...');
+
+        var formData = new FormData();
+        formData.append('session_id', String(activeSessionId));
+        formData.append('audio', audioBlob, 'turn.webm');
+
+        try {
+          var response = await fetch(turnApiUrl, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': getCsrfToken()
+            },
+            body: formData
+          });
+          var data = await response.json();
+          if (!response.ok || !data.ok) {
+            throw new Error(data.error || 'Failed to process interview turn');
+          }
+
+          turnsPosted += 1;
+
+          if (data.user_transcript) appendTranscript('You', data.user_transcript);
+          var aiQuestion = data.ai_question;
+          if (!data.user_transcript || !String(data.user_transcript).trim()) {
+            aiQuestion = 'Why did you not answer? I did not catch your response. Please hold the button and speak again.';
+          }
+          appendTranscript('AI', aiQuestion);
+          currentQuestion.textContent = aiQuestion;
+          if (data.ai_feedback) liveTip.textContent = data.ai_feedback;
+          updateLatencyFromTimings(data.timings);
+          setDebugSignal('turn #' + turnsPosted + ' completed');
+
+          if (data.ai_audio_url) {
+            await playAiAudio(data.ai_audio_url);
+          }
+          setPipelineStatus('Your turn. Hold the button to speak, release to send.');
+          setTurnState(true);
+          isProcessing = false;
+          updatePushToTalkState();
+        } catch (error) {
+          isProcessing = false;
+          setPipelineStatus(error.message || 'Pipeline error while processing turn.');
+          setDebugSignal('turn post failed: ' + (error && error.message ? error.message : 'unknown'));
+          setTurnState(true);
+          updatePushToTalkState();
+        }
+      }
+
+      async function playAiAudio(url) {
+        if (!url) return;
+        if (latestAudio) {
+          latestAudio.pause();
+          latestAudio = null;
+        }
+        latestAudio = new Audio(url);
+        latestAudio.playbackRate = 1.0;
+        try {
+          await latestAudio.play();
+          await new Promise(function (resolve) {
+            latestAudio.onended = resolve;
+            latestAudio.onerror = resolve;
+          });
+        } catch (_) {
+          setPipelineStatus('Autoplay blocked. Click page once to allow AI voice playback.');
+        }
+      }
+
+      toggleMic.addEventListener('click', function () {
+        isMuted = !isMuted;
+        syncMicState();
+        if (isMuted) {
+          isPushTalking = false;
+          stopRecorder();
+        } else {
+          armInactivityTimer();
+        }
+        updatePushToTalkState();
+      });
+
+      toggleCam.addEventListener('click', function () {
+        isCameraOn = !isCameraOn;
+        syncCameraState();
+      });
+
+      function toggleChatPanel() {
+        isChatOpen = !isChatOpen;
+        syncChatState();
+      }
+
+      toggleChat.addEventListener('click', toggleChatPanel);
+      chatHeaderToggle.addEventListener('click', toggleChatPanel);
+
+      holdToTalk.addEventListener('mousedown', beginPushToTalk);
+      holdToTalk.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        beginPushToTalk();
+      }, { passive: false });
+      holdToTalk.addEventListener('mouseup', endPushToTalk);
+      holdToTalk.addEventListener('mouseleave', endPushToTalk);
+      window.addEventListener('mouseup', endPushToTalk);
+      holdToTalk.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        endPushToTalk();
+      });
+      holdToTalk.addEventListener('touchcancel', endPushToTalk);
+
+      setTurnState(true);
+      syncMicState();
+      syncCameraState();
+      syncChatState();
+      updatePushToTalkState();
+      setInterval(tickTimer, 1000);
+
+      initMedia().then(function () {
+        return startInterviewSession();
+      }).catch(function (error) {
+        setPipelineStatus(error.message || 'Could not start live interview session.');
+      });
+    })();
+  </script>
 </body>
 </html>

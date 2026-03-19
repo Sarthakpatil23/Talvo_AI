@@ -1,9 +1,16 @@
+import json
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
 from .forms import RegistrationOnboardingForm
-from .models import UserProfile
+from .interview_pipeline import InterviewPipeline, PipelineUnavailableError
+from .models import InterviewSession, InterviewTurn, UserProfile
 
 
 def landing(request):
@@ -72,7 +79,172 @@ def interview_setup(request):
 
 @login_required
 def live_interview(request):
-	return render(request, 'Live-Interview-36d6010513664b89ae2c813c331e830e.html')
+	context = {
+		'prefill_role': request.GET.get('role', ''),
+		'prefill_company': request.GET.get('company', ''),
+		'prefill_difficulty': request.GET.get('difficulty', 'Medium'),
+		'prefill_type': request.GET.get('type', 'Behavioral'),
+	}
+	return render(request, 'Live-Interview-36d6010513664b89ae2c813c331e830e.html', context)
+
+
+def _session_history(session: InterviewSession):
+	history = []
+	for turn in session.turns.all().order_by('turn_index'):
+		history.append({'user': turn.user_transcript, 'ai': turn.ai_response})
+	return history
+
+
+def _build_audio_paths(session: InterviewSession, turn_index: int):
+	base_rel = f"interviews/session_{session.id}"
+	user_rel = f"{base_rel}/user_turn_{turn_index}.webm"
+	ai_rel = f"{base_rel}/ai_turn_{turn_index}.wav"
+	return user_rel, ai_rel
+
+
+def _build_media_url(request, rel_path: str):
+	clean = rel_path.replace('\\', '/')
+	base = settings.MEDIA_URL
+	if not base.endswith('/'):
+		base += '/'
+	return request.build_absolute_uri(f"{base}{clean}")
+
+
+@login_required
+@require_POST
+def live_interview_start_api(request):
+	try:
+		payload = json.loads(request.body.decode('utf-8') or '{}')
+	except json.JSONDecodeError:
+		return JsonResponse({'ok': False, 'error': 'Invalid JSON payload'}, status=400)
+
+	target_role = (payload.get('target_role') or '').strip() or 'Product Manager'
+	target_company = (payload.get('target_company') or '').strip() or 'Google'
+	difficulty = (payload.get('difficulty') or '').strip() or 'Medium'
+	interview_type = (payload.get('interview_type') or '').strip() or 'Behavioral'
+
+	session = InterviewSession.objects.create(
+		user=request.user,
+		target_role=target_role,
+		target_company=target_company,
+		difficulty=difficulty,
+		interview_type=interview_type,
+	)
+
+	_, ai_rel = _build_audio_paths(session, 1)
+	pipeline = InterviewPipeline.instance()
+
+	try:
+		result = pipeline.run_turn(
+			target_role=target_role,
+			target_company=target_company,
+			difficulty=difficulty,
+			interview_type=interview_type,
+			history=[],
+			user_audio_path='',
+			ai_audio_relpath=ai_rel,
+			is_first_turn=True,
+		)
+	except PipelineUnavailableError as exc:
+		session.status = InterviewSession.STATUS_ABORTED
+		session.save(update_fields=['status', 'updated_at'])
+		return JsonResponse({'ok': False, 'error': str(exc)}, status=503)
+	except Exception as exc:
+		session.status = InterviewSession.STATUS_ABORTED
+		session.save(update_fields=['status', 'updated_at'])
+		return JsonResponse({'ok': False, 'error': f'Failed to start interview: {exc}'}, status=500)
+
+	turn = InterviewTurn.objects.create(
+		session=session,
+		turn_index=1,
+		user_transcript='',
+		ai_response=result.ai_question,
+		ai_feedback=result.ai_feedback,
+		ai_audio_path=result.ai_audio_relpath,
+		processing_ms=result.processing_ms,
+	)
+
+	return JsonResponse(
+		{
+			'ok': True,
+			'session_id': session.id,
+			'turn_id': turn.id,
+			'turn_index': turn.turn_index,
+			'ai_question': turn.ai_response,
+			'ai_feedback': turn.ai_feedback,
+			'ai_audio_url': _build_media_url(request, turn.ai_audio_path),
+			'timings': result.timings,
+		}
+	)
+
+
+@login_required
+@require_POST
+def live_interview_turn_api(request):
+	session_id = request.POST.get('session_id')
+	if not session_id:
+		return JsonResponse({'ok': False, 'error': 'session_id is required'}, status=400)
+
+	try:
+		session = InterviewSession.objects.get(id=session_id, user=request.user)
+	except InterviewSession.DoesNotExist:
+		return JsonResponse({'ok': False, 'error': 'Interview session not found'}, status=404)
+
+	upload = request.FILES.get('audio')
+	if upload is None:
+		return JsonResponse({'ok': False, 'error': 'audio file is required'}, status=400)
+
+	next_turn_index = (session.turns.order_by('-turn_index').values_list('turn_index', flat=True).first() or 0) + 1
+	user_rel, ai_rel = _build_audio_paths(session, next_turn_index)
+	user_audio_abs = Path(settings.MEDIA_ROOT) / user_rel
+	user_audio_abs.parent.mkdir(parents=True, exist_ok=True)
+	with user_audio_abs.open('wb+') as destination:
+		for chunk in upload.chunks():
+			destination.write(chunk)
+
+	history = _session_history(session)
+	pipeline = InterviewPipeline.instance()
+
+	try:
+		result = pipeline.run_turn(
+			target_role=session.target_role,
+			target_company=session.target_company,
+			difficulty=session.difficulty,
+			interview_type=session.interview_type,
+			history=history,
+			user_audio_path=str(user_audio_abs),
+			ai_audio_relpath=ai_rel,
+			is_first_turn=False,
+		)
+	except PipelineUnavailableError as exc:
+		return JsonResponse({'ok': False, 'error': str(exc)}, status=503)
+	except Exception as exc:
+		return JsonResponse({'ok': False, 'error': f'Failed to process turn: {exc}'}, status=500)
+
+	turn = InterviewTurn.objects.create(
+		session=session,
+		turn_index=next_turn_index,
+		user_transcript=result.user_transcript,
+		ai_response=result.ai_question,
+		ai_feedback=result.ai_feedback,
+		user_audio_path=user_rel,
+		ai_audio_path=result.ai_audio_relpath,
+		processing_ms=result.processing_ms,
+	)
+
+	return JsonResponse(
+		{
+			'ok': True,
+			'session_id': session.id,
+			'turn_id': turn.id,
+			'turn_index': turn.turn_index,
+			'user_transcript': turn.user_transcript,
+			'ai_question': turn.ai_response,
+			'ai_feedback': turn.ai_feedback,
+			'ai_audio_url': _build_media_url(request, turn.ai_audio_path),
+			'timings': result.timings,
+		}
+	)
 
 
 @login_required
