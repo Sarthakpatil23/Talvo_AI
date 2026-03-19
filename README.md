@@ -1,114 +1,157 @@
-# Talvo_AI
+<p align="center">
+  <img src="assets/readme-hero.svg" alt="Talvo AI Hero" width="100%" />
+</p>
 
-## Google Authentication Setup
+<p align="center">
+  <img src="assets/talvo-logo.svg" alt="Talvo Website Logo" width="56" />
+</p>
 
-This project now uses `django-allauth` for Google sign-in and first-time registration onboarding.
+<h1 align="center">Talvo AI</h1>
 
-### 1. Set environment variables
+<p align="center">
+  <strong>Interview simulation that feels real, responds in voice, and coaches with precision.</strong>
+</p>
 
-Use the values from `.env.example`:
+<p align="center">
+  <img alt="Django" src="https://img.shields.io/badge/Django-6-0f172a?style=flat-square" />
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.13%20%2B%203.11-0f766e?style=flat-square" />
+  <img alt="STT" src="https://img.shields.io/badge/STT-faster--whisper-1d4ed8?style=flat-square" />
+  <img alt="LLM" src="https://img.shields.io/badge/LLM-Groq%20Llama-6d28d9?style=flat-square" />
+  <img alt="TTS" src="https://img.shields.io/badge/TTS-Coqui-f97316?style=flat-square" />
+</p>
+
+---
+
+## The Vibe
+
+Talvo is built for candidates who want high-quality repetition under realistic interview pressure.
+
+- Dynamic follow-up questions, not generic scripts
+- Push-to-talk voice loop designed for natural speaking
+- Replay-ready stored interview sessions and turns
+- Instant coaching nudges you can use in the next answer
+
+## Live Flow
+
+1. AI asks the interview question.
+2. User holds the dock button to speak and releases to submit.
+3. Local Whisper transcribes voice.
+4. Groq Llama generates next interviewer response.
+5. Local Coqui synthesizes AI voice playback.
+6. Loop continues until the interview ends.
+
+If Talvo cannot detect a response, it prompts the user to answer again.
+
+## System Design
+
+```text
+Browser (push-to-talk)
+   |
+   v
+Django App (Python 3.13)
+  - auth, APIs, session persistence
+  - interview orchestration + Groq prompt logic
+   |
+   v
+Speech Worker (Python 3.11)
+  - /stt -> faster-whisper
+  - /tts -> Coqui TTS
+```
+
+## Quick Start
+
+### 1. Install Django-side dependencies
+
+```powershell
+Set-Location c:/TALVO/talvo
+c:/TALVO/.venv/Scripts/python.exe -m pip install -r requirements.txt
+```
+
+### 2. Install speech worker dependencies
+
+```powershell
+Set-Location c:/TALVO/talvo
+c:/TALVO/voiceenv311/Scripts/python.exe -m pip install -r speech_worker/requirements.txt
+```
+
+### 3. Apply migrations
+
+```powershell
+Set-Location c:/TALVO/talvo
+c:/TALVO/.venv/Scripts/python.exe manage.py migrate
+```
+
+### 4. Start speech worker (Terminal A)
+
+```powershell
+Set-Location c:/TALVO/talvo
+powershell -ExecutionPolicy Bypass -File scripts/start_speech_worker.ps1
+```
+
+### 5. Start Django server (Terminal B)
+
+```powershell
+Set-Location c:/TALVO/talvo
+c:/TALVO/.venv/Scripts/python.exe manage.py runserver 127.0.0.1:8000
+```
+
+### 6. Validate health
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8001/health | Select-Object -ExpandProperty Content
+```
+
+## Environment
+
+Use `.env` from `.env.example`.
+
+Required:
 
 - `GOOGLE_OAUTH_CLIENT_ID`
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `GROQ_API_KEY`
 - `GROQ_MODEL_NAME`
-- `WHISPER_MODEL_SIZE`
-- `COQUI_TTS_MODEL`
+- `SPEECH_WORKER_URL` (default `http://127.0.0.1:8001`)
 
-On Windows PowerShell:
+Common tuning:
 
-```powershell
-$env:GOOGLE_OAUTH_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
-$env:GOOGLE_OAUTH_CLIENT_SECRET="your-google-client-secret"
-$env:GROQ_API_KEY="your-groq-api-key"
-$env:GROQ_MODEL_NAME="llama-3.1-8b-instant"
-$env:WHISPER_MODEL_SIZE="base"
-$env:COQUI_TTS_MODEL="tts_models/en/ljspeech/vits"
-```
+- `WHISPER_MODEL_SIZE=base`
+- `COQUI_TTS_MODEL=tts_models/en/ljspeech/vits`
+- `TTS_USE_GPU=0` (recommended on most Windows setups)
 
-The project also auto-loads a local `.env` file from the repository root, so you can keep these values in `.env` instead of exporting every terminal session.
+## OAuth Redirects
 
-### 2. Live Interview Voice Pipeline
+Configure both in Google Cloud Console:
 
-Live interview now runs this sequence per turn:
+- `http://127.0.0.1:8000/accounts/google/login/callback/`
+- `http://localhost:8000/accounts/google/login/callback/`
 
-1. Browser records ~7 second audio chunk.
-2. Backend transcribes with local `faster-whisper`.
-3. Transcript + history go to Llama 3 via Groq.
-4. AI response is synthesized with local Coqui TTS.
-5. Frontend plays AI audio and continues the loop.
+## Core Routes
 
-Install dependencies:
+- `GET /live-interview/`
+- `POST /api/live-interview/start/`
+- `POST /api/live-interview/turn/`
+- `GET /auth/login/`
 
-```powershell
-c:/TALVO/.venv/Scripts/python.exe -m pip install -r requirements.txt
-```
+## Troubleshooting
 
-Create DB tables for session/turn storage:
+### Connection refused on STT (WinError 10061)
 
-```powershell
-c:/TALVO/.venv/Scripts/python.exe manage.py migrate
-```
+1. Ensure speech worker starts before Django interview turn requests.
+2. Confirm `/health` responds on port `8001`.
+3. Confirm `SPEECH_WORKER_URL` in `.env` points to the same host and port.
 
-Notes:
+### Voice not captured
 
-- Keep `WHISPER_MODEL_SIZE=base` or `small` for laptop performance.
-- Ensure FFmpeg is available on PATH (required by Whisper for webm/audio decoding).
-- Generated interview audio files are stored under `media/interviews/`.
+- Keep the Hold to Speak button pressed while speaking.
+- Release only after finishing the sentence.
+- Confirm browser mic permission and OS mic level are enabled.
 
-### 2.1 Local Speech Worker (Whisper + Coqui)
+### Coqui GPU issues
 
-Run speech models in Python 3.11 sidecar process and keep Django in its existing environment.
+- Keep `TTS_USE_GPU=0` first.
+- Enable GPU only after CUDA/cuDNN compatibility is verified.
 
-Install speech worker dependencies:
+## License
 
-```powershell
-c:/TALVO/voiceenv311/Scripts/python.exe -m pip install -r speech_worker/requirements.txt
-```
-
-Start speech worker:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/start_speech_worker.ps1
-```
-
-Health check:
-
-```powershell
-Invoke-WebRequest http://127.0.0.1:8001/health | Select-Object -ExpandProperty Content
-```
-
-Then run Django as usual in your app environment. The app will call `SPEECH_WORKER_URL` for STT/TTS.
-
-Optional tuning:
-
-- `TTS_USE_GPU=0` is safest on Windows if CUDA/cuDNN mismatch appears.
-- Set `TTS_USE_GPU=1` only after confirming your CUDA runtime supports Coqui model inference.
-
-### 3. Google Cloud Console OAuth redirect URI
-
-Configure this redirect URI in your Google OAuth app:
-
-`http://127.0.0.1:8000/accounts/google/login/callback/`
-
-If you use `localhost`, also add:
-
-`http://localhost:8000/accounts/google/login/callback/`
-
-### 4. Run the app
-
-```powershell
-c:/TALVO/.venv/Scripts/python.exe manage.py runserver
-```
-
-### 5. Auth flow
-
-1. Go to `/auth/login/` and sign in with Google.
-2. First-time users are redirected to `/auth/registration/`.
-3. Onboarding requires:
-	- Target Role
-	- Experience Level
-	- Target Company
-4. Optional onboarding fields:
-	- Interview Focus
-	- Confidence Level
+Licensed under the terms in [LICENSE](LICENSE).

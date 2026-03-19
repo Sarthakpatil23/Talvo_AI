@@ -1,0 +1,61 @@
+<svg width="1400" height="520" viewBox="0 0 1400 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="90" y1="40" x2="1320" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="0.48" stop-color="#1E1B4B"/>
+      <stop offset="1" stop-color="#0E7490"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="180" y1="420" x2="1240" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="0.52" stop-color="#818CF8"/>
+      <stop offset="1" stop-color="#C084FC"/>
+    </linearGradient>
+    <filter id="blur" x="-100" y="-100" width="1600" height="800" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="48"/>
+    </filter>
+  </defs>
+
+  <rect width="1400" height="520" rx="30" fill="url(#bg)"/>
+
+  <g opacity="0.45" filter="url(#blur)">
+    <circle cx="250" cy="130" r="90" fill="#22D3EE"/>
+    <circle cx="640" cy="420" r="130" fill="#4F46E5"/>
+    <circle cx="1150" cy="160" r="110" fill="#A855F7"/>
+  </g>
+
+  <g opacity="0.18" stroke="url(#accent)" stroke-width="2">
+    <path d="M80 430C300 280 500 470 740 320C940 195 1110 300 1320 120"/>
+    <path d="M80 470C280 330 520 510 760 350C980 210 1115 330 1320 180"/>
+    <path d="M80 390C320 245 505 425 735 280C920 165 1085 250 1320 90"/>
+  </g>
+
+  <g transform="translate(130 150)">
+    <svg width="88" height="88" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="talvoAccentHero" x1="16" y1="52" x2="50" y2="14" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#4F46E5"/>
+          <stop offset="1" stop-color="#7C3AED"/>
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 18C27 12 37 12 44 18C51 24 52 34 46 41C41 47 33 49 26.5 46.5" stroke="#E2E8F0" stroke-width="4.5"/>
+        <path d="M44 46C37 52 27 52 20 46C13 40 12 30 18 23C23 17 31 15 37.5 17.5" stroke="url(#talvoAccentHero)" stroke-width="4.5"/>
+        <path d="M28 28V36" stroke="#E2E8F0" stroke-width="2.6" opacity="0.75"/>
+        <path d="M32 25V39" stroke="#E2E8F0" stroke-width="2.6" opacity="0.95"/>
+        <path d="M36 29V35" stroke="#E2E8F0" stroke-width="2.6" opacity="0.75"/>
+      </g>
+    </svg>
+  </g>
+
+  <text x="235" y="214" fill="#E2E8F0" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="64" font-weight="800" letter-spacing="0.5">TALVO AI</text>
+  <text x="235" y="264" fill="#C7D2FE" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="26" font-weight="600">Voice-First Interview Intelligence</text>
+
+  <text x="235" y="323" fill="#CBD5E1" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="22" font-weight="500">Local STT + LLM Reasoning + Local TTS</text>
+  <text x="235" y="360" fill="#94A3B8" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="19" font-weight="400">Practice like a real interview. Learn like a high-performance athlete.</text>
+
+  <g transform="translate(980 380)">
+    <rect x="0" y="0" width="280" height="72" rx="18" fill="rgba(255,255,255,0.08)" stroke="rgba(148,163,184,0.5)"/>
+    <text x="20" y="30" fill="#E2E8F0" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="17" font-weight="700">Live Pipeline</text>
+    <text x="20" y="52" fill="#93C5FD" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="14" font-weight="500">Push-to-talk • Whisper • Groq • Coqui</text>
+  </g>
+</svg>
