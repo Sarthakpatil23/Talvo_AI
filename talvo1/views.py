@@ -79,11 +79,15 @@ def interview_setup(request):
 
 @login_required
 def live_interview(request):
+	prefill_role, prefill_type = _enforce_software_focus(
+		request.GET.get('role', ''),
+		request.GET.get('type', ''),
+	)
 	context = {
-		'prefill_role': request.GET.get('role', ''),
+		'prefill_role': prefill_role,
 		'prefill_company': request.GET.get('company', ''),
 		'prefill_difficulty': request.GET.get('difficulty', 'Medium'),
-		'prefill_type': request.GET.get('type', 'Behavioral'),
+		'prefill_type': prefill_type,
 	}
 	return render(request, 'Live-Interview-36d6010513664b89ae2c813c331e830e.html', context)
 
@@ -110,6 +114,34 @@ def _build_media_url(request, rel_path: str):
 	return request.build_absolute_uri(f"{base}{clean}")
 
 
+def _enforce_software_focus(role: str, interview_type: str):
+	enabled = str(getattr(settings, 'INTERVIEW_SOFTWARE_ONLY', '1')).strip().lower() in {'1', 'true', 'yes', 'on'}
+	if not enabled:
+		return (role or '').strip() or 'Software Engineer', (interview_type or '').strip() or 'Technical'
+
+	allowed_raw = str(getattr(settings, 'INTERVIEW_SOFTWARE_ALLOWED_TYPES', 'technical,coding,system design,debugging,behavioral'))
+	allowed = [x.strip().lower() for x in allowed_raw.split(',') if x.strip()]
+	pretty = {
+		'technical': 'Technical',
+		'coding': 'Coding',
+		'system design': 'System Design',
+		'debugging': 'Debugging',
+		'behavioral': 'Behavioral',
+	}
+
+	requested = (interview_type or '').strip().lower()
+	chosen = 'technical'
+	if requested in allowed:
+		chosen = requested
+	else:
+		for value in allowed:
+			if requested and (requested in value or value in requested):
+				chosen = value
+				break
+
+	return 'Software Engineer', pretty.get(chosen, 'Technical')
+
+
 @login_required
 @require_POST
 def live_interview_start_api(request):
@@ -118,10 +150,11 @@ def live_interview_start_api(request):
 	except json.JSONDecodeError:
 		return JsonResponse({'ok': False, 'error': 'Invalid JSON payload'}, status=400)
 
-	target_role = (payload.get('target_role') or '').strip() or 'Product Manager'
+	target_role = (payload.get('target_role') or '').strip() or 'Software Engineer'
 	target_company = (payload.get('target_company') or '').strip() or 'Google'
 	difficulty = (payload.get('difficulty') or '').strip() or 'Medium'
-	interview_type = (payload.get('interview_type') or '').strip() or 'Behavioral'
+	interview_type = (payload.get('interview_type') or '').strip() or 'Technical'
+	target_role, interview_type = _enforce_software_focus(target_role, interview_type)
 
 	session = InterviewSession.objects.create(
 		user=request.user,
@@ -174,6 +207,7 @@ def live_interview_start_api(request):
 			'ai_feedback': turn.ai_feedback,
 			'ai_audio_url': _build_media_url(request, turn.ai_audio_path),
 			'timings': result.timings,
+			'debug_retrieval': result.rag_context,
 		}
 	)
 
@@ -243,6 +277,7 @@ def live_interview_turn_api(request):
 			'ai_feedback': turn.ai_feedback,
 			'ai_audio_url': _build_media_url(request, turn.ai_audio_path),
 			'timings': result.timings,
+			'debug_retrieval': result.rag_context,
 		}
 	)
 

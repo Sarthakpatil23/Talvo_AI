@@ -1,6 +1,5 @@
 import json
 import importlib
-import os
 import threading
 import time
 from dataclasses import dataclass
@@ -9,6 +8,9 @@ from typing import Dict, List
 
 import requests
 from django.conf import settings
+
+from .prompt_engineering import InterviewPromptBuilder
+from .rag_retriever import InterviewRAGRetriever
 
 
 class PipelineUnavailableError(RuntimeError):
@@ -23,6 +25,7 @@ class PipelineOutput:
     ai_audio_relpath: str
     processing_ms: int
     timings: Dict[str, int]
+    rag_context: List[Dict[str, str]]
 
 
 class InterviewPipeline:
@@ -32,6 +35,8 @@ class InterviewPipeline:
     def __init__(self) -> None:
         self._models_lock = threading.Lock()
         self._groq = None
+        self._prompt_builder = InterviewPromptBuilder()
+        self._retriever = InterviewRAGRetriever()
 
     @classmethod
     def instance(cls) -> "InterviewPipeline":
@@ -58,6 +63,22 @@ class InterviewPipeline:
         return Groq(api_key=api_key)
 
     @staticmethod
+    def _software_only_enabled() -> bool:
+        return str(getattr(settings, 'INTERVIEW_SOFTWARE_ONLY', '1')).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+    @staticmethod
+    def _normalize_software_type(interview_type: str) -> str:
+        allowed_raw = str(getattr(settings, 'INTERVIEW_SOFTWARE_ALLOWED_TYPES', 'technical,coding,system design,debugging,behavioral'))
+        allowed = [x.strip().lower() for x in allowed_raw.split(',') if x.strip()]
+        normalized = (interview_type or '').strip().lower()
+        if normalized in allowed:
+            return normalized.title()
+        for value in allowed:
+            if normalized and (normalized in value or value in normalized):
+                return value.title()
+        return 'Technical'
+
+    @staticmethod
     def _speech_worker_url() -> str:
         return (getattr(settings, 'SPEECH_WORKER_URL', '') or '').rstrip('/')
 
@@ -65,7 +86,14 @@ class InterviewPipeline:
     def _speech_worker_timeout() -> int:
         return int(getattr(settings, 'SPEECH_WORKER_TIMEOUT_SECONDS', 120))
 
-    def transcribe(self, audio_path: str) -> str:
+    @staticmethod
+    def _stt_min_confidence() -> float:
+        try:
+            return float(getattr(settings, 'STT_MIN_CONFIDENCE', 0.45))
+        except Exception:
+            return 0.45
+
+    def transcribe(self, audio_path: str) -> Dict[str, object]:
         worker_url = self._speech_worker_url()
         if not worker_url:
             raise PipelineUnavailableError('SPEECH_WORKER_URL is not configured')
@@ -81,7 +109,20 @@ class InterviewPipeline:
                     )
                 response.raise_for_status()
                 payload = response.json()
-                return (payload.get('transcript') or '').strip()
+                transcript = (payload.get('transcript') or '').strip() if isinstance(payload, dict) else ''
+                confidence = 0.0
+                if isinstance(payload, dict):
+                    try:
+                        confidence = float(payload.get('confidence', 0.0) or 0.0)
+                    except Exception:
+                        confidence = 0.0
+
+                return {
+                    'transcript': transcript,
+                    'confidence': confidence,
+                    'decode_mode': (payload.get('decode_mode') or '') if isinstance(payload, dict) else '',
+                    'language': (payload.get('language') or '') if isinstance(payload, dict) else '',
+                }
             except Exception as exc:
                 last_exc = exc
                 if attempt < 2:
@@ -104,37 +145,27 @@ class InterviewPipeline:
     ) -> Dict[str, str]:
         self._ensure_models()
         model_name = getattr(settings, 'GROQ_MODEL_NAME', 'llama-3.1-8b-instant')
+        rag_top_k = int(getattr(settings, 'INTERVIEW_RAG_TOP_K', 4))
 
-        system_prompt = (
-            'You are an expert technical interviewer. Keep the interview natural, realistic, and concise. '
-            'Use context from prior turns and ask one strong next question. '
-            'Return strict JSON with keys: ai_question, ai_feedback. '
-            'ai_feedback should be one short coaching note for the candidate answer, or empty on first turn.'
+        retrieved = self._retriever.retrieve(
+            company=target_company,
+            role=target_role,
+            difficulty=difficulty,
+            interview_type=interview_type,
+            user_transcript=user_transcript,
+            history=history,
+            top_k=rag_top_k,
         )
 
-        history_text = []
-        for item in history[-10:]:
-            history_text.append(f"Candidate: {item.get('user', '').strip()}")
-            history_text.append(f"Interviewer: {item.get('ai', '').strip()}")
-
-        user_block = user_transcript.strip() or '[NO USER TRANSCRIPT]'
-        flow_mode = 'first_question' if is_first_turn else 'follow_up'
-
-        user_prompt = (
-            f"Interview Context:\n"
-            f"- company: {target_company}\n"
-            f"- role: {target_role}\n"
-            f"- difficulty: {difficulty}\n"
-            f"- interview_type: {interview_type}\n"
-            f"- mode: {flow_mode}\n\n"
-            f"Conversation History:\n{os.linesep.join(history_text) if history_text else '[NO HISTORY]'}\n\n"
-            f"Latest candidate answer:\n{user_block}\n\n"
-            "Rules:\n"
-            "1) Ask one interviewer question only (no multi-question lists).\n"
-            "2) If mode is follow_up, the question must connect to the candidate answer.\n"
-            "3) Keep question under 35 words.\n"
-            "4) ai_feedback must be under 25 words and actionable.\n"
-            "5) Output JSON only."
+        prompt_bundle = self._prompt_builder.build(
+            target_company=target_company,
+            target_role=target_role,
+            difficulty=difficulty,
+            interview_type=interview_type,
+            history=history,
+            user_transcript=user_transcript,
+            is_first_turn=is_first_turn,
+            retrieved_items=retrieved,
         )
 
         result = self._groq.chat.completions.create(
@@ -142,8 +173,8 @@ class InterviewPipeline:
             temperature=0.5,
             max_tokens=220,
             messages=[
-                {'role': 'system', 'content': system_prompt},
-                {'role': 'user', 'content': user_prompt},
+                {'role': 'system', 'content': prompt_bundle.system_prompt},
+                {'role': 'user', 'content': prompt_bundle.user_prompt},
             ],
         )
 
@@ -154,7 +185,26 @@ class InterviewPipeline:
         ai_feedback = parsed.get('ai_feedback', '').strip()
         if not ai_question:
             ai_question = 'Can you walk me through your reasoning and the measurable outcome?'
-        return {'ai_question': ai_question, 'ai_feedback': ai_feedback}
+
+        debug_items: List[Dict[str, str]] = []
+        for item in retrieved[:4]:
+            debug_items.append(
+                {
+                    'question': str(item.get('question', '')),
+                    'rationale': str(item.get('rationale', '')),
+                    'company': str(item.get('company', '')),
+                    'role': str(item.get('role', '')),
+                    'difficulty': str(item.get('difficulty', '')),
+                    'interview_type': str(item.get('interview_type', '')),
+                    'score': str(item.get('score', '')),
+                }
+            )
+
+        return {
+            'ai_question': ai_question,
+            'ai_feedback': ai_feedback,
+            'retrieved_examples': debug_items,
+        }
 
     @staticmethod
     def _parse_llm_json(raw_text: str) -> Dict[str, str]:
@@ -212,10 +262,19 @@ class InterviewPipeline:
         ai_audio_relpath: str,
         is_first_turn: bool,
     ) -> PipelineOutput:
+        if self._software_only_enabled():
+            target_role = 'Software Engineer'
+            interview_type = self._normalize_software_type(interview_type)
+
         start = time.perf_counter()
 
         whisper_start = time.perf_counter()
-        user_transcript = '' if is_first_turn else self.transcribe(user_audio_path)
+        stt_result = {'transcript': '', 'confidence': 1.0, 'decode_mode': '', 'language': ''}
+        user_transcript = ''
+        if not is_first_turn:
+            stt_result = self.transcribe(user_audio_path)
+            user_transcript = str(stt_result.get('transcript', '') or '').strip()
+        stt_confidence = float(stt_result.get('confidence', 0.0) or 0.0)
         whisper_ms = int((time.perf_counter() - whisper_start) * 1000)
 
         llm_start = time.perf_counter()
@@ -223,6 +282,17 @@ class InterviewPipeline:
             llm = {
                 'ai_question': 'Why did you not answer? I could not catch your response. Please hold the speak button and answer again.',
                 'ai_feedback': 'Speak a bit louder and keep holding the button until you finish.',
+                'retrieved_examples': [],
+            }
+        elif not is_first_turn and user_transcript and stt_confidence < self._stt_min_confidence():
+            llm = {
+                'ai_question': (
+                    'I may have misheard part of your answer. Please repeat that response clearly in one or two short sentences.'
+                ),
+                'ai_feedback': (
+                    f"Low transcript confidence ({stt_confidence:.2f}). Keep mic close, reduce background noise, and hold the speak button until finished."
+                ),
+                'retrieved_examples': [],
             }
         else:
             llm = self.generate_interviewer_response(
@@ -253,5 +323,7 @@ class InterviewPipeline:
                 'llm_ms': llm_ms,
                 'tts_ms': tts_ms,
                 'total_ms': total_ms,
+                'stt_confidence': round(stt_confidence, 3),
             },
+            rag_context=llm.get('retrieved_examples', []),
         )

@@ -1,0 +1,262 @@
+[ 
+  {
+    "company": "amazon",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "technical",
+    "question": "Walk me through a service you built and how you handled scale, latency, and reliability tradeoffs.",
+    "followups": [
+      "What bottleneck surfaced first at scale?",
+      "How did you validate your fix in production?"
+    ],
+    "competencies": ["system design", "reliability", "ownership"],
+    "tags": ["scalability", "latency", "architecture"]
+  },
+  {
+    "company": "amazon",
+    "role": "software engineer",
+    "difficulty": "hard",
+    "interview_type": "system design",
+    "question": "Design an order-processing pipeline that stays available during dependency outages and traffic spikes.",
+    "followups": [
+      "How do you handle idempotency and retries?",
+      "What SLOs and alerts would you define?"
+    ],
+    "competencies": ["distributed systems", "resilience", "tradeoffs"],
+    "tags": ["queues", "idempotency", "slo"]
+  },
+  {
+    "company": "amazon",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "debugging",
+    "question": "Describe a production incident you debugged where the initial hypothesis was wrong.",
+    "followups": [
+      "What signal changed your hypothesis?",
+      "What prevention did you add after the fix?"
+    ],
+    "competencies": ["debugging", "root cause analysis", "ownership"],
+    "tags": ["incident response", "observability", "postmortem"]
+  },
+  {
+    "company": "google",
+    "role": "software engineer",
+    "difficulty": "hard",
+    "interview_type": "coding",
+    "question": "Given a stream of events, design an algorithm to detect duplicate sessions with bounded memory.",
+    "followups": [
+      "What is the time and space complexity?",
+      "How would you test edge cases?"
+    ],
+    "competencies": ["algorithms", "complexity analysis", "clean code"],
+    "tags": ["hashing", "stream processing", "complexity"]
+  },
+  {
+    "company": "google",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "system design",
+    "question": "Design a metrics ingestion system for high-cardinality events with near real-time dashboards.",
+    "followups": [
+      "How do you control cost as cardinality grows?",
+      "How do you enforce data quality?"
+    ],
+    "competencies": ["scalable design", "data modeling", "operational thinking"],
+    "tags": ["timeseries", "cardinality", "pipelines"]
+  },
+  {
+    "company": "google",
+    "role": "software engineer",
+    "difficulty": "hard",
+    "interview_type": "system design",
+    "question": "Design a globally distributed collaboration backend with low-latency edits and conflict resolution.",
+    "followups": [
+      "How do you balance consistency and latency?",
+      "How would you recover from region-wide failures?"
+    ],
+    "competencies": ["distributed systems", "consistency tradeoffs", "resilience"],
+    "tags": ["conflict resolution", "multi-region", "availability"]
+  },
+  {
+    "company": "google",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "behavioral",
+    "question": "Tell me about a time you changed your implementation approach after peer review feedback.",
+    "followups": [
+      "What technical signal convinced you?",
+      "How did the final design improve?"
+    ],
+    "competencies": ["collaboration", "engineering judgment", "growth mindset"],
+    "tags": ["code review", "design iteration", "collaboration"]
+  },
+  {
+    "company": "microsoft",
+    "role": "software engineer",
+    "difficulty": "easy",
+    "interview_type": "technical",
+    "question": "Tell me about a bug you investigated end-to-end and what your debugging process looked like.",
+    "followups": [
+      "How did you narrow down root cause?",
+      "What guardrail prevented recurrence?"
+    ],
+    "competencies": ["debugging", "ownership", "quality"],
+    "tags": ["incident", "debugging", "reliability"]
+  },
+  {
+    "company": "microsoft",
+    "role": "software engineer",
+    "difficulty": "hard",
+    "interview_type": "system design",
+    "question": "Design a multi-tenant notification platform with tenant isolation and per-tenant rate limits.",
+    "followups": [
+      "How do you enforce fairness between tenants?",
+      "How do you debug noisy-neighbor issues?"
+    ],
+    "competencies": ["architecture", "multi-tenancy", "operational excellence"],
+    "tags": ["rate limiting", "isolation", "distributed systems"]
+  },
+  {
+    "company": "microsoft",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "coding",
+    "question": "Implement a cache with TTL and eviction, then explain correctness under concurrent access.",
+    "followups": [
+      "How would you test races and stale reads?",
+      "Which data structures did you choose and why?"
+    ],
+    "competencies": ["data structures", "concurrency", "testing"],
+    "tags": ["cache", "ttl", "thread safety"]
+  },
+  {
+    "company": "microsoft",
+    "role": "software engineer",
+    "difficulty": "hard",
+    "interview_type": "debugging",
+    "question": "Explain how you would diagnose a production memory regression that appears only after a new deployment.",
+    "followups": [
+      "What telemetry and profiling steps come first?",
+      "How do you mitigate impact before full root cause is known?"
+    ],
+    "competencies": ["debugging", "incident management", "operational rigor"],
+    "tags": ["memory regression", "deployment", "profiling"]
+  },
+  {
+    "company": "meta",
+    "role": "software engineer",
+    "difficulty": "hard",
+    "interview_type": "technical",
+    "question": "Walk me through a performance bottleneck you solved in a distributed system and how you verified impact.",
+    "followups": [
+      "Which metric moved most after your change?",
+      "What fallback plan did you prepare?"
+    ],
+    "competencies": ["performance", "systems thinking", "execution"],
+    "tags": ["distributed systems", "performance", "scalability"]
+  },
+  {
+    "company": "meta",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "debugging",
+    "question": "How did you diagnose and fix a memory leak that only appeared under peak production load?",
+    "followups": [
+      "What tooling was most useful?",
+      "How did you prove the leak was resolved?"
+    ],
+    "competencies": ["debugging", "profiling", "validation"],
+    "tags": ["memory", "profiling", "load testing"]
+  },
+  {
+    "company": "meta",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "behavioral",
+    "question": "Tell me about a technical disagreement where you aligned quickly without sacrificing quality.",
+    "followups": [
+      "Which tradeoff framework did you use?",
+      "How did you preserve team velocity afterward?"
+    ],
+    "competencies": ["communication", "conflict resolution", "execution"],
+    "tags": ["tradeoffs", "teamwork", "decision making"]
+  },
+  {
+    "company": "generic",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "technical",
+    "question": "Explain a migration you led from a monolith module to a service and the risks you managed.",
+    "followups": [
+      "How did you sequence rollout safely?",
+      "What did you monitor during migration?"
+    ],
+    "competencies": ["architecture", "risk management", "execution"],
+    "tags": ["migration", "rollout", "observability"]
+  },
+  {
+    "company": "generic",
+    "role": "software engineer",
+    "difficulty": "hard",
+    "interview_type": "system design",
+    "question": "Design a URL shortener that supports analytics, abuse prevention, and high read throughput.",
+    "followups": [
+      "How do you partition storage and indexing?",
+      "How do you handle hot keys and abuse?"
+    ],
+    "competencies": ["system design", "scalability", "security thinking"],
+    "tags": ["url shortener", "analytics", "abuse prevention"]
+  },
+  {
+    "company": "generic",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "coding",
+    "question": "Write a function to merge overlapping intervals and explain how you validate correctness.",
+    "followups": [
+      "What edge cases are easiest to miss?",
+      "Can you reduce memory usage?"
+    ],
+    "competencies": ["algorithms", "correctness", "testing discipline"],
+    "tags": ["intervals", "sorting", "edge cases"]
+  },
+  {
+    "company": "generic",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "debugging",
+    "question": "Describe how you would debug intermittent timeout spikes between two internal services.",
+    "followups": [
+      "Which telemetry would you inspect first?",
+      "How would you isolate client versus server causes?"
+    ],
+    "competencies": ["network debugging", "observability", "structured troubleshooting"],
+    "tags": ["timeouts", "latency", "distributed tracing"]
+  },
+  {
+    "company": "generic",
+    "role": "software engineer",
+    "difficulty": "medium",
+    "interview_type": "behavioral",
+    "question": "Tell me about a time you received critical code-quality feedback and changed your engineering habits.",
+    "followups": [
+      "What concrete habit changed?",
+      "How did you measure improvement?"
+    ],
+    "competencies": ["coachability", "quality mindset", "continuous improvement"],
+    "tags": ["feedback", "code quality", "growth"]
+  },
+  {
+    "company": "generic",
+    "role": "software engineer",
+    "difficulty": "hard",
+    "interview_type": "technical",
+    "question": "How would you plan and execute a zero-downtime schema change on a large transactional database?",
+    "followups": [
+      "What rollback strategy would you use?",
+      "How would you verify no data inconsistency?"
+    ],
+    "competencies": ["database engineering", "risk mitigation", "operational rigor"],
+    "tags": ["schema migration", "zero downtime", "data integrity"]
+  }
+]

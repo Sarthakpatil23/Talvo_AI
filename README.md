@@ -58,6 +58,40 @@ Speech Worker (Python 3.11)
   - /tts -> Coqui TTS
 ```
 
+## Prompt Engineering + RAG
+
+Talvo now uses a two-layer interviewer intelligence stack:
+
+- Prompt engineering layer: modular guidance by company, role, difficulty, and interview type
+- RAG layer: retrieves relevant interview examples from a local dataset and injects them into the LLM context
+
+Current implementation files:
+
+- talvo1/prompt_engineering.py
+- talvo1/rag_retriever.py
+- talvo1/data/interview_question_bank.json
+
+How it works:
+
+1. User context is captured from interview setup.
+2. Retriever selects top-k relevant examples by metadata + context overlap.
+3. Prompt builder assembles layered system rules and retrieved examples.
+4. Groq model generates one grounded interviewer question plus concise coaching feedback.
+
+Phase-2 upgrades:
+
+- Candidate pool retrieval + MMR-style reranking for diversity
+- Configurable metadata and semantic weighting
+- Diversity control to avoid near-duplicate question retrieval
+- Scenario evaluator script for retrieval quality checks
+
+Evaluator command:
+
+```powershell
+Set-Location c:/TALVO/talvo
+c:/TALVO/.venv/Scripts/python.exe scripts/evaluate_rag_phase2.py
+```
+
 ## Quick Start
 
 ### 1. Install Django-side dependencies
@@ -118,6 +152,13 @@ Common tuning:
 - `WHISPER_MODEL_SIZE=base`
 - `COQUI_TTS_MODEL=tts_models/en/ljspeech/vits`
 - `TTS_USE_GPU=0` (recommended on most Windows setups)
+- `INTERVIEW_RAG_DATA_PATH=talvo1/data/interview_question_bank.json`
+- `INTERVIEW_RAG_TOP_K=4`
+- `INTERVIEW_RAG_CANDIDATE_POOL=12`
+- `INTERVIEW_RAG_ENABLE_RERANK=1`
+- `INTERVIEW_RAG_DIVERSITY_LAMBDA=0.20`
+- `INTERVIEW_RAG_METADATA_WEIGHT=1.0`
+- `INTERVIEW_RAG_SEMANTIC_WEIGHT=1.1`
 
 ## OAuth Redirects
 

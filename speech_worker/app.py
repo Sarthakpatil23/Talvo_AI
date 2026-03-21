@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from typing import Dict, List
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -10,6 +11,66 @@ app = FastAPI(title='Talvo Speech Worker', version='1.0.0')
 
 _whisper_model = None
 _tts_model = None
+
+
+def _clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
+
+
+def _score_transcript(transcript: str, avg_logprob: float, no_speech_prob: float) -> float:
+    words = len((transcript or '').split())
+    logprob_score = _clamp((avg_logprob + 2.0) / 2.0, 0.0, 1.0)
+    length_score = _clamp(words / 12.0, 0.0, 1.0)
+    speech_score = _clamp(1.0 - no_speech_prob, 0.0, 1.0)
+
+    confidence = (0.55 * logprob_score) + (0.30 * length_score) + (0.15 * speech_score)
+    if words < 3:
+        confidence *= 0.7
+    return round(_clamp(confidence, 0.0, 1.0), 3)
+
+
+def _transcribe_candidate(tmp_path: str, *, beam_size: int, vad_filter: bool) -> Dict[str, object]:
+    language = (os.getenv('STT_LANGUAGE', 'en') or 'en').strip()
+    vad_parameters = {'min_silence_duration_ms': 250, 'speech_pad_ms': 180} if vad_filter else None
+
+    segments, info = _whisper_model.transcribe(
+        tmp_path,
+        language=language,
+        task='transcribe',
+        beam_size=beam_size,
+        vad_filter=vad_filter,
+        vad_parameters=vad_parameters,
+        condition_on_previous_text=False,
+        temperature=[0.0, 0.2, 0.4],
+        no_speech_threshold=0.55,
+        log_prob_threshold=-1.2,
+    )
+
+    texts: List[str] = []
+    logprobs: List[float] = []
+    no_speech_values: List[float] = []
+    for segment in segments:
+        part = (getattr(segment, 'text', '') or '').strip()
+        if part:
+            texts.append(part)
+        logprobs.append(float(getattr(segment, 'avg_logprob', -2.0) or -2.0))
+        no_speech_values.append(float(getattr(segment, 'no_speech_prob', 0.5) or 0.5))
+
+    transcript = ' '.join(texts).strip()
+    avg_logprob = (sum(logprobs) / len(logprobs)) if logprobs else -2.0
+    no_speech_prob = (sum(no_speech_values) / len(no_speech_values)) if no_speech_values else 0.5
+    confidence = _score_transcript(transcript, avg_logprob, no_speech_prob)
+
+    return {
+        'transcript': transcript,
+        'confidence': confidence,
+        'avg_logprob': round(avg_logprob, 3),
+        'no_speech_prob': round(no_speech_prob, 3),
+        'language': str(getattr(info, 'language', language) or language),
+        'language_probability': round(float(getattr(info, 'language_probability', 0.0) or 0.0), 3),
+        'beam_size': beam_size,
+        'vad_filter': vad_filter,
+    }
 
 
 class TTSRequest(BaseModel):
@@ -83,15 +144,31 @@ async def stt(audio: UploadFile = File(...)):
             tmp.write(await audio.read())
             tmp_path = tmp.name
 
-        segments, _ = _whisper_model.transcribe(tmp_path, beam_size=1, vad_filter=True)
-        transcript = ' '.join((segment.text or '').strip() for segment in segments).strip()
+        primary = _transcribe_candidate(tmp_path, beam_size=5, vad_filter=True)
+        backup = _transcribe_candidate(tmp_path, beam_size=8, vad_filter=False)
 
-        # Retry once without VAD when the first pass misses soft/short speech.
-        if not transcript:
-            retry_segments, _ = _whisper_model.transcribe(tmp_path, beam_size=5, vad_filter=False)
-            transcript = ' '.join((segment.text or '').strip() for segment in retry_segments).strip()
-
-        return {'transcript': transcript}
+        chosen = primary if float(primary['confidence']) >= float(backup['confidence']) else backup
+        return {
+            'transcript': str(chosen['transcript']),
+            'confidence': float(chosen['confidence']),
+            'language': str(chosen['language']),
+            'language_probability': float(chosen['language_probability']),
+            'avg_logprob': float(chosen['avg_logprob']),
+            'no_speech_prob': float(chosen['no_speech_prob']),
+            'decode_mode': f"beam={chosen['beam_size']},vad={chosen['vad_filter']}",
+            'alternatives': [
+                {
+                    'decode_mode': f"beam={primary['beam_size']},vad={primary['vad_filter']}",
+                    'confidence': float(primary['confidence']),
+                    'transcript': str(primary['transcript']),
+                },
+                {
+                    'decode_mode': f"beam={backup['beam_size']},vad={backup['vad_filter']}",
+                    'confidence': float(backup['confidence']),
+                    'transcript': str(backup['transcript']),
+                },
+            ],
+        }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f'STT failed: {exc}') from exc
     finally:

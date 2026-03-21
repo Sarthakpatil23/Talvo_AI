@@ -84,11 +84,11 @@
 <body class="min-h-screen bg-gray-50 text-gray-900">
   <div class="relative min-h-screen overflow-hidden">
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.12),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.08),transparent_38%)]"></div>
-    <main class="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-28 pt-5 sm:px-6 lg:px-8">
+    <main class="relative mx-auto flex min-h-screen w-full max-w-[96rem] flex-col px-4 pb-28 pt-5 sm:px-6 lg:px-8">
       <header class="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:px-5">
         <div class="flex items-center gap-3">
           <button onclick="window.location.href='{% url 'dashboard' %}'" class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50">Exit</button>
-          <p class="hidden text-sm text-gray-500 sm:block">Google PM L4 | Behavioral + Execution</p>
+          <p class="hidden text-sm text-gray-500 sm:block">Google SWE | Technical + System Design</p>
         </div>
         <div class="flex items-center gap-3">
           <span id="turnBadge" class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">YOUR TURN</span>
@@ -96,19 +96,11 @@
         </div>
       </header>
 
-      <section id="meetingLayout" class="mt-4 grid h-[calc(100vh-180px)] min-h-[560px] gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <section id="meetingLayout" class="mt-4 grid h-[calc(100vh-180px)] min-h-[560px] gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <article class="relative overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
           <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_35%),linear-gradient(160deg,#f5f7ff_0%,#eef2ff_35%,#f8fafc_100%)]"></div>
           <div class="relative flex h-full flex-col p-4 sm:p-6">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <p class="text-xs uppercase tracking-[0.16em] text-gray-500">Interviewer Prompt</p>
-                <h1 id="currentQuestion" class="mt-2 max-w-3xl text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">Tell me about a time you had to handle a difficult stakeholder disagreement.</h1>
-              </div>
-              <span id="latencyBadge" class="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">Latency --</span>
-            </div>
-
-            <div class="relative mt-4 flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/50">
+            <div class="relative flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/50">
               <div class="absolute inset-0 flex items-center justify-center">
                 <div class="relative">
                   <span id="aiPulse" class="ring-pulse absolute inset-0 rounded-full border border-indigo-300/70"></span>
@@ -135,26 +127,16 @@
               </div>
             </div>
 
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-              <div class="rounded-xl border border-gray-200 bg-white/80 p-3">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Adaptive Follow-Up Queue</p>
-                <ul id="followupQueue" class="mt-2 space-y-2 text-sm text-gray-700">
-                  <li class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">What was the business impact of your decision?</li>
-                  <li class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">How did you align the engineering and sales teams?</li>
-                </ul>
-              </div>
-              <div class="rounded-xl border border-gray-200 bg-white/80 p-3">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Live Coaching Nudge</p>
-                <p id="liveTip" class="mt-2 text-sm text-gray-700">Lead with a measurable outcome first, then explain your influence strategy.</p>
-              </div>
-            </div>
           </div>
         </article>
 
         <aside id="chatPanel" class="flex h-full min-h-0 flex-col rounded-3xl border border-gray-200 bg-white shadow-sm">
           <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
             <h2 class="text-sm font-semibold tracking-wide text-gray-900">Meeting Chat</h2>
-            <button id="chatHeaderToggle" type="button" class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">Hide</button>
+            <div class="flex items-center gap-2">
+              <button id="ragDebugToggle" type="button" class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">RAG Debug</button>
+              <button id="chatHeaderToggle" type="button" class="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">Hide</button>
+            </div>
           </div>
           <div id="transcriptFeed" class="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
             <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm">
@@ -166,6 +148,12 @@
               <p class="mt-1 text-gray-800">In Q3, sales pushed a launch date we could not support with current reliability targets.</p>
             </div>
           </div>
+          <div id="ragDebugPanel" class="hidden border-t border-gray-200 px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Retrieved Context</p>
+            <div id="ragDebugFeed" class="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-gray-700">
+              <p class="text-gray-500">No retrieval context yet.</p>
+            </div>
+          </div>
           <div class="border-t border-gray-200 px-4 py-3">
             <div id="pipelineStatus" class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">Initializing interview...</div>
             <div id="debugSignal" class="mt-2 text-xs text-gray-500">Debug: booting...</div>
@@ -174,7 +162,7 @@
       </section>
 
       <footer class="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-6 py-3 backdrop-blur-xl lg:px-8">
-        <div class="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+        <div class="mx-auto flex w-full max-w-[96rem] items-center justify-between gap-4">
           <div class="hidden items-center gap-2 text-xs text-gray-500 md:flex">
             <span id="micState" class="rounded-full bg-gray-100 px-2.5 py-1">Mic on</span>
             <span id="cameraBadge" class="rounded-full bg-gray-100 px-2.5 py-1">Camera on</span>
@@ -205,9 +193,7 @@
       var turnBadge = document.getElementById('turnBadge');
       var interviewerState = document.getElementById('interviewerState');
       var transcriptFeed = document.getElementById('transcriptFeed');
-      var liveTip = document.getElementById('liveTip');
       var timer = document.getElementById('timer');
-      var latencyBadge = document.getElementById('latencyBadge');
       var pipelineStatus = document.getElementById('pipelineStatus');
       var debugSignal = document.getElementById('debugSignal');
       var toggleMic = document.getElementById('toggleMic');
@@ -220,17 +206,20 @@
       var userVideo = document.getElementById('userVideo');
       var userAvatar = document.getElementById('userAvatar');
       var toggleChat = document.getElementById('toggleChat');
+      var ragDebugToggle = document.getElementById('ragDebugToggle');
       var chatHeaderToggle = document.getElementById('chatHeaderToggle');
       var chatPanel = document.getElementById('chatPanel');
+      var ragDebugPanel = document.getElementById('ragDebugPanel');
+      var ragDebugFeed = document.getElementById('ragDebugFeed');
       var chatBadge = document.getElementById('chatBadge');
       var meetingLayout = document.getElementById('meetingLayout');
       var aiPulse = document.getElementById('aiPulse');
-      var currentQuestion = document.getElementById('currentQuestion');
 
       var isUserTurn = true;
       var isMuted = false;
       var isCameraOn = true;
       var isChatOpen = true;
+      var isRagDebugOpen = false;
       var isProcessing = false;
       var stream = null;
       var recorderStream = null;
@@ -238,6 +227,7 @@
       var videoTrack = null;
       var mediaRecorder = null;
       var recordTimer = null;
+      var releaseGraceTimer = null;
       var inactivityTimer = null;
       var isPushTalking = false;
       var activeSessionId = null;
@@ -250,10 +240,10 @@
 
       var startApiUrl = "{% url 'live_interview_start_api' %}";
       var turnApiUrl = "{% url 'live_interview_turn_api' %}";
-      var initialRole = "{{ prefill_role|default:'Product Manager'|escapejs }}" || 'Product Manager';
+      var initialRole = "{{ prefill_role|default:'Software Engineer'|escapejs }}" || 'Software Engineer';
       var initialCompany = "{{ prefill_company|default:'Google'|escapejs }}" || 'Google';
       var initialDifficulty = "{{ prefill_difficulty|default:'Medium'|escapejs }}" || 'Medium';
-      var initialType = "{{ prefill_type|default:'Behavioral'|escapejs }}" || 'Behavioral';
+      var initialType = "{{ prefill_type|default:'Technical'|escapejs }}" || 'Technical';
 
       function setTurnState(userTurn) {
         isUserTurn = userTurn;
@@ -291,8 +281,6 @@
           else if (!stream) reason = 'Microphone stream is unavailable.';
           var nudge = 'Why are you not responding? I am here and listening.' + (reason ? ' ' + reason : '');
           appendTranscript('AI', nudge);
-          currentQuestion.textContent = nudge;
-          liveTip.textContent = 'Quick check: confirm mic permission is allowed and speak for 6-8 seconds.';
           setPipelineStatus('No response detected for 15 seconds. Prompted a follow-up check.');
           setDebugSignal('session=' + (activeSessionId || 'none') + ', stream=' + (!!stream) + ', muted=' + isMuted + ', chunks=' + chunksCaptured + ', turns=' + turnsPosted);
           armInactivityTimer();
@@ -323,7 +311,7 @@
 
       function updateLatencyFromTimings(timings) {
         if (!timings || !timings.total_ms) return;
-        latencyBadge.textContent = 'Latency ' + timings.total_ms + 'ms';
+        setDebugSignal('latency=' + timings.total_ms + 'ms');
       }
 
       function getPreferredMimeType() {
@@ -347,6 +335,48 @@
       function setDebugSignal(text) {
         if (debugSignal) {
           debugSignal.textContent = 'Debug: ' + text;
+        }
+      }
+
+      function syncRagDebugState() {
+        if (!ragDebugPanel || !ragDebugToggle) return;
+        ragDebugPanel.classList.toggle('hidden', !isRagDebugOpen || !isChatOpen);
+        ragDebugToggle.textContent = isRagDebugOpen ? 'Hide RAG' : 'RAG Debug';
+      }
+
+      function renderRagDebug(items) {
+        if (!ragDebugFeed) return;
+        ragDebugFeed.innerHTML = '';
+
+        if (!items || !items.length) {
+          var empty = document.createElement('p');
+          empty.className = 'text-gray-500';
+          empty.textContent = 'No retrieval context for this turn.';
+          ragDebugFeed.appendChild(empty);
+          return;
+        }
+
+        for (var i = 0; i < items.length; i += 1) {
+          var item = items[i] || {};
+          var card = document.createElement('div');
+          card.className = 'rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2';
+
+          var meta = document.createElement('p');
+          meta.className = 'text-[11px] uppercase tracking-wide text-gray-500';
+          meta.textContent = [item.company, item.role, item.difficulty, item.interview_type].filter(Boolean).join(' | ');
+
+          var q = document.createElement('p');
+          q.className = 'mt-1 text-gray-800';
+          q.textContent = item.question || '-';
+
+          var why = document.createElement('p');
+          why.className = 'mt-1 text-[11px] text-gray-500';
+          why.textContent = 'why: ' + (item.rationale || '-') + (item.score ? ' | score=' + item.score : '');
+
+          card.appendChild(meta);
+          card.appendChild(q);
+          card.appendChild(why);
+          ragDebugFeed.appendChild(card);
         }
       }
 
@@ -393,11 +423,12 @@
 
       function syncChatState() {
         chatPanel.classList.toggle('hidden', !isChatOpen);
-        meetingLayout.classList.toggle('lg:grid-cols-[minmax(0,1fr)_360px]', isChatOpen);
+        meetingLayout.classList.toggle('lg:grid-cols-[minmax(0,1fr)_320px]', isChatOpen);
         meetingLayout.classList.toggle('lg:grid-cols-1', !isChatOpen);
         toggleChat.classList.toggle('on', isChatOpen);
         chatHeaderToggle.textContent = isChatOpen ? 'Hide' : 'Show';
         chatBadge.textContent = isChatOpen ? 'Chat open' : 'Chat hidden';
+        syncRagDebugState();
       }
 
       function tickTimer() {
@@ -414,8 +445,15 @@
       }
 
       async function initMedia() {
+        var audioConstraints = {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000
+        };
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+          stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: true });
           audioTrack = stream.getAudioTracks()[0] || null;
           videoTrack = stream.getVideoTracks()[0] || null;
           recorderStream = audioTrack ? new MediaStream([audioTrack.clone()]) : null;
@@ -426,7 +464,7 @@
         } catch (error) {
           try {
             // If camera permission is denied, still allow interview with microphone-only mode.
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
             audioTrack = stream.getAudioTracks()[0] || null;
             videoTrack = null;
             recorderStream = audioTrack ? new MediaStream([audioTrack.clone()]) : null;
@@ -471,9 +509,8 @@
         }
 
         activeSessionId = data.session_id;
-        currentQuestion.textContent = data.ai_question;
         appendTranscript('AI', data.ai_question);
-        if (data.ai_feedback) liveTip.textContent = data.ai_feedback;
+        renderRagDebug(data.debug_retrieval || []);
         updateLatencyFromTimings(data.timings);
         setPipelineStatus('Interview live. Speak naturally in short 6-8 second chunks.');
         setDebugSignal('session started id=' + activeSessionId);
@@ -529,7 +566,6 @@
           updatePushToTalkState();
           if (!chunks.length) {
             appendTranscript('AI', 'Why did you not answer? Please hold the button and speak clearly.');
-            currentQuestion.textContent = 'Why did you not answer? Please hold the button and speak clearly.';
             setPipelineStatus('No audio captured. Hold the button while speaking, then release.');
             setDebugSignal('ptt released with empty audio chunk');
             armInactivityTimer();
@@ -548,9 +584,19 @@
 
       function endPushToTalk() {
         if (!isPushTalking) return;
+        if (releaseGraceTimer) {
+          clearTimeout(releaseGraceTimer);
+          releaseGraceTimer = null;
+        }
         if (mediaRecorder && mediaRecorder.state === 'recording') {
           setPipelineStatus('Sending your response...');
-          mediaRecorder.stop();
+          // Give the recorder a short grace window to avoid clipping trailing words.
+          releaseGraceTimer = setTimeout(function () {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+              mediaRecorder.stop();
+            }
+            releaseGraceTimer = null;
+          }, 180);
         }
       }
 
@@ -586,8 +632,7 @@
             aiQuestion = 'Why did you not answer? I did not catch your response. Please hold the button and speak again.';
           }
           appendTranscript('AI', aiQuestion);
-          currentQuestion.textContent = aiQuestion;
-          if (data.ai_feedback) liveTip.textContent = data.ai_feedback;
+          renderRagDebug(data.debug_retrieval || []);
           updateLatencyFromTimings(data.timings);
           setDebugSignal('turn #' + turnsPosted + ' completed');
 
@@ -648,8 +693,14 @@
         syncChatState();
       }
 
+      function toggleRagDebugPanel() {
+        isRagDebugOpen = !isRagDebugOpen;
+        syncRagDebugState();
+      }
+
       toggleChat.addEventListener('click', toggleChatPanel);
       chatHeaderToggle.addEventListener('click', toggleChatPanel);
+      ragDebugToggle.addEventListener('click', toggleRagDebugPanel);
 
       holdToTalk.addEventListener('mousedown', beginPushToTalk);
       holdToTalk.addEventListener('touchstart', function (e) {
@@ -669,6 +720,7 @@
       syncMicState();
       syncCameraState();
       syncChatState();
+      syncRagDebugState();
       updatePushToTalkState();
       setInterval(tickTimer, 1000);
 
