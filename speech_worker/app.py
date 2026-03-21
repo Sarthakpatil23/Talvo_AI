@@ -31,19 +31,33 @@ def _score_transcript(transcript: str, avg_logprob: float, no_speech_prob: float
 
 def _transcribe_candidate(tmp_path: str, *, beam_size: int, vad_filter: bool) -> Dict[str, object]:
     language = (os.getenv('STT_LANGUAGE', 'en') or 'en').strip()
-    vad_parameters = {'min_silence_duration_ms': 250, 'speech_pad_ms': 180} if vad_filter else None
+    vad_parameters = {'min_silence_duration_ms': 450, 'speech_pad_ms': 320} if vad_filter else None
+    no_speech_threshold = float(os.getenv('STT_NO_SPEECH_THRESHOLD', '0.85'))
+    log_prob_threshold = float(os.getenv('STT_LOG_PROB_THRESHOLD', '-2.0'))
+    compression_ratio_threshold = float(os.getenv('STT_COMPRESSION_RATIO_THRESHOLD', '2.8'))
+    initial_prompt = (
+        os.getenv(
+            'STT_INITIAL_PROMPT',
+            'This is a software engineering interview. Common words include API, microservices, latency, throughput, '
+            'cache invalidation, Kubernetes, CI/CD, and PostgreSQL.'
+        )
+        or ''
+    ).strip()
 
     segments, info = _whisper_model.transcribe(
         tmp_path,
         language=language,
         task='transcribe',
         beam_size=beam_size,
+        best_of=max(beam_size, 5),
         vad_filter=vad_filter,
         vad_parameters=vad_parameters,
         condition_on_previous_text=False,
-        temperature=[0.0, 0.2, 0.4],
-        no_speech_threshold=0.55,
-        log_prob_threshold=-1.2,
+        temperature=[0.0, 0.1, 0.2],
+        no_speech_threshold=no_speech_threshold,
+        log_prob_threshold=log_prob_threshold,
+        compression_ratio_threshold=compression_ratio_threshold,
+        initial_prompt=initial_prompt,
     )
 
     texts: List[str] = []
@@ -144,8 +158,11 @@ async def stt(audio: UploadFile = File(...)):
             tmp.write(await audio.read())
             tmp_path = tmp.name
 
-        primary = _transcribe_candidate(tmp_path, beam_size=5, vad_filter=True)
-        backup = _transcribe_candidate(tmp_path, beam_size=8, vad_filter=False)
+        primary_beam = int(os.getenv('STT_BEAM_PRIMARY', '8'))
+        backup_beam = int(os.getenv('STT_BEAM_BACKUP', '12'))
+
+        primary = _transcribe_candidate(tmp_path, beam_size=primary_beam, vad_filter=True)
+        backup = _transcribe_candidate(tmp_path, beam_size=backup_beam, vad_filter=False)
 
         chosen = primary if float(primary['confidence']) >= float(backup['confidence']) else backup
         return {
