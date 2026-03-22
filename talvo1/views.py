@@ -206,6 +206,7 @@ def live_interview_start_api(request):
 			'ai_question': turn.ai_response,
 			'ai_feedback': turn.ai_feedback,
 			'ai_audio_url': _build_media_url(request, turn.ai_audio_path),
+			'ai_lipsync_url': _build_media_url(request, result.ai_lipsync_relpath) if result.ai_lipsync_relpath else '',
 			'timings': result.timings,
 			'debug_retrieval': result.rag_context,
 		}
@@ -276,6 +277,7 @@ def live_interview_turn_api(request):
 			'ai_question': turn.ai_response,
 			'ai_feedback': turn.ai_feedback,
 			'ai_audio_url': _build_media_url(request, turn.ai_audio_path),
+			'ai_lipsync_url': _build_media_url(request, result.ai_lipsync_relpath) if result.ai_lipsync_relpath else '',
 			'timings': result.timings,
 			'debug_retrieval': result.rag_context,
 		}

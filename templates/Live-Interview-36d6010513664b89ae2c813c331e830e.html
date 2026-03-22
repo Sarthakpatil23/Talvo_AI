@@ -1,4 +1,5 @@
 ﻿<!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
@@ -79,6 +80,87 @@
       70% { transform: scale(1.25); opacity: 0; }
       100% { transform: scale(1.25); opacity: 0; }
     }
+    #avatarStage {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    #avatarStage canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    .image-avatar-wrap {
+      position: absolute;
+      left: 50%;
+      bottom: 4%;
+      width: min(420px, 52%);
+      aspect-ratio: 3 / 4;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 22px 68px rgba(15, 23, 42, 0.18);
+      background: rgba(255, 255, 255, 0.35);
+      transform-origin: center bottom;
+      transform: translateX(-50%) scale(1);
+      transition: transform 120ms ease-out;
+      will-change: transform;
+    }
+    .image-avatar-wrap.speaking {
+      transform: translateX(-50%) scale(1.01);
+    }
+    .image-avatar-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      opacity: 0;
+      transition: opacity 90ms linear;
+      will-change: opacity;
+    }
+    .image-avatar-img.visible {
+      opacity: 1;
+    }
+    .image-avatar-img.hidden {
+      opacity: 0;
+    }
+    .avatar-fallback-wrap {
+      position: absolute;
+      left: 10%;
+      bottom: 6%;
+      width: min(340px, 42%);
+      aspect-ratio: 3 / 4;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.65);
+      box-shadow: 0 24px 70px rgba(30, 41, 59, 0.18);
+      background: radial-gradient(circle at 50% 15%, #f6efe8 0%, #e6d8cc 35%, #c4b6aa 100%);
+    }
+    .avatar-fallback-face {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 49% 36%, rgba(249, 224, 203, 0.95) 0 16%, transparent 16.5%),
+        radial-gradient(circle at 41% 36%, #2f3a4d 0 1.2%, transparent 1.3%),
+        radial-gradient(circle at 57% 36%, #2f3a4d 0 1.2%, transparent 1.3%),
+        radial-gradient(ellipse at 49% 43%, #7b4a3f 0 2.8%, transparent 3%),
+        radial-gradient(ellipse at 50% 62%, #0f172a 0 27%, transparent 27.5%),
+        radial-gradient(ellipse at 50% 80%, #1f2937 0 38%, #111827 42%, transparent 43%);
+      opacity: 0.95;
+      transform-origin: 50% 85%;
+      transition: transform 220ms ease;
+    }
+    .avatar-fallback-wrap.speaking .avatar-fallback-face {
+      transform: translateY(-1px) scale(1.01);
+    }
+    .avatar-fallback-wrap.listening .avatar-fallback-face {
+      transform: rotate(-2deg) translateX(-2px);
+    }
   </style>
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-900">
@@ -101,15 +183,7 @@
           <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_35%),linear-gradient(160deg,#f5f7ff_0%,#eef2ff_35%,#f8fafc_100%)]"></div>
           <div class="relative flex h-full flex-col p-4 sm:p-6">
             <div class="relative flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/50">
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="relative">
-                  <span id="aiPulse" class="ring-pulse absolute inset-0 rounded-full border border-indigo-300/70"></span>
-                  <div class="relative grid h-36 w-36 place-items-center rounded-full border border-indigo-200 bg-white text-indigo-700 shadow-[0_20px_60px_rgba(99,102,241,0.25)]">
-                    <svg class="h-14 w-14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3a9 9 0 100 18 9 9 0 000-18zm-2.5 7.5h5m-5 3h3"/></svg>
-                  </div>
-                </div>
-              </div>
-
+              <div id="avatarStage"></div>
               <div class="absolute left-4 top-4 rounded-xl border border-white/50 bg-white/80 px-3 py-2 text-xs font-semibold text-gray-700 backdrop-blur">
                 Talvo Interviewer
                 <p id="interviewerState" class="mt-0.5 font-medium text-gray-500">Listening to your response...</p>
@@ -214,6 +288,7 @@
       var chatBadge = document.getElementById('chatBadge');
       var meetingLayout = document.getElementById('meetingLayout');
       var aiPulse = document.getElementById('aiPulse');
+      var avatarStage = document.getElementById('avatarStage');
 
       var isUserTurn = true;
       var isMuted = false;
@@ -232,6 +307,7 @@
       var isPushTalking = false;
       var activeSessionId = null;
       var latestAudio = null;
+      var avatar = null;
       var mm = 7;
       var ss = 42;
       var inactivityMs = 15000;
@@ -251,13 +327,15 @@
           turnBadge.textContent = 'YOUR TURN';
           turnBadge.className = 'rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700';
           interviewerState.textContent = 'Hold the button and speak. Release to send.';
-          aiPulse.style.display = 'none';
+          if (aiPulse) aiPulse.style.display = 'none';
+          if (avatar) avatar.setState('listening');
           armInactivityTimer();
         } else {
           turnBadge.textContent = 'AI SPEAKING';
           turnBadge.className = 'rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700';
           interviewerState.textContent = 'Generating follow-up based on your answer...';
-          aiPulse.style.display = 'block';
+          if (aiPulse) aiPulse.style.display = 'block';
+          if (avatar) avatar.setState('idle');
           clearInactivityTimer();
         }
         updatePushToTalkState();
@@ -431,6 +509,85 @@
         syncRagDebugState();
       }
 
+      async function initAvatar() {
+        if (!avatarStage) return;
+        try {
+          var avatarModule = await import("{% static 'talvo1/js/ImageLipSyncAvatar.js' %}?v=4");
+          if (avatarModule && avatarModule.ImageLipSyncAvatar) {
+            avatar = new avatarModule.ImageLipSyncAvatar(avatarStage, {
+              images: {
+                rest: "{% static 'talvo1/images/avatar/avatar_01_rest_closed.png' %}",
+                openSlight: "{% static 'talvo1/images/avatar/avatar_02_open_slight.png' %}",
+                openMedium: "{% static 'talvo1/images/avatar/avatar_03_open_medium.png' %}",
+                openWide: "{% static 'talvo1/images/avatar/avatar_04_open_wide.png' %}",
+                oSmall: "{% static 'talvo1/images/avatar/avatar_05_o_small_round.png' %}",
+                oWide: "{% static 'talvo1/images/avatar/avatar_06_o_wide_round.png' %}",
+                teethE: "{% static 'talvo1/images/avatar/avatar_07_e_ee_teeth_stretch.png' %}",
+                fv: "{% static 'talvo1/images/avatar/avatar_08_f_v_lip_teeth.png' %}",
+                lth: "{% static 'talvo1/images/avatar/avatar_09_l_th_tongue_forward.png' %}",
+                mbp: "{% static 'talvo1/images/avatar/avatar_10_m_b_p_lips_pressed.png' %}",
+                idleSmile: "{% static 'talvo1/images/avatar/avatar_11_idle_smile_soft.png' %}",
+                jawDrop: "{% static 'talvo1/images/avatar/avatar_12_jaw_drop_neutral.png' %}",
+                bridgeClosedToSlight: "{% static 'talvo1/images/avatar/avatar_t01_closed_to_slight_half.png' %}",
+                bridgeSlightToMedium: "{% static 'talvo1/images/avatar/avatar_t02_slight_to_medium_half.png' %}",
+                bridgeMediumToWide: "{% static 'talvo1/images/avatar/avatar_t03_medium_to_wide_half.png' %}",
+                bridgeOToE: "{% static 'talvo1/images/avatar/avatar_t04_o_to_e_bridge.png' %}",
+                bridgeEToClosed: "{% static 'talvo1/images/avatar/avatar_t05_e_to_closed_bridge.png' %}",
+                bridgeFvToClosed: "{% static 'talvo1/images/avatar/avatar_t06_fv_to_closed_bridge.png' %}"
+              },
+              phonemeToImage: {
+                A: 'mbp',
+                B: 'openSlight',
+                C: 'openMedium',
+                D: 'openWide',
+                E: 'oSmall',
+                F: 'oWide',
+                G: 'fv',
+                H: 'lth',
+                X: 'rest'
+              },
+              transitionMs: 88,
+              minSwitchMs: 66,
+              bridgeHoldMs: 44,
+              useIdleWhenSilent: false
+            });
+            avatar.setState('listening');
+            setDebugSignal('avatar: image lipsync ready');
+            return;
+          }
+        } catch (_) {
+          // Keep interview flow alive even if avatar module fails.
+        }
+
+        var fallbackWrap = document.createElement('div');
+        fallbackWrap.className = 'avatar-fallback-wrap listening';
+        fallbackWrap.innerHTML = '<div class="avatar-fallback-face"></div>';
+        avatarStage.appendChild(fallbackWrap);
+
+        avatar = {
+          setState: function (next) {
+            fallbackWrap.classList.remove('idle', 'speaking', 'listening');
+            fallbackWrap.classList.add(next || 'idle');
+          },
+          speak: async function (url) {
+            if (!url) return;
+            this.setState('speaking');
+            var a = new Audio(url);
+            try {
+              await a.play();
+              await new Promise(function (resolve) {
+                a.onended = resolve;
+                a.onerror = resolve;
+              });
+            } finally {
+              this.setState('idle');
+            }
+          }
+        };
+
+        setDebugSignal('avatar: portrait fallback ready');
+      }
+
       function tickTimer() {
         if (ss === 0) {
           if (mm === 0) return;
@@ -515,7 +672,7 @@
         setPipelineStatus('Interview live. Speak naturally in short 6-8 second chunks.');
         setDebugSignal('session started id=' + activeSessionId);
 
-        await playAiAudio(data.ai_audio_url);
+        await playAiAudio(data.ai_audio_url, data.ai_lipsync_url);
         setTurnState(true);
         updatePushToTalkState();
       }
@@ -637,7 +794,7 @@
           setDebugSignal('turn #' + turnsPosted + ' completed');
 
           if (data.ai_audio_url) {
-            await playAiAudio(data.ai_audio_url);
+            await playAiAudio(data.ai_audio_url, data.ai_lipsync_url);
           }
           setPipelineStatus('Your turn. Hold the button to speak, release to send.');
           setTurnState(true);
@@ -652,21 +809,37 @@
         }
       }
 
-      async function playAiAudio(url) {
+      async function playAiAudio(url, lipSyncUrl) {
         if (!url) return;
+        if (avatar) {
+          try {
+            await avatar.speak(url, lipSyncUrl || '');
+            return;
+          } catch (_) {
+            if (latestAudio) {
+              latestAudio.pause();
+              latestAudio = null;
+            }
+          }
+        }
+
         if (latestAudio) {
           latestAudio.pause();
           latestAudio = null;
         }
+
         latestAudio = new Audio(url);
         latestAudio.playbackRate = 1.0;
         try {
+          if (avatar) avatar.setState('speaking');
           await latestAudio.play();
           await new Promise(function (resolve) {
             latestAudio.onended = resolve;
             latestAudio.onerror = resolve;
           });
+          if (avatar) avatar.setState('idle');
         } catch (_) {
+          if (avatar) avatar.setState('idle');
           setPipelineStatus('Autoplay blocked. Click page once to allow AI voice playback.');
         }
       }
@@ -724,7 +897,9 @@
       updatePushToTalkState();
       setInterval(tickTimer, 1000);
 
-      initMedia().then(function () {
+      initAvatar().then(function () {
+        return initMedia();
+      }).then(function () {
         return startInterviewSession();
       }).catch(function (error) {
         setPipelineStatus(error.message || 'Could not start live interview session.');

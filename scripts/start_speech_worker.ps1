@@ -19,7 +19,9 @@ if (Test-Path $envFile) {
         'STT_COMPRESSION_RATIO_THRESHOLD',
         'STT_BEAM_PRIMARY',
         'STT_BEAM_BACKUP',
-        'STT_INITIAL_PROMPT'
+        'STT_INITIAL_PROMPT',
+        'RHUBARB_BINARY',
+        'RHUBARB_TIMEOUT_SECONDS'
     )
 
     Get-Content $envFile | ForEach-Object {

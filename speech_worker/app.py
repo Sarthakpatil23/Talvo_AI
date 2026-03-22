@@ -1,4 +1,6 @@
 import os
+import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import Dict, List
@@ -132,6 +134,50 @@ def _load_tts():
     return TTS(model_name=model_name, progress_bar=False, gpu=use_gpu)
 
 
+def _find_rhubarb_binary() -> str:
+    configured = (os.getenv('RHUBARB_BINARY', '') or '').strip()
+    candidates = [configured] if configured else []
+    candidates.extend(['rhubarb', 'rhubarb.exe'])
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+        if Path(candidate).exists():
+            return candidate
+        resolved = shutil.which(candidate)
+        if resolved:
+            return resolved
+
+    return ''
+
+
+def _generate_lipsync_json(audio_path: Path) -> Path | None:
+    rhubarb_bin = _find_rhubarb_binary()
+    if not rhubarb_bin:
+        return None
+
+    output_json = audio_path.with_suffix('.lipsync.json')
+    timeout_seconds = int(os.getenv('RHUBARB_TIMEOUT_SECONDS', '20') or '20')
+
+    cmd = [
+        rhubarb_bin,
+        '-f',
+        'json',
+        '-o',
+        str(output_json),
+        str(audio_path),
+    ]
+
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=timeout_seconds)
+        if output_json.exists():
+            return output_json
+    except Exception:
+        return None
+
+    return None
+
+
 @app.on_event('startup')
 def startup() -> None:
     global _whisper_model, _tts_model
@@ -205,6 +251,12 @@ def tts(payload: TTSRequest):
     try:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         _tts_model.tts_to_file(text=text, file_path=str(output_path))
-        return {'ok': True, 'output_path': str(output_path)}
+        lipsync_path = _generate_lipsync_json(output_path)
+        return {
+            'ok': True,
+            'output_path': str(output_path),
+            'lipsync_path': str(lipsync_path) if lipsync_path else '',
+            'lipsync_enabled': bool(lipsync_path),
+        }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f'TTS failed: {exc}') from exc

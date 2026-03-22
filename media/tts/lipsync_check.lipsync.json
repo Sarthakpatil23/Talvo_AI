@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "soundFile": "C:\\TALVO\\talvo\\media\\tts\\lipsync_check.wav",
+    "duration": 5.35
+  },
+  "mouthCues": [
+    { "start": 0.00, "end": 0.06, "value": "B" },
+    { "start": 0.06, "end": 0.26, "value": "C" },
+    { "start": 0.26, "end": 0.70, "value": "B" },
+    { "start": 0.70, "end": 0.82, "value": "E" },
+    { "start": 0.82, "end": 0.96, "value": "C" },
+    { "start": 0.96, "end": 1.17, "value": "B" },
+    { "start": 1.17, "end": 1.24, "value": "E" },
+    { "start": 1.24, "end": 1.45, "value": "F" },
+    { "start": 1.45, "end": 1.87, "value": "B" },
+    { "start": 1.87, "end": 1.95, "value": "A" },
+    { "start": 1.95, "end": 2.18, "value": "C" },
+    { "start": 2.18, "end": 2.25, "value": "B" },
+    { "start": 2.25, "end": 2.32, "value": "G" },
+    { "start": 2.32, "end": 2.53, "value": "C" },
+    { "start": 2.53, "end": 3.02, "value": "B" },
+    { "start": 3.02, "end": 3.09, "value": "C" },
+    { "start": 3.09, "end": 3.37, "value": "B" },
+    { "start": 3.37, "end": 3.45, "value": "A" },
+    { "start": 3.45, "end": 3.65, "value": "F" },
+    { "start": 3.65, "end": 3.70, "value": "E" },
+    { "start": 3.70, "end": 3.88, "value": "C" },
+    { "start": 3.88, "end": 3.95, "value": "E" },
+    { "start": 3.95, "end": 4.03, "value": "A" },
+    { "start": 4.03, "end": 4.18, "value": "E" },
+    { "start": 4.18, "end": 4.25, "value": "F" },
+    { "start": 4.25, "end": 4.32, "value": "C" },
+    { "start": 4.32, "end": 4.46, "value": "A" },
+    { "start": 4.46, "end": 4.82, "value": "B" },
+    { "start": 4.82, "end": 5.35, "value": "X" }
+  ]
+}

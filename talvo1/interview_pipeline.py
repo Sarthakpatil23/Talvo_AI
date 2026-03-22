@@ -23,6 +23,7 @@ class PipelineOutput:
     ai_question: str
     ai_feedback: str
     ai_audio_relpath: str
+    ai_lipsync_relpath: str
     processing_ms: int
     timings: Dict[str, int]
     rag_context: List[Dict[str, str]]
@@ -226,7 +227,7 @@ class InterviewPipeline:
 
         return {'ai_question': raw_text.strip(), 'ai_feedback': ''}
 
-    def synthesize(self, text: str, output_path: Path) -> None:
+    def synthesize(self, text: str, output_path: Path) -> Dict[str, str]:
         worker_url = self._speech_worker_url()
         if not worker_url:
             raise PipelineUnavailableError('SPEECH_WORKER_URL is not configured')
@@ -240,7 +241,22 @@ class InterviewPipeline:
                     timeout=self._speech_worker_timeout(),
                 )
                 response.raise_for_status()
-                return
+                payload = response.json() if response.content else {}
+                lipsync_abs = ''
+                if isinstance(payload, dict):
+                    lipsync_abs = str(payload.get('lipsync_path', '') or '').strip()
+
+                lipsync_rel = ''
+                if lipsync_abs:
+                    try:
+                        lipsync_rel = str(Path(lipsync_abs).resolve().relative_to(Path(settings.MEDIA_ROOT).resolve())).replace('\\', '/')
+                    except Exception:
+                        lipsync_rel = ''
+
+                return {
+                    'ai_audio_relpath': str(output_path.relative_to(Path(settings.MEDIA_ROOT))).replace('\\', '/'),
+                    'ai_lipsync_relpath': lipsync_rel,
+                }
             except Exception as exc:
                 last_exc = exc
                 if attempt < 2:
@@ -308,7 +324,7 @@ class InterviewPipeline:
 
         tts_start = time.perf_counter()
         ai_audio_abs = Path(settings.MEDIA_ROOT) / ai_audio_relpath
-        self.synthesize(llm['ai_question'], ai_audio_abs)
+        tts_artifacts = self.synthesize(llm['ai_question'], ai_audio_abs)
         tts_ms = int((time.perf_counter() - tts_start) * 1000)
 
         total_ms = int((time.perf_counter() - start) * 1000)
@@ -317,6 +333,7 @@ class InterviewPipeline:
             ai_question=llm['ai_question'],
             ai_feedback=llm['ai_feedback'],
             ai_audio_relpath=ai_audio_relpath,
+            ai_lipsync_relpath=str(tts_artifacts.get('ai_lipsync_relpath', '') or ''),
             processing_ms=total_ms,
             timings={
                 'whisper_ms': whisper_ms,
