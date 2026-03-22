@@ -20,6 +20,8 @@ const BRIDGE_BY_PAIR = {
   'fv->rest': 'bridgeFvToClosed',
 };
 
+const MIN_CUE_SECONDS = 0.055;
+
 function normalizeCues(raw) {
   const source = Array.isArray(raw)
     ? raw
@@ -27,7 +29,7 @@ function normalizeCues(raw) {
       ? raw.mouthCues
       : [];
 
-  return source
+  const parsed = source
     .filter((cue) => cue && Number.isFinite(cue.start) && Number.isFinite(cue.end) && cue.end >= cue.start)
     .map((cue) => ({
       start: Number(cue.start),
@@ -35,6 +37,23 @@ function normalizeCues(raw) {
       value: String(cue.value || '').trim().toUpperCase(),
     }))
     .sort((a, b) => a.start - b.start);
+
+  if (!parsed.length) return [];
+
+  const merged = [];
+  for (let i = 0; i < parsed.length; i += 1) {
+    const cue = parsed[i];
+    const prev = merged[merged.length - 1];
+
+    if (prev && prev.value === cue.value && cue.start <= prev.end + 0.001) {
+      prev.end = Math.max(prev.end, cue.end);
+      continue;
+    }
+
+    merged.push({ ...cue });
+  }
+
+  return merged.filter((cue) => cue.end - cue.start >= MIN_CUE_SECONDS);
 }
 
 function createPreloadPromise(src, loadedSet) {
@@ -104,14 +123,19 @@ export class ImageLipSyncAvatar {
 
     this.loadedSources = new Set();
     this.transitionMs = Number.isFinite(options.transitionMs) ? options.transitionMs : 90;
-    this.minSwitchMs = Number.isFinite(options.minSwitchMs) ? options.minSwitchMs : 72;
+    this.minSwitchMs = Number.isFinite(options.minSwitchMs) ? options.minSwitchMs : 88;
     this.bridgeHoldMs = Number.isFinite(options.bridgeHoldMs) ? options.bridgeHoldMs : 48;
+    this.stabilityMsCue = Number.isFinite(options.stabilityMsCue) ? options.stabilityMsCue : 42;
+    this.stabilityMsEnergy = Number.isFinite(options.stabilityMsEnergy) ? options.stabilityMsEnergy : 96;
+    this.bridgeMinGapMs = Number.isFinite(options.bridgeMinGapMs) ? options.bridgeMinGapMs : 120;
 
     this.frontImageIndex = 0;
     this.visibleKey = '';
     this.lastSwitchAt = 0;
     this.smoothedRms = 0;
     this.pendingBridgeTimer = null;
+    this.pendingKey = '';
+    this.pendingSince = 0;
 
     this.rootEl = document.createElement('div');
     this.rootEl.className = 'image-avatar-wrap listening';
@@ -277,9 +301,9 @@ export class ImageLipSyncAvatar {
       const cue = this._getCueAtTime(this.audio.currentTime);
       if (cue) {
         const mappedKey = this.phonemeToImage[cue.value] || 'rest';
-        this._setImageByKey(mappedKey);
+        this._setImageByKey(mappedKey, { fromCue: true });
       } else {
-        this._setImageByKey(this._resolveImageFromAudioEnergy());
+        this._setImageByKey(this._resolveImageFromAudioEnergy(), { fromCue: false });
       }
 
       this.rafId = requestAnimationFrame(tick);
@@ -338,16 +362,34 @@ export class ImageLipSyncAvatar {
 
   _setImageByKey(key, options = {}) {
     const force = !!options.force;
+    const fromCue = !!options.fromCue;
     const resolvedKey = this.images[key] ? key : 'rest';
 
     if (!force && resolvedKey === this.visibleKey) return;
 
     const now = performance.now();
+    const stabilityMs = fromCue ? this.stabilityMsCue : this.stabilityMsEnergy;
+
+    if (!force) {
+      if (this.pendingKey !== resolvedKey) {
+        this.pendingKey = resolvedKey;
+        this.pendingSince = now;
+        return;
+      }
+
+      if (now - this.pendingSince < stabilityMs) {
+        return;
+      }
+    } else {
+      this.pendingKey = '';
+      this.pendingSince = 0;
+    }
+
     if (!force && now - this.lastSwitchAt < this.minSwitchMs) return;
 
     this._clearBridgeTimer();
 
-    if (!force) {
+    if (!force && fromCue && now - this.lastSwitchAt >= this.bridgeMinGapMs) {
       const bridgeKey = this._resolveBridgeKey(this.visibleKey, resolvedKey);
       if (bridgeKey && bridgeKey !== resolvedKey) {
         this._crossfadeToKey(bridgeKey);
@@ -360,6 +402,8 @@ export class ImageLipSyncAvatar {
     }
 
     this._crossfadeToKey(resolvedKey, force);
+    this.pendingKey = '';
+    this.pendingSince = 0;
   }
 
   _resolveBridgeKey(fromKey, toKey) {
