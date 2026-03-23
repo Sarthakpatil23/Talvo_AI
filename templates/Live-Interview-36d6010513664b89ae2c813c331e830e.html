@@ -37,6 +37,30 @@
       color: #ffffff;
     }
     .control-btn.end:hover { background: #dc2626; }
+    .control-btn.ide {
+      border-color: #c7d2fe;
+      background: #eef2ff;
+      color: #4338ca;
+      width: auto;
+      min-width: 120px;
+      border-radius: 9999px;
+      padding: 0 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .control-btn.ide.active {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: #ffffff;
+    }
+    .control-btn.ide.disabled {
+      border-color: #e5e7eb;
+      background: #f8fafc;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
     .control-btn.ptt {
       width: auto;
       min-width: 168px;
@@ -214,6 +238,179 @@
       50% { transform: scaleY(0.52); }
       75% { transform: scaleY(0.95); }
     }
+    .coding-drawer {
+      position: fixed;
+      right: 14px;
+      bottom: 84px;
+      height: min(82vh, 820px);
+      min-height: 420px;
+      max-height: calc(100vh - 104px);
+      width: min(74vw, 1320px);
+      min-width: 520px;
+      max-width: calc(100vw - 22px);
+      resize: both;
+      overflow: auto;
+      z-index: 45;
+      transform: translateX(calc(100% + 20px));
+      transition: transform .24s ease;
+    }
+    .coding-drawer.open {
+      transform: translateX(0);
+    }
+    .coding-drawer.compact {
+      width: min(64vw, 1040px);
+    }
+    .coding-drawer.wide {
+      width: min(84vw, 1480px);
+    }
+    .ide-shell {
+      color: #e5e7eb;
+      border: 1px solid #1f2937;
+      background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
+      box-shadow: 0 34px 60px rgba(2, 6, 23, 0.7);
+    }
+    .ide-topbar {
+      border-bottom: 1px solid #1f2937;
+      background: #0b0f17;
+    }
+    .ide-chip {
+      border: 1px solid #303748;
+      background: #111827;
+      color: #cbd5e1;
+      border-radius: 9999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .ide-chip.active {
+      border-color: #0e7490;
+      background: #083344;
+      color: #67e8f9;
+    }
+    .ide-tab {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .ide-tab.active {
+      border-color: #303748;
+      background: #151c2b;
+      color: #f8fafc;
+    }
+    .ide-split {
+      display: grid;
+      min-height: 0;
+      flex: 1;
+      grid-template-columns: minmax(300px, 1fr) minmax(360px, 1fr);
+      gap: 10px;
+      padding: 10px;
+    }
+    .ide-problem-pane,
+    .ide-code-pane {
+      min-height: 0;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      background: #0a0f1a;
+      display: flex;
+      flex-direction: column;
+    }
+    .ide-problem-pane { overflow: hidden; }
+    .ide-code-pane { overflow: hidden; }
+    .ide-divider {
+      border-bottom: 1px solid #1f2937;
+    }
+    .ide-scroll {
+      overflow: auto;
+      min-height: 0;
+    }
+    .ide-section-title {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #60a5fa;
+      font-weight: 700;
+    }
+    .ide-muted {
+      color: #93a1b8;
+    }
+    .ide-editor-wrap {
+      flex: 1;
+      min-height: 0;
+      padding: 10px;
+      background: #020617;
+    }
+    #codingEditor {
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      background: #020617;
+      color: #e2e8f0;
+      min-height: 240px;
+      height: 100%;
+      box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.3);
+    }
+    #codingEditor:focus {
+      border-color: #22d3ee;
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+      outline: none;
+    }
+    .ide-action-btn {
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid #334155;
+      color: #dbeafe;
+      background: #0f172a;
+      transition: all 0.16s ease;
+    }
+    .ide-action-btn:hover {
+      border-color: #475569;
+      background: #1e293b;
+    }
+    .ide-action-btn.primary {
+      border-color: #14532d;
+      background: #16a34a;
+      color: #f0fdf4;
+    }
+    .ide-action-btn.primary:hover {
+      background: #22c55e;
+    }
+    .test-pill {
+      border: 1px solid #334155;
+      background: #0f172a;
+      border-radius: 9999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    .test-pill.pass {
+      border-color: #166534;
+      background: #052e16;
+      color: #86efac;
+    }
+    .test-pill.fail {
+      border-color: #881337;
+      background: #4c0519;
+      color: #fda4af;
+    }
+    @media (max-width: 1100px) {
+      .coding-drawer {
+        right: 10px;
+        left: 10px;
+        min-width: 0;
+        width: auto;
+        max-width: none;
+        height: min(78vh, 760px);
+        resize: none;
+      }
+      .ide-split {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(180px, 1fr) minmax(260px, 1fr);
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-900">
@@ -222,7 +419,7 @@
     <main class="relative mx-auto flex min-h-screen w-full max-w-[96rem] flex-col px-4 pb-28 pt-5 sm:px-6 lg:px-8">
       <header class="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:px-5">
         <div class="flex items-center gap-3">
-          <button onclick="window.location.href='{% url 'dashboard' %}'" class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50">Exit</button>
+          <button id="exitToDashboardBtn" type="button" class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50">Exit</button>
           <p class="hidden text-sm text-gray-500 sm:block">Google SWE | Technical + System Design</p>
         </div>
         <div class="flex items-center gap-3">
@@ -310,6 +507,7 @@
             <span id="chatBadge" class="rounded-full bg-gray-100 px-2.5 py-1">Chat open</span>
           </div>
           <div class="mx-auto flex items-center gap-2 sm:gap-3">
+            <button id="toggleCodingIde" type="button" class="control-btn ide" aria-label="Open coding IDE">Code IDE</button>
             <button id="toggleMic" type="button" class="control-btn" aria-label="Toggle microphone">
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14a3 3 0 003-3V7a3 3 0 10-6 0v4a3 3 0 003 3zm0 0v4m-4 0h8"/></svg>
             </button>
@@ -320,12 +518,84 @@
             <button id="toggleChat" type="button" class="control-btn on" aria-label="Toggle chat panel">
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m-7 6l-3-3H4a2 2 0 01-2-2V6a2 2 0 012-2h16a2 2 0 012 2v9a2 2 0 01-2 2H8l-3 3z"/></svg>
             </button>
-            <button type="button" onclick="window.location.href='{% url 'feedback_dashboard' %}'" class="control-btn end" aria-label="End interview">
+            <button id="endInterviewBtn" type="button" class="control-btn end" aria-label="End interview">
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 15.5c1.2-1.3 2.7-2.1 4.5-2.4a20 20 0 019 0c1.8.3 3.3 1.1 4.5 2.4M8 12l1.5-3m6.5 3L14.5 9"/></svg>
             </button>
           </div>
         </div>
       </footer>
+
+      <aside id="codingDrawer" class="coding-drawer wide">
+        <div class="ide-shell flex h-full min-h-0 flex-col overflow-hidden rounded-2xl">
+          <div class="ide-topbar px-3 py-2">
+            <div class="flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Problem List</p>
+                <h3 id="codingTitle" class="truncate text-sm font-semibold text-slate-100">Loading question...</h3>
+                <p id="codingMeta" class="truncate text-[11px] text-slate-400">AI-selected coding prompt for this interview session.</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button id="codingLayoutCompact" type="button" class="ide-chip">Compact</button>
+                <button id="codingLayoutWide" type="button" class="ide-chip">Wide</button>
+                <button id="closeCodingDrawer" type="button" class="ide-chip">Close</button>
+              </div>
+            </div>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <span class="ide-tab active">Description</span>
+              <span class="ide-tab">Editorial</span>
+              <span class="ide-tab">Solutions</span>
+              <span class="ide-tab">Submissions</span>
+              <span class="ml-auto text-[11px] text-slate-500">Resize panel from bottom-right corner</span>
+            </div>
+          </div>
+
+          <div class="ide-split">
+            <section class="ide-problem-pane">
+              <div class="ide-divider px-4 py-2">
+                <p class="ide-section-title">Description</p>
+              </div>
+              <div class="ide-scroll space-y-4 px-4 py-3 text-sm leading-6 text-slate-200">
+                <div>
+                  <p id="codingPrompt" class="text-slate-100">Preparing coding prompt...</p>
+                  <p id="codingConstraints" class="mt-2 text-xs ide-muted"></p>
+                </div>
+                <div>
+                  <p class="ide-section-title">Visible Tests</p>
+                  <div id="codingVisibleTests" class="mt-2 flex flex-wrap gap-2"></div>
+                </div>
+                <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-3">
+                  <p id="codingStatus" class="text-xs ide-muted">IDE appears when the interviewer asks a coding problem.</p>
+                  <div id="codingResults" class="mt-2 flex flex-wrap gap-2"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="ide-code-pane">
+              <div class="ide-divider flex items-center justify-between px-3 py-2">
+                <div class="flex items-center gap-2 text-xs text-slate-300">
+                  <span class="rounded-md bg-slate-700/70 px-2 py-1">Python</span>
+                  <span class="rounded-md bg-slate-800 px-2 py-1 text-slate-400">Auto</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button id="runOutputBtn" type="button" class="ide-action-btn">Run Output</button>
+                  <button id="runCodingBtn" type="button" class="ide-action-btn">Run Tests</button>
+                  <button id="submitCodingBtn" type="button" class="ide-action-btn primary">Submit</button>
+                </div>
+              </div>
+
+              <div class="ide-editor-wrap">
+                <label for="codingEditor" class="sr-only">Write Python Code</label>
+                <textarea id="codingEditor" spellcheck="false" class="w-full resize-none px-3 py-3 font-mono text-xs leading-6"></textarea>
+              </div>
+
+              <div class="ide-divider px-3 py-2">
+                <p class="ide-section-title">Test Result</p>
+                <pre id="codingRunOutput" class="mt-2 hidden max-h-36 overflow-auto rounded-md border border-slate-700 bg-black/40 px-3 py-2 font-mono text-[11px] text-slate-100"></pre>
+              </div>
+            </section>
+          </div>
+        </div>
+      </aside>
     </main>
   </div>
 
@@ -349,6 +619,9 @@
       var toggleChat = document.getElementById('toggleChat');
       var ragDebugToggle = document.getElementById('ragDebugToggle');
       var chatHeaderToggle = document.getElementById('chatHeaderToggle');
+      var exitToDashboardBtn = document.getElementById('exitToDashboardBtn');
+      var endInterviewBtn = document.getElementById('endInterviewBtn');
+      var toggleCodingIde = document.getElementById('toggleCodingIde');
       var chatPanel = document.getElementById('chatPanel');
       var ragDebugPanel = document.getElementById('ragDebugPanel');
       var ragDebugFeed = document.getElementById('ragDebugFeed');
@@ -357,6 +630,22 @@
       var aiPulse = document.getElementById('aiPulse');
       var avatarStage = document.getElementById('avatarStage');
       var voiceVisualizer = document.getElementById('voiceVisualizer');
+      var codingDrawer = document.getElementById('codingDrawer');
+      var closeCodingDrawer = document.getElementById('closeCodingDrawer');
+      var codingLayoutCompact = document.getElementById('codingLayoutCompact');
+      var codingLayoutWide = document.getElementById('codingLayoutWide');
+      var codingTitle = document.getElementById('codingTitle');
+      var codingMeta = document.getElementById('codingMeta');
+      var codingPrompt = document.getElementById('codingPrompt');
+      var codingConstraints = document.getElementById('codingConstraints');
+      var codingVisibleTests = document.getElementById('codingVisibleTests');
+      var codingEditor = document.getElementById('codingEditor');
+      var runOutputBtn = document.getElementById('runOutputBtn');
+      var runCodingBtn = document.getElementById('runCodingBtn');
+      var submitCodingBtn = document.getElementById('submitCodingBtn');
+      var codingStatus = document.getElementById('codingStatus');
+      var codingResults = document.getElementById('codingResults');
+      var codingRunOutput = document.getElementById('codingRunOutput');
 
       var isUserTurn = true;
       var isMuted = false;
@@ -381,15 +670,44 @@
       var inactivityMs = 15000;
       var chunksCaptured = 0;
       var turnsPosted = 0;
+      var codingDrawerOpen = false;
+      var codingQuestionLoaded = false;
+      var shouldOfferCodingIde = false;
+      var technicalSolveGate = false;
+      var technicalSolved = false;
+      var codingGateReminderShown = false;
+      var browserTtsEnabled = true;
 
       var startApiUrl = "{% url 'live_interview_start_api' %}";
       var turnApiUrl = "{% url 'live_interview_turn_api' %}";
+      var codingQuestionApiUrl = "{% url 'live_interview_coding_question_api' %}";
+      var codingEvaluateApiUrl = "{% url 'live_interview_coding_evaluate_api' %}";
       var initialRole = "{{ prefill_role|default:'Software Engineer'|escapejs }}" || 'Software Engineer';
       var initialCompany = "{{ prefill_company|default:'Google'|escapejs }}" || 'Google';
       var initialDifficulty = "{{ prefill_difficulty|default:'Medium'|escapejs }}" || 'Medium';
       var initialType = "{{ prefill_type|default:'Technical'|escapejs }}" || 'Technical';
+      var initialRound = "{{ prefill_round|default:'technical'|escapejs }}" || 'technical';
       var initialMode = "{{ prefill_mode|default:'avatar'|escapejs }}" || 'avatar';
       var interviewMode = initialMode.toLowerCase() === 'voice' ? 'voice' : 'avatar';
+      var isFinalRound = initialRound.toLowerCase() === 'final';
+      var dashboardUrl = "{% url 'dashboard' %}";
+      var feedbackDashboardUrl = "{% url 'feedback_dashboard' %}";
+
+      if (exitToDashboardBtn) {
+        exitToDashboardBtn.addEventListener('click', function () {
+          window.location.href = dashboardUrl;
+        });
+      }
+
+      if (endInterviewBtn) {
+        endInterviewBtn.addEventListener('click', function () {
+          if (activeSessionId) {
+            window.location.href = feedbackDashboardUrl + '?session=' + encodeURIComponent(String(activeSessionId));
+            return;
+          }
+          window.location.href = feedbackDashboardUrl;
+        });
+      }
 
       function setVoiceVisualizerState(state) {
         if (!voiceVisualizer) return;
@@ -515,6 +833,249 @@
         }
       }
 
+      function setCodingStatus(text) {
+        if (codingStatus) codingStatus.textContent = text;
+      }
+
+      function isCodingGateActive() {
+        return !isFinalRound && technicalSolveGate && !technicalSolved;
+      }
+
+      function updateCodingIdeAvailability(shouldOffer, aiQuestionText) {
+        if (!toggleCodingIde) return;
+
+        if (isFinalRound) {
+          shouldOfferCodingIde = false;
+          toggleCodingIde.classList.add('hidden');
+          if (codingDrawerOpen) {
+            setCodingDrawerOpen(false);
+          }
+          setCodingStatus('Final round selected: IDE is disabled for this session.');
+          return;
+        }
+
+        toggleCodingIde.classList.remove('hidden');
+        shouldOfferCodingIde = true;
+
+        if (shouldOffer && aiQuestionText) {
+          setCodingStatus('Coding challenge detected. Open IDE to solve the problem.');
+        } else {
+          setCodingStatus('Technical round active: open IDE to solve coding questions.');
+        }
+      }
+
+      function setCodingBusy(isBusy) {
+        if (runOutputBtn) runOutputBtn.disabled = isBusy;
+        if (runCodingBtn) runCodingBtn.disabled = isBusy;
+        if (submitCodingBtn) submitCodingBtn.disabled = isBusy;
+      }
+
+      function resetCodingResults() {
+        if (!codingResults) return;
+        codingResults.innerHTML = '';
+      }
+
+      function resetCodingOutput() {
+        if (!codingRunOutput) return;
+        codingRunOutput.classList.add('hidden');
+        codingRunOutput.textContent = '';
+      }
+
+      function renderRunOutput(payload) {
+        if (!codingRunOutput) return;
+        var stdout = (payload && payload.stdout) ? String(payload.stdout) : '';
+        var stderr = (payload && payload.stderr) ? String(payload.stderr) : '';
+        var returnCode = (payload && typeof payload.returncode !== 'undefined') ? payload.returncode : 1;
+        var blocks = ['Exit code: ' + returnCode];
+        if (stdout) blocks.push('STDOUT:\n' + stdout);
+        if (stderr) blocks.push('STDERR:\n' + stderr);
+        if (!stdout && !stderr) blocks.push('No output produced. Add print(...) statements to inspect values.');
+        codingRunOutput.textContent = blocks.join('\n\n');
+        codingRunOutput.classList.remove('hidden');
+      }
+
+      function renderVisibleTests(tests) {
+        if (!codingVisibleTests) return;
+        codingVisibleTests.innerHTML = '';
+        if (!tests || !tests.length) {
+          var empty = document.createElement('span');
+          empty.className = 'text-xs text-gray-500';
+          empty.textContent = 'No visible tests provided.';
+          codingVisibleTests.appendChild(empty);
+          return;
+        }
+        tests.forEach(function (test, index) {
+          var pill = document.createElement('span');
+          pill.className = 'test-pill';
+          pill.textContent = 'T' + (index + 1) + ' args=' + JSON.stringify(test.args || []);
+          codingVisibleTests.appendChild(pill);
+        });
+      }
+
+      function applyCodingLayout(mode) {
+        if (!codingDrawer) return;
+        codingDrawer.classList.remove('compact', 'wide');
+        codingDrawer.classList.add(mode === 'wide' ? 'wide' : 'compact');
+        if (codingLayoutCompact) {
+          codingLayoutCompact.classList.toggle('active', mode === 'compact');
+        }
+        if (codingLayoutWide) {
+          codingLayoutWide.classList.toggle('active', mode === 'wide');
+        }
+      }
+
+      function setCodingDrawerOpen(isOpen) {
+        codingDrawerOpen = !!isOpen;
+        if (!codingDrawer || !toggleCodingIde) return;
+        codingDrawer.classList.toggle('open', codingDrawerOpen);
+        toggleCodingIde.classList.toggle('active', codingDrawerOpen);
+        toggleCodingIde.textContent = codingDrawerOpen ? 'Close IDE' : 'Code IDE';
+      }
+
+      function renderCodingEvaluation(payload) {
+        resetCodingResults();
+        if (!codingResults) return;
+
+        var summary = document.createElement('span');
+        var allPassed = !!payload.all_passed;
+        summary.className = 'test-pill ' + (allPassed ? 'pass' : 'fail');
+        summary.textContent = (allPassed ? 'PASS' : 'PARTIAL') + ' ' + payload.passed_count + '/' + payload.total_count;
+        codingResults.appendChild(summary);
+
+        var mode = document.createElement('span');
+        mode.className = 'test-pill';
+        mode.textContent = payload.action === 'submit' ? 'Full Evaluation' : 'Visible Tests';
+        codingResults.appendChild(mode);
+
+        var failed = payload.failed_tests || [];
+        for (var i = 0; i < failed.length; i += 1) {
+          var item = failed[i] || {};
+          var chip = document.createElement('span');
+          chip.className = 'test-pill fail';
+          var msg = item.error ? item.error : ('expected=' + JSON.stringify(item.expected) + ' actual=' + JSON.stringify(item.actual));
+          chip.textContent = 'T' + item.index + ': ' + msg;
+          codingResults.appendChild(chip);
+        }
+      }
+
+      function populateCodingQuestion(data) {
+        if (codingTitle) codingTitle.textContent = data.title || 'Coding Question';
+        if (codingMeta) codingMeta.textContent = (data.company || '') + ' | ' + (data.difficulty || '') + ' | ' + (data.selection_reason || 'AI selected question');
+        if (codingPrompt) codingPrompt.textContent = data.prompt || 'Solve the given coding problem.';
+        if (codingConstraints) codingConstraints.textContent = data.constraints || '';
+        if (codingEditor && (!codingEditor.value || !codingQuestionLoaded)) {
+          codingEditor.value = data.starter_code || '';
+        }
+        renderVisibleTests(data.visible_tests || []);
+      }
+
+      async function loadCodingQuestion() {
+        if (isFinalRound) {
+          setCodingStatus('Final round selected: coding IDE question pack is not used.');
+          return null;
+        }
+        if (!activeSessionId) {
+          setCodingStatus('Interview session is initializing. Please wait a moment.');
+          return null;
+        }
+
+        setCodingBusy(true);
+        setCodingStatus('Loading AI-selected coding question...');
+        try {
+          var response = await fetch(codingQuestionApiUrl + '?session_id=' + encodeURIComponent(String(activeSessionId)), {
+            method: 'GET',
+            headers: {
+              'X-CSRFToken': getCsrfToken()
+            }
+          });
+          var data = await response.json();
+          if (!response.ok || !data.ok) {
+            throw new Error(data.error || 'Failed to load coding question');
+          }
+          populateCodingQuestion(data);
+          codingQuestionLoaded = true;
+          resetCodingResults();
+          setCodingStatus('Question ready. Run visible tests first, then submit full evaluation.');
+          return data;
+        } catch (error) {
+          setCodingStatus(error && error.message ? error.message : 'Could not load coding question.');
+          return null;
+        } finally {
+          setCodingBusy(false);
+        }
+      }
+
+      async function evaluateCoding(action) {
+        if (!activeSessionId) {
+          setCodingStatus('Session not started yet.');
+          return;
+        }
+        if (!codingEditor || !codingEditor.value.trim()) {
+          setCodingStatus('Write code before evaluation.');
+          return;
+        }
+
+        setCodingBusy(true);
+        if (action === 'run_output') {
+          setCodingStatus('Running code and capturing stdout/stderr output...');
+        } else {
+          setCodingStatus(action === 'submit' ? 'Running full hidden + visible test suite...' : 'Running visible tests...');
+        }
+
+        try {
+          var response = await fetch(codingEvaluateApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+              session_id: activeSessionId,
+              action: action,
+              source_code: codingEditor.value
+            })
+          });
+          var data = await response.json();
+          if (!response.ok || !data.ok) {
+            throw new Error(data.error || 'Evaluation failed');
+          }
+          if (action === 'run_output') {
+            resetCodingResults();
+            renderRunOutput(data);
+            setCodingStatus(data.run_ok ? 'Code executed successfully.' : 'Code execution finished with errors.');
+          } else {
+            resetCodingOutput();
+            renderCodingEvaluation(data);
+            setCodingStatus(data.all_passed ? 'Great work. All tests passed.' : 'Some tests failed. Refine and run again.');
+            if (!isFinalRound && action === 'submit' && data.all_passed) {
+              technicalSolved = true;
+              technicalSolveGate = false;
+              codingGateReminderShown = false;
+              var followup = data.followup_mode || {};
+              var followupMsg = (followup && followup.enabled && followup.first_question)
+                ? String(followup.first_question)
+                : 'Excellent solution. You have cleared the coding task. We can continue with discussion questions now.';
+              appendTranscript('AI', followupMsg);
+              await speakAiText(followupMsg);
+              if (followup && followup.enabled) {
+                setPipelineStatus('Code-aware follow-up started. Answer based on your implementation choices.');
+              } else {
+                setPipelineStatus('Coding task solved. Hold to Speak is now enabled.');
+              }
+              setTurnState(true);
+            }
+          }
+        } catch (error) {
+          setCodingStatus(error && error.message ? error.message : 'Evaluation failed.');
+          resetCodingResults();
+          if (action === 'run_output') {
+            resetCodingOutput();
+          }
+        } finally {
+          setCodingBusy(false);
+        }
+      }
+
       function syncRagDebugState() {
         if (!ragDebugPanel || !ragDebugToggle) return;
         ragDebugPanel.classList.toggle('hidden', !isRagDebugOpen || !isChatOpen);
@@ -566,11 +1127,13 @@
 
       function updatePushToTalkState() {
         if (!holdToTalk) return;
-        var canTalk = isUserTurn && !isProcessing && !isMuted && !!stream && !!activeSessionId;
+        var blockedByCodingGate = isCodingGateActive();
+        var canTalk = isUserTurn && !isProcessing && !isMuted && !!stream && !!activeSessionId && !blockedByCodingGate;
         holdToTalk.classList.toggle('disabled', !canTalk);
         holdToTalk.classList.toggle('active', isPushTalking);
         if (!canTalk) {
-          holdToTalk.textContent = isMuted ? 'Unmute to Speak' : (isUserTurn ? 'Hold to Speak' : 'Wait for AI');
+          if (blockedByCodingGate) holdToTalk.textContent = 'Solve Coding Task First';
+          else holdToTalk.textContent = isMuted ? 'Unmute to Speak' : (isUserTurn ? 'Hold to Speak' : 'Wait for AI');
         } else {
           holdToTalk.textContent = isPushTalking ? 'Release to Send' : 'Hold to Speak';
         }
@@ -758,7 +1321,8 @@
             target_role: initialRole,
             target_company: initialCompany,
             difficulty: initialDifficulty,
-            interview_type: initialType
+            interview_type: initialType,
+            round: initialRound
           })
         });
 
@@ -768,11 +1332,35 @@
         }
 
         activeSessionId = data.session_id;
-        appendTranscript('AI', data.ai_question);
+        updateCodingIdeAvailability(!!data.should_offer_coding_ide, data.ai_question);
         renderRagDebug(data.debug_retrieval || []);
         updateLatencyFromTimings(data.timings);
-        setPipelineStatus('Interview live. Speak naturally in short 6-8 second chunks.');
         setDebugSignal('session started id=' + activeSessionId);
+
+        if (!isFinalRound) {
+          technicalSolveGate = true;
+          technicalSolved = false;
+          codingGateReminderShown = false;
+          setCodingDrawerOpen(true);
+          var codingData = await loadCodingQuestion();
+          if (codingData && codingData.prompt) {
+            var introMsg = 'Welcome to your technical round. Please solve this coding question before we continue: ' + codingData.prompt;
+            appendTranscript('AI', introMsg);
+            await speakAiText(introMsg);
+            setPipelineStatus('Technical round live. Solve the coding task in IDE, then submit full evaluation.');
+            setTurnState(false);
+            updatePushToTalkState();
+            return;
+          }
+          technicalSolveGate = false;
+        }
+
+        appendTranscript('AI', data.ai_question);
+        setPipelineStatus('Interview live. Speak naturally in short 6-8 second chunks.');
+
+        if (codingDrawerOpen && !codingQuestionLoaded) {
+          loadCodingQuestion();
+        }
 
         await playAiAudio(data.ai_audio_url, data.ai_lipsync_url);
         setTurnState(true);
@@ -861,6 +1449,17 @@
 
       async function sendTurn(audioBlob) {
         if (!activeSessionId) return;
+        if (isCodingGateActive()) {
+          setPipelineStatus('Solve and submit the coding question before speaking.');
+          if (!codingGateReminderShown) {
+            var gateMsg = 'Please complete the coding question in the IDE first. Submit full evaluation once all tests pass, then we will continue.';
+            appendTranscript('AI', gateMsg);
+            await speakAiText(gateMsg);
+            codingGateReminderShown = true;
+          }
+          setTurnState(false);
+          return;
+        }
         clearInactivityTimer();
         isProcessing = true;
         setTurnState(false);
@@ -891,6 +1490,7 @@
             aiQuestion = 'Why did you not answer? I did not catch your response. Please hold the button and speak again.';
           }
           appendTranscript('AI', aiQuestion);
+          updateCodingIdeAvailability(!!data.should_offer_coding_ide, aiQuestion);
           renderRagDebug(data.debug_retrieval || []);
           updateLatencyFromTimings(data.timings);
           setDebugSignal('turn #' + turnsPosted + ' completed');
@@ -952,6 +1552,33 @@
         }
       }
 
+      async function speakAiText(text) {
+        if (!browserTtsEnabled) return;
+        if (!text || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') return;
+        if (isMuted) return;
+
+        try {
+          if (interviewMode === 'voice') setVoiceVisualizerState('speaking');
+          if (avatar) avatar.setState('speaking');
+          window.speechSynthesis.cancel();
+
+          await new Promise(function (resolve) {
+            var utterance = new SpeechSynthesisUtterance(String(text));
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            utterance.onend = resolve;
+            utterance.onerror = resolve;
+            window.speechSynthesis.speak(utterance);
+          });
+        } catch (_) {
+          browserTtsEnabled = false;
+        } finally {
+          if (avatar) avatar.setState('idle');
+          if (interviewMode === 'voice') setVoiceVisualizerState('idle');
+        }
+      }
+
       toggleMic.addEventListener('click', function () {
         isMuted = !isMuted;
         syncMicState();
@@ -983,6 +1610,52 @@
       chatHeaderToggle.addEventListener('click', toggleChatPanel);
       ragDebugToggle.addEventListener('click', toggleRagDebugPanel);
 
+      if (toggleCodingIde) {
+        toggleCodingIde.addEventListener('click', function () {
+          var next = !codingDrawerOpen;
+          setCodingDrawerOpen(next);
+          if (next && !codingQuestionLoaded) {
+            loadCodingQuestion();
+          }
+        });
+      }
+
+      if (closeCodingDrawer) {
+        closeCodingDrawer.addEventListener('click', function () {
+          setCodingDrawerOpen(false);
+        });
+      }
+
+      if (codingLayoutCompact) {
+        codingLayoutCompact.addEventListener('click', function () {
+          applyCodingLayout('compact');
+        });
+      }
+
+      if (codingLayoutWide) {
+        codingLayoutWide.addEventListener('click', function () {
+          applyCodingLayout('wide');
+        });
+      }
+
+      if (runCodingBtn) {
+        runCodingBtn.addEventListener('click', function () {
+          evaluateCoding('run');
+        });
+      }
+
+      if (runOutputBtn) {
+        runOutputBtn.addEventListener('click', function () {
+          evaluateCoding('run_output');
+        });
+      }
+
+      if (submitCodingBtn) {
+        submitCodingBtn.addEventListener('click', function () {
+          evaluateCoding('submit');
+        });
+      }
+
       holdToTalk.addEventListener('mousedown', beginPushToTalk);
       holdToTalk.addEventListener('touchstart', function (e) {
         e.preventDefault();
@@ -1003,6 +1676,10 @@
       syncChatState();
       syncRagDebugState();
       applyInterviewerMode();
+      applyCodingLayout('compact');
+      setCodingDrawerOpen(false);
+      updateCodingIdeAvailability(false, '');
+      resetCodingOutput();
       updatePushToTalkState();
       setInterval(tickTimer, 1000);
 

@@ -21,6 +21,12 @@
       color: white;
       box-shadow: 0 8px 18px -14px rgba(79, 70, 229, 0.7);
     }
+    .round-card.active {
+      border-color: rgb(99 102 241);
+      background: rgb(238 242 255);
+      box-shadow: 0 10px 24px -18px rgba(79, 70, 229, 0.6);
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-900 flex min-h-screen">
@@ -42,6 +48,22 @@
         <form class="md:col-span-2 space-y-6" id="launchForm">
           <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
             <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 1</p>
+            <h2 class="text-xl font-semibold tracking-tight">Choose Interview Round</h2>
+            <div id="roundCards" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button type="button" class="round-card active rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md" data-round="technical" data-summary="Technical Coding" data-preview="Coding questions solved on IDE with AI evaluation.">
+                <p class="text-sm font-semibold text-gray-900">Technical Round</p>
+                <p class="mt-1 text-xs text-gray-600">Coding questions on Talvo IDE, evaluate with Run, tests, and AI feedback.</p>
+              </button>
+              <button type="button" class="round-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md" data-round="final" data-summary="Final Round" data-preview="Discussion-only interview. No IDE required.">
+                <p class="text-sm font-semibold text-gray-900">Final Round</p>
+                <p class="mt-1 text-xs text-gray-600">Leadership, communication, and decision-making round without coding IDE.</p>
+              </button>
+            </div>
+            <p id="roundPreviewText" class="text-sm text-gray-600">Coding questions solved on IDE with AI evaluation.</p>
+          </article>
+
+          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 2</p>
             <h2 class="text-xl font-semibold tracking-tight">Select Company</h2>
             <div id="companyCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <button type="button" class="company-card active rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Google" data-insight="Focus on algorithms and problem solving" data-questions="8" data-followup="High">
@@ -123,7 +145,7 @@
           </article>
 
           <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 2</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 3</p>
             <h2 class="text-xl font-semibold tracking-tight">Role and Context</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="md:col-span-2">
@@ -143,20 +165,18 @@
                 </select>
               </div>
               <div>
-                <label for="interviewType" class="text-sm font-medium text-gray-700">Software Interview Type</label>
-                <select id="interviewType" class="mt-1 w-full rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                  <option>Technical</option>
-                  <option>Coding</option>
-                  <option>System Design</option>
-                  <option>Debugging</option>
-                  <option>Behavioral</option>
+                <label for="interviewType" class="text-sm font-medium text-gray-700">Round Interview Type</label>
+                <select id="interviewType" disabled class="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                  <option>Technical Coding</option>
+                  <option>Final Round</option>
                 </select>
+                <p id="interviewTypeHint" class="mt-1 text-xs text-gray-500">Type is set automatically from selected round.</p>
               </div>
             </div>
           </article>
 
           <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 3</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 4</p>
             <h2 class="text-xl font-semibold tracking-tight">Difficulty</h2>
             <div class="rounded-xl border border-gray-200 bg-gray-50 p-1 grid grid-cols-3 gap-1">
               <button type="button" class="difficulty-pill rounded-lg bg-white px-3 py-2 text-sm font-medium transition-all duration-200" data-difficulty="Easy">Easy</button>
@@ -167,7 +187,7 @@
           </article>
 
           <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 4</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 5</p>
             <h2 class="text-xl font-semibold tracking-tight">Session Style</h2>
             <div>
               <div class="mb-2 flex items-center justify-between text-sm">
@@ -190,8 +210,8 @@
             </div>
           </article>
 
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 5</p>
+          <article id="modeStepCard" class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 6</p>
             <h2 class="text-xl font-semibold tracking-tight">Interviewer Mode</h2>
             <div id="modeButtons" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button type="button" class="mode-pill active rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-left transition-all duration-200" data-mode="avatar">
@@ -206,7 +226,7 @@
           </article>
 
           <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 6</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 7</p>
             <h2 class="text-xl font-semibold tracking-tight">Final Action</h2>
             <button id="startInterviewBtn" type="button" class="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-500 py-3.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(99,102,241,0.2)] transition-all duration-200 hover:opacity-90">Start Interview</button>
           </article>
@@ -276,9 +296,11 @@
   <script>
     (function () {
       var companyCards = Array.prototype.slice.call(document.querySelectorAll('.company-card'));
+      var roundCards = Array.prototype.slice.call(document.querySelectorAll('.round-card'));
       var customWrap = document.getElementById('customCompanyWrap');
       var customCompanySelect = document.getElementById('customCompanySelect');
       var customCompanyOther = document.getElementById('customCompanyOther');
+      var roundPreviewText = document.getElementById('roundPreviewText');
       var companyInsight = document.getElementById('companyInsight');
       var questionCount = document.getElementById('questionCount');
       var followupDepth = document.getElementById('followupDepth');
@@ -293,13 +315,55 @@
       var sessionLengthValue = document.getElementById('sessionLengthValue');
       var difficultyButtons = Array.prototype.slice.call(document.querySelectorAll('.difficulty-pill'));
       var modeButtons = Array.prototype.slice.call(document.querySelectorAll('.mode-pill'));
+      var modeStepCard = document.getElementById('modeStepCard');
       var interviewType = document.getElementById('interviewType');
+      var interviewTypeHint = document.getElementById('interviewTypeHint');
       var targetRoleInput = document.getElementById('targetRole');
       var startInterviewBtn = document.getElementById('startInterviewBtn');
 
       var topicChips = document.getElementById('topicChips');
       var topicInput = document.getElementById('topicInput');
       var setupReadinessChart = null;
+      var selectedRound = 'technical';
+
+      function setMode(mode) {
+        modeButtons.forEach(function (item) {
+          var isActive = item.getAttribute('data-mode') === mode;
+          item.classList.toggle('active', isActive);
+          item.classList.toggle('border-indigo-200', isActive);
+          item.classList.toggle('bg-indigo-50', isActive);
+          item.classList.toggle('border-gray-200', !isActive);
+          item.classList.toggle('bg-white', !isActive);
+          var title = item.querySelector('p');
+          if (title) {
+            title.classList.toggle('text-indigo-800', isActive);
+          }
+        });
+      }
+
+      function setRound(card) {
+        roundCards.forEach(function (item) {
+          item.classList.remove('active');
+        });
+        card.classList.add('active');
+
+        selectedRound = card.getAttribute('data-round') || 'technical';
+        var preview = card.getAttribute('data-preview') || '';
+        if (roundPreviewText) roundPreviewText.textContent = preview;
+
+        if (selectedRound === 'final') {
+          if (modeStepCard) modeStepCard.classList.remove('hidden');
+          interviewType.value = 'Final Round';
+          questionTypeLabel.textContent = 'Final Round';
+          if (interviewTypeHint) interviewTypeHint.textContent = 'Final round selected. IDE is disabled in live interview.';
+        } else {
+          if (modeStepCard) modeStepCard.classList.add('hidden');
+          setMode('voice');
+          interviewType.value = 'Technical Coding';
+          questionTypeLabel.textContent = 'Technical Coding';
+          if (interviewTypeHint) interviewTypeHint.textContent = 'Technical round selected. Coding IDE with AI evaluation is enabled.';
+        }
+      }
 
       function updateReadiness() {
         var diff = (difficultyBadge.textContent || '').trim();
@@ -360,6 +424,7 @@
       }
 
       function resolveSelectedMode() {
+        if (selectedRound === 'technical') return 'voice';
         var selected = modeButtons.find(function (btn) { return btn.classList.contains('active'); });
         return (selected && selected.getAttribute('data-mode')) || 'avatar';
       }
@@ -377,6 +442,13 @@
       companyCards.forEach(function (card) {
         card.addEventListener('click', function () {
           setCompany(card);
+        });
+      });
+
+      roundCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+          setRound(card);
+          updateReadiness();
         });
       });
 
@@ -403,17 +475,7 @@
 
       modeButtons.forEach(function (btn) {
         btn.addEventListener('click', function () {
-          modeButtons.forEach(function (item) {
-            item.classList.remove('active', 'border-indigo-200', 'bg-indigo-50');
-            item.classList.add('border-gray-200', 'bg-white');
-            var title = item.querySelector('p');
-            if (title) title.classList.remove('text-indigo-800');
-          });
-
-          btn.classList.add('active', 'border-indigo-200', 'bg-indigo-50');
-          btn.classList.remove('border-gray-200', 'bg-white');
-          var title = btn.querySelector('p');
-          if (title) title.classList.add('text-indigo-800');
+          setMode(btn.getAttribute('data-mode') || 'avatar');
         });
       });
 
@@ -470,7 +532,8 @@
             role: (targetRoleInput && targetRoleInput.value) ? targetRoleInput.value.trim() : 'Software Engineer',
             company: company,
             difficulty: difficulty,
-            type: interviewType.value,
+            type: selectedRound === 'final' ? 'Final Round' : 'Technical Coding',
+            round: selectedRound,
             mode: resolveSelectedMode()
           });
 
@@ -479,6 +542,7 @@
       }
 
       setCompany(companyCards[0]);
+      setRound(roundCards[0]);
       renderLength();
 
       var chartTarget = document.querySelector('#setupReadinessChart');

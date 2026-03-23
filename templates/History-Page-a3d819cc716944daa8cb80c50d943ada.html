@@ -90,7 +90,7 @@
               </div>
               <div class="mt-3 flex flex-wrap gap-2">
                 <a href="{% url 'replay_page' %}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200">Replay</a>
-                <a href="{% url 'feedback_dashboard' %}" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all duration-200">Feedback</a>
+                <a href="{% url 'feedback_dashboard' %}?session={{ item.id }}" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all duration-200">Feedback</a>
                 <button type="button" data-toggle="session-{{ item.id }}" class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-all duration-200">Open Analytics</button>
               </div>
             </div>
