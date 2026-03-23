@@ -20,6 +20,7 @@ urlpatterns = [
     path('feedback-dashboard/', views.feedback_dashboard, name='feedback_dashboard'),
     path('settings/', views.settings_page, name='settings_page'),
     path('profile/', views.profile_page, name='profile_page'),
+    path('results/', views.results_page, name='results_page'),
     path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
     path('terms-of-service/', views.terms_of_service, name='terms_of_service'),
     path('contact/', views.contact_page, name='contact_page'),

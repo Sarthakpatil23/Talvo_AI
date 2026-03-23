@@ -11,57 +11,132 @@
 <body class="bg-gray-50 text-gray-900 flex min-h-screen">
   {% include 'partials/sidebar.html' %}
   <div class="flex-1 min-w-0 flex flex-col min-h-screen">
-    <main class="max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
-      <header class="space-y-2">
-        <p class="text-sm text-gray-500 uppercase tracking-wide">Account</p>
-        <h1 class="text-3xl font-semibold tracking-tight">Profile</h1>
-        <p class="text-sm text-gray-600">Your personal details and interview preferences.</p>
+    <main class="max-w-7xl mx-auto w-full px-6 py-7 space-y-6">
+      <header class="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-500 p-6 text-white shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="space-y-1">
+            <p class="text-xs uppercase tracking-[0.14em] text-indigo-100">Account Overview</p>
+            <h1 class="text-3xl font-semibold tracking-tight">{{ request.user.get_full_name|default:request.user.username }}</h1>
+            <p class="text-sm text-indigo-50">{{ request.user.email|default:'No email on file' }}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-right text-xs sm:text-sm">
+            <div class="rounded-xl bg-white/15 px-3 py-2 backdrop-blur">
+              <p class="text-indigo-100">Member Since</p>
+              <p class="font-semibold text-white">{{ request.user.date_joined|date:'M Y' }}</p>
+            </div>
+            <div class="rounded-xl bg-white/15 px-3 py-2 backdrop-blur">
+              <p class="text-indigo-100">Profile Completion</p>
+              <p class="font-semibold text-white">{{ profile_completion }}%</p>
+            </div>
+          </div>
+        </div>
       </header>
 
-      <section class="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
-        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 class="text-lg font-bold text-gray-900">Basic Information</h2>
-          <dl class="mt-4 space-y-4 text-sm">
-            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-              <dt class="text-gray-500">Full Name</dt>
-              <dd class="font-medium text-gray-900 text-right">{{ request.user.get_full_name|default:'Not set' }}</dd>
-            </div>
-            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-              <dt class="text-gray-500">Email</dt>
-              <dd class="font-medium text-gray-900 text-right">{{ request.user.email|default:'Not set' }}</dd>
-            </div>
-            <div class="flex items-start justify-between gap-3">
-              <dt class="text-gray-500">Member Since</dt>
-              <dd class="font-medium text-gray-900 text-right">{{ request.user.date_joined|date:'M d, Y' }}</dd>
-            </div>
-          </dl>
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Sessions</p>
+          <p class="mt-1 text-2xl font-bold text-gray-900">{{ total_sessions }}</p>
         </article>
+        <article class="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-green-700">Completed</p>
+          <p class="mt-1 text-2xl font-bold text-green-800">{{ completed_sessions }}</p>
+        </article>
+        <article class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-amber-700">Active</p>
+          <p class="mt-1 text-2xl font-bold text-amber-800">{{ active_sessions }}</p>
+        </article>
+        <article class="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-indigo-700">Avg Turn Latency</p>
+          <p class="mt-1 text-2xl font-bold text-indigo-800">{{ avg_processing_ms }} ms</p>
+        </article>
+      </section>
 
-        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 class="text-lg font-bold text-gray-900">Interview Preferences</h2>
-          <dl class="mt-4 space-y-4 text-sm">
-            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-              <dt class="text-gray-500">Target Role</dt>
-              <dd class="font-medium text-gray-900 text-right">{{ profile.target_role|default:'Not set' }}</dd>
+      <section class="grid grid-cols-1 xl:grid-cols-[1.1fr_.9fr] gap-6">
+        <div class="space-y-6">
+          <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-bold text-gray-900">Basic Information</h2>
+            <dl class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <dt class="text-gray-500">Full Name</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ request.user.get_full_name|default:'Not set' }}</dd>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <dt class="text-gray-500">Email</dt>
+                <dd class="mt-1 font-medium text-gray-900 break-all">{{ request.user.email|default:'Not set' }}</dd>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <dt class="text-gray-500">Username</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ request.user.username }}</dd>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <dt class="text-gray-500">Joined</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ request.user.date_joined|date:'M d, Y' }}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-bold text-gray-900">Interview Preferences</h2>
+            <dl class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <dt class="text-gray-500">Target Role</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ profile.target_role|default:'Not set' }}</dd>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <dt class="text-gray-500">Experience Level</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ profile.get_experience_level_display|default:'Not set' }}</dd>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <dt class="text-gray-500">Target Company</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ profile.target_company|default:'Not set' }}</dd>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <dt class="text-gray-500">Interview Focus</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ profile.interview_focus|default:'Not set' }}</dd>
+              </div>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3 md:col-span-2">
+                <dt class="text-gray-500">Confidence Level</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ profile.confidence_level|default:'Not set' }}</dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+
+        <div class="space-y-6">
+          <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-bold text-gray-900">Recent Sessions</h2>
+              <span class="text-xs font-semibold text-gray-500">Latest 5</span>
             </div>
-            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-              <dt class="text-gray-500">Experience Level</dt>
-              <dd class="font-medium text-gray-900 text-right">{{ profile.get_experience_level_display|default:'Not set' }}</dd>
+            <div class="mt-4 space-y-3">
+              {% for session in recent_sessions %}
+                <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="text-sm font-semibold text-gray-900">{{ session.target_company }} - {{ session.interview_type }}</p>
+                    <span class="text-[11px] rounded-full px-2 py-0.5 {% if session.status == 'completed' %}bg-green-100 text-green-700{% elif session.status == 'active' %}bg-amber-100 text-amber-700{% else %}bg-rose-100 text-rose-700{% endif %}">{{ session.status|title }}</span>
+                  </div>
+                  <p class="mt-1 text-xs text-gray-600">{{ session.target_role }} | {{ session.difficulty }} | {{ session.started_at|date:'M d, h:i A' }}</p>
+                </div>
+              {% empty %}
+                <p class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">No interview sessions yet. Start one from Interview Setup.</p>
+              {% endfor %}
             </div>
-            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-              <dt class="text-gray-500">Target Company</dt>
-              <dd class="font-medium text-gray-900 text-right">{{ profile.target_company|default:'Not set' }}</dd>
+          </article>
+
+          <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-bold text-gray-900">Top Target Companies</h2>
+            <div class="mt-4 space-y-2">
+              {% for item in top_companies %}
+                <div class="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+                  <span class="font-medium text-gray-700">{{ item.target_company|default:'Unknown' }}</span>
+                  <span class="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">{{ item.total }} sessions</span>
+                </div>
+              {% empty %}
+                <p class="text-sm text-gray-500">No company trends yet.</p>
+              {% endfor %}
             </div>
-            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-              <dt class="text-gray-500">Interview Focus</dt>
-              <dd class="font-medium text-gray-900 text-right">{{ profile.interview_focus|default:'Not set' }}</dd>
-            </div>
-            <div class="flex items-start justify-between gap-3">
-              <dt class="text-gray-500">Confidence Level</dt>
-              <dd class="font-medium text-gray-900 text-right">{{ profile.confidence_level|default:'Not set' }}</dd>
-            </div>
-          </dl>
-        </article>
+          </article>
+        </div>
       </section>
     </main>
 

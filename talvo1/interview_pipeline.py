@@ -58,9 +58,9 @@ class InterviewPipeline:
         except Exception as exc:
             raise PipelineUnavailableError(f"groq import failed: {exc}") from exc
 
-        api_key = getattr(settings, 'GROQ_API_KEY', '')
-        if not api_key:
-            raise PipelineUnavailableError('Missing GROQ_API_KEY in environment/settings')
+        api_key = str(getattr(settings, 'GROQ_API_KEY', '') or '').strip()
+        if not api_key or api_key == 'your-groq-api-key':
+            raise PipelineUnavailableError('Missing or placeholder GROQ_API_KEY in .env. Set a real key and restart server.')
         return Groq(api_key=api_key)
 
     @staticmethod
@@ -169,15 +169,24 @@ class InterviewPipeline:
             retrieved_items=retrieved,
         )
 
-        result = self._groq.chat.completions.create(
-            model=model_name,
-            temperature=0.5,
-            max_tokens=220,
-            messages=[
-                {'role': 'system', 'content': prompt_bundle.system_prompt},
-                {'role': 'user', 'content': prompt_bundle.user_prompt},
-            ],
-        )
+        try:
+            result = self._groq.chat.completions.create(
+                model=model_name,
+                temperature=0.5,
+                max_tokens=220,
+                messages=[
+                    {'role': 'system', 'content': prompt_bundle.system_prompt},
+                    {'role': 'user', 'content': prompt_bundle.user_prompt},
+                ],
+            )
+        except Exception as exc:
+            message = str(exc)
+            lower_message = message.lower()
+            if 'invalid_api_key' in lower_message or 'invalid api key' in lower_message:
+                raise PipelineUnavailableError(
+                    'Invalid GROQ_API_KEY in .env. Replace it with a valid key and restart server.'
+                ) from exc
+            raise PipelineUnavailableError(f'Groq API request failed: {message}') from exc
 
         text = (result.choices[0].message.content or '').strip()
         parsed = self._parse_llm_json(text)
