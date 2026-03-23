@@ -152,7 +152,7 @@
               <a href="{% url 'replay_page' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Open replay evidence</a>
             </div>
             <div class="chart-shell mt-4">
-              <div id="feedbackRadarChart" class="h-56 sm:h-48 w-full rounded-xl"></div>
+              <div id="feedbackRadarChart" class="h-72 sm:h-80 w-full rounded-xl"></div>
             </div>
             <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:px-4 sm:py-3.5">
               <p class="text-xs uppercase tracking-wide text-gray-500">Coach Summary</p>
@@ -218,33 +218,100 @@
             var radarCurrent = radarCurrentEl ? JSON.parse(radarCurrentEl.textContent || '[]') : [0, 0, 0, 0, 0];
             var radarTarget = radarTargetEl ? JSON.parse(radarTargetEl.textContent || '[]') : [0, 0, 0, 0, 0];
             var focusPayload = focusPayloadEl ? JSON.parse(focusPayloadEl.textContent || '{}') : {};
+            var categoryLabels = ['Communication', 'Confidence', 'Technical Depth', 'Clarity', 'Delivery'];
+            var allScoreValues = (radarCurrent || []).concat(radarTarget || []).filter(function (v) {
+              return typeof v === 'number' && !isNaN(v);
+            });
+            var minScore = allScoreValues.length ? Math.min.apply(null, allScoreValues) : 0;
+            var maxScore = allScoreValues.length ? Math.max.apply(null, allScoreValues) : 100;
+            var xAxisMin = Math.max(0, Math.floor((minScore - 12) / 5) * 5);
+            var xAxisMax = Math.min(100, Math.ceil((maxScore + 8) / 5) * 5);
+            if (xAxisMax - xAxisMin < 30) {
+              xAxisMax = Math.min(100, xAxisMin + 30);
+            }
 
             var feedbackRadar = new ApexCharts(chartTarget, {
               chart: {
-                type: 'radar',
+                type: 'bar',
                 height: '100%',
-                toolbar: { show: false }
+                toolbar: { show: false },
+                animations: { easing: 'easeinout', speed: 450 },
+                events: {
+                  dataPointSelection: function (event, chartContext, opts) {
+                    var map = ['communication', 'delivery', 'technical', 'communication', 'delivery'];
+                    var targetFocus = map[opts.dataPointIndex] || 'overview';
+                    setFocus(targetFocus);
+                  }
+                }
               },
               series: [
                 { name: 'Current', data: radarCurrent },
                 { name: 'Target', data: radarTarget }
               ],
-              labels: ['Communication', 'Confidence', 'Technical Depth', 'Clarity', 'Delivery'],
+              xaxis: {
+                categories: categoryLabels,
+                min: xAxisMin,
+                max: xAxisMax,
+                tickAmount: 5,
+                labels: {
+                  style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 },
+                  formatter: function (val) { return Math.round(val) + '%'; }
+                },
+                axisBorder: { color: '#e2e8f0' }
+              },
+              yaxis: {
+                labels: { style: { colors: '#334155', fontSize: '12px', fontWeight: 600 } }
+              },
               colors: ['#4f46e5', '#22c55e'],
-              fill: { opacity: 0.2 },
-              stroke: { width: 2 },
-              markers: { size: 3, strokeWidth: 2, strokeColors: '#fff' },
-              yaxis: { min: 40, max: 100, tickAmount: 3, labels: { show: false } },
-              xaxis: { labels: { style: { colors: '#6b7280', fontSize: '11px' } } },
-              tooltip: { y: { formatter: function (val) { return val + '%'; } } },
+              plotOptions: {
+                bar: {
+                  horizontal: true,
+                  borderRadius: 7,
+                  borderRadiusApplication: 'end',
+                  barHeight: '58%',
+                  dataLabels: { position: 'right' }
+                }
+              },
+              stroke: { width: 0 },
+              fill: {
+                type: 'gradient',
+                gradient: {
+                  shade: 'light',
+                  type: 'horizontal',
+                  shadeIntensity: 0.35,
+                  opacityFrom: 0.95,
+                  opacityTo: 0.78,
+                  stops: [0, 100]
+                }
+              },
+              dataLabels: {
+                enabled: true,
+                style: { colors: ['#0f172a'], fontWeight: 700, fontSize: '11px' },
+                formatter: function (val) { return Math.round(val) + '%'; }
+              },
+              tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                  formatter: function (val) { return Math.round(val) + '%'; }
+                }
+              },
+              grid: {
+                borderColor: '#e2e8f0',
+                strokeDashArray: 4,
+                xaxis: { lines: { show: true } }
+              },
               legend: {
                 show: true,
                 position: 'top',
                 horizontalAlign: 'right',
                 labels: { colors: '#4b5563' },
-                markers: { radius: 8 }
+                markers: { radius: 10 }
               },
-              plotOptions: { radar: { polygons: { strokeColors: '#e5e7eb', fill: { colors: ['#ffffff', '#f8fafc'] } } } }
+              states: {
+                hover: { filter: { type: 'lighten', value: 0.05 } },
+                active: { filter: { type: 'darken', value: 0.05 } }
+              }
             });
             feedbackRadar.render();
 

@@ -292,6 +292,7 @@ class InterviewPipeline:
         user_audio_path: str,
         ai_audio_relpath: str,
         is_first_turn: bool,
+        user_transcript_override: str = '',
         include_resume: bool = False,
         resume_context: str = '',
     ) -> PipelineOutput:
@@ -305,8 +306,12 @@ class InterviewPipeline:
         stt_result = {'transcript': '', 'confidence': 1.0, 'decode_mode': '', 'language': ''}
         user_transcript = ''
         if not is_first_turn:
-            stt_result = self.transcribe(user_audio_path)
-            user_transcript = str(stt_result.get('transcript', '') or '').strip()
+            override = str(user_transcript_override or '').strip()
+            if override:
+                user_transcript = override
+            else:
+                stt_result = self.transcribe(user_audio_path)
+                user_transcript = str(stt_result.get('transcript', '') or '').strip()
         stt_confidence = float(stt_result.get('confidence', 0.0) or 0.0)
         whisper_ms = int((time.perf_counter() - whisper_start) * 1000)
 
