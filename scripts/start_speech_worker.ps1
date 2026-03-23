@@ -1,10 +1,16 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$py = 'C:/TALVO/voiceenv311/Scripts/python.exe'
+$pythonCandidates = @(
+    'C:/TALVO/voiceenv311/Scripts/python.exe',
+    (Join-Path (Split-Path -Parent $root) '.venv/Scripts/python.exe'),
+    (Join-Path $root '.venv/Scripts/python.exe')
+)
 
-if (-not (Test-Path $py)) {
-    Write-Error "Python 3.11 speech environment not found at $py"
+$py = $pythonCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+if (-not $py) {
+    Write-Error "No Python environment found for speech worker. Checked: $($pythonCandidates -join ', ')"
 }
 
 $envFile = Join-Path $root '.env'
