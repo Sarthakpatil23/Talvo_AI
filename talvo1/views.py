@@ -211,6 +211,40 @@ def _extract_structured_pdf_text(raw_bytes: bytes, max_chars: int) -> str:
 	return '\n'.join(ordered).strip()[:max_chars]
 
 
+def _normalize_extracted_text(text: str, max_chars: int) -> str:
+	if not text:
+		return ''
+	clean = str(text).replace('\x00', ' ').replace('\ufeff', ' ')
+	clean = re.sub(r'[\u200b-\u200f\u2060]', '', clean)
+	clean = clean.replace('\r\n', '\n').replace('\r', '\n')
+	clean = re.sub(r'[ \t\f\v]+', ' ', clean)
+	clean = re.sub(r'\n{3,}', '\n\n', clean)
+	return clean.strip()[:max_chars]
+
+
+def _text_quality_score(text: str) -> int:
+	if not text:
+		return 0
+	normalized = str(text)
+	alnum_count = sum(1 for ch in normalized if ch.isalnum())
+	word_count = len(re.findall(r'[A-Za-z0-9][A-Za-z0-9+#./-]*', normalized))
+	line_count = len([ln for ln in normalized.splitlines() if ln.strip()])
+	# Prioritize candidates with actual words, not sparse glyph output.
+	return (alnum_count * 3) + (word_count * 10) + (line_count * 4)
+
+
+def _pick_best_text(candidates, max_chars: int) -> str:
+	best_text = ''
+	best_score = 0
+	for raw in candidates:
+		candidate = _normalize_extracted_text(raw, max_chars)
+		score = _text_quality_score(candidate)
+		if score > best_score:
+			best_score = score
+			best_text = candidate
+	return best_text
+
+
 def _extract_resume_text(upload) -> str:
 	if not upload:
 		return ''
@@ -226,7 +260,7 @@ def _extract_resume_text(upload) -> str:
 		else:
 			text = str(raw)
 		upload.seek(0)
-		return text.strip()[:max_chars]
+		return _normalize_extracted_text(text, max_chars)
 
 	if ext == '.pdf':
 		try:
@@ -234,9 +268,9 @@ def _extract_resume_text(upload) -> str:
 			upload.seek(0)
 			if not isinstance(raw, bytes):
 				raw = bytes(raw or b'')
+			candidates = []
 
-			# Primary extractor for PDFs: handles many resume layouts better.
-			text = ''
+			# 1) pdfplumber: strong on many resume templates.
 			try:
 				import pdfplumber
 				chunks = []
@@ -244,34 +278,69 @@ def _extract_resume_text(upload) -> str:
 					for page in pdf.pages:
 						page_text = (page.extract_text() or '').strip()
 						if page_text:
-							chunks.append(page_text.replace('\x00', ' '))
-				text = '\n'.join(chunks).strip()[:max_chars]
+							chunks.append(page_text)
+						layout_text = (page.extract_text(layout=True) or '').strip()
+						if layout_text and layout_text != page_text:
+							chunks.append(layout_text)
+				if chunks:
+					candidates.append('\n'.join(chunks))
 			except Exception:
-				text = ''
+				pass
 
-			if text:
-				upload.seek(0)
-				return text
-
-			from pypdf import PdfReader
-			reader = PdfReader(io.BytesIO(raw))
-			chunks = []
-			for page in reader.pages:
-				page_text = ''
-				try:
-					page_text = (page.extract_text() or '').strip()
-				except Exception:
+			# 2) pypdf: fallback for documents where pdfplumber under-extracts.
+			try:
+				from pypdf import PdfReader
+				reader = PdfReader(io.BytesIO(raw))
+				chunks = []
+				for page in reader.pages:
 					page_text = ''
-				if not page_text:
 					try:
-						page_text = (page.extract_text(extraction_mode='layout') or '').strip()
+						page_text = (page.extract_text() or '').strip()
 					except Exception:
 						page_text = ''
-				if page_text:
-					chunks.append(page_text.replace('\x00', ' '))
-			text = '\n'.join(x for x in chunks if x).strip()[:max_chars]
-			if not text:
-				text = _extract_structured_pdf_text(raw, max_chars)
+					if not page_text:
+						try:
+							page_text = (page.extract_text(extraction_mode='layout') or '').strip()
+						except Exception:
+							page_text = ''
+					if page_text:
+						chunks.append(page_text)
+				if chunks:
+					candidates.append('\n'.join(chunks))
+			except Exception:
+				pass
+
+			# 3) PyMuPDF: catches PDFs where pypdf/pdfplumber miss text ordering.
+			try:
+				import fitz  # PyMuPDF
+				doc = fitz.open(stream=raw, filetype='pdf')
+				chunks = []
+				for page in doc:
+					text_page = (page.get_text('text') or '').strip()
+					if text_page:
+						chunks.append(text_page)
+					block_text = (page.get_text('blocks') or [])
+					if block_text:
+						block_lines = []
+						for block in block_text:
+							if isinstance(block, (list, tuple)) and len(block) >= 5:
+								val = str(block[4] or '').strip()
+								if val:
+									block_lines.append(val)
+						if block_lines:
+							chunks.append('\n'.join(block_lines))
+				doc.close()
+				if chunks:
+					candidates.append('\n'.join(chunks))
+			except Exception:
+				pass
+
+			# 4) Low-level tagged PDF fallback.
+			structured = _extract_structured_pdf_text(raw, max_chars)
+			if structured:
+				candidates.append(structured)
+
+			text = _pick_best_text(candidates, max_chars)
 			upload.seek(0)
 			return text
 		except Exception:
@@ -284,7 +353,7 @@ def _extract_resume_text(upload) -> str:
 			doc = Document(upload)
 			lines = [p.text.strip() for p in doc.paragraphs if (p.text or '').strip()]
 			upload.seek(0)
-			return '\n'.join(lines).strip()[:max_chars]
+			return _normalize_extracted_text('\n'.join(lines), max_chars)
 		except Exception:
 			upload.seek(0)
 			return ''
@@ -296,7 +365,7 @@ def _extract_resume_text(upload) -> str:
 		else:
 			text = str(raw)
 		upload.seek(0)
-		return text.strip()[:max_chars]
+		return _normalize_extracted_text(text, max_chars)
 	except Exception:
 		try:
 			upload.seek(0)
@@ -1567,16 +1636,20 @@ def live_interview_turn_api(request):
 		return JsonResponse({'ok': False, 'error': 'Interview session not found'}, status=404)
 
 	upload = request.FILES.get('audio')
-	if upload is None:
-		return JsonResponse({'ok': False, 'error': 'audio file is required'}, status=400)
+	user_text = str(request.POST.get('user_text', '') or '').strip()
+	if upload is None and not user_text:
+		return JsonResponse({'ok': False, 'error': 'audio file or user_text is required'}, status=400)
 
 	next_turn_index = (session.turns.order_by('-turn_index').values_list('turn_index', flat=True).first() or 0) + 1
 	user_rel, ai_rel = _build_audio_paths(session, next_turn_index)
 	user_audio_abs = Path(settings.MEDIA_ROOT) / user_rel
-	user_audio_abs.parent.mkdir(parents=True, exist_ok=True)
-	with user_audio_abs.open('wb+') as destination:
-		for chunk in upload.chunks():
-			destination.write(chunk)
+	if upload is not None:
+		user_audio_abs.parent.mkdir(parents=True, exist_ok=True)
+		with user_audio_abs.open('wb+') as destination:
+			for chunk in upload.chunks():
+				destination.write(chunk)
+	else:
+		user_rel = ''
 
 	history = _session_history(session)
 	pipeline = InterviewPipeline.instance()
@@ -1585,11 +1658,14 @@ def live_interview_turn_api(request):
 		questions = followup_state.get('questions') or []
 		next_index = int(followup_state.get('next_index', 0) or 0)
 		if next_index < len(questions):
-			try:
-				stt_result = pipeline.transcribe(str(user_audio_abs))
-			except Exception:
-				stt_result = {'transcript': '', 'confidence': 0.0}
-			user_transcript = str(stt_result.get('transcript', '') or '').strip()
+			if user_text:
+				user_transcript = user_text
+			else:
+				try:
+					stt_result = pipeline.transcribe(str(user_audio_abs))
+				except Exception:
+					stt_result = {'transcript': '', 'confidence': 0.0}
+				user_transcript = str(stt_result.get('transcript', '') or '').strip()
 
 			ai_question = str(questions[next_index]).strip()
 			ai_feedback = 'Code follow-up mode: focus on algorithm, complexity, and correctness from your implementation.'
@@ -1650,9 +1726,10 @@ def live_interview_turn_api(request):
 			difficulty=session.difficulty,
 			interview_type=session.interview_type,
 			history=history,
-			user_audio_path=str(user_audio_abs),
+			user_audio_path=str(user_audio_abs) if upload is not None else '',
 			ai_audio_relpath=ai_rel,
 			is_first_turn=False,
+			user_transcript_override=user_text,
 			include_resume=session.include_resume,
 			resume_context=session.resume_context,
 		)
@@ -1815,6 +1892,12 @@ def settings_page(request):
 	upload_error = ''
 	has_resume_file = bool(profile.resume_file)
 
+	# Auto-retry extraction on previously uploaded files that have empty cached text.
+	if has_resume_file and not (profile.resume_text or '').strip():
+		recovered = _refresh_resume_text_from_saved_file(profile)
+		if recovered:
+			upload_message = 'Resume text extracted successfully from your existing uploaded file.'
+
 	if request.method == 'POST':
 		action = str(request.POST.get('resume_action') or 'upload').strip().lower()
 		if action == 'delete':
@@ -1827,7 +1910,14 @@ def settings_page(request):
 			upload_message = 'Resume deleted. You can upload a new resume now.'
 		else:
 			if has_resume_file:
-				upload_error = 'Resume already uploaded. Delete existing resume before uploading a new one.'
+				if not (profile.resume_text or '').strip():
+					recovered = _refresh_resume_text_from_saved_file(profile)
+					if recovered:
+						upload_message = 'Resume already uploaded. Text extraction has now been recovered successfully.'
+					else:
+						upload_error = 'Resume already uploaded and extraction is still empty. Delete it once and re-upload after this update.'
+				else:
+					upload_error = 'Resume already uploaded. Delete existing resume before uploading a new one.'
 			else:
 				resume_file = request.FILES.get('resume_file')
 				if not resume_file:

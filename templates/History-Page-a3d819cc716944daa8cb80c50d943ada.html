@@ -8,49 +8,147 @@
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background:
+        radial-gradient(circle at 8% 4%, rgba(79, 70, 229, 0.12), transparent 28%),
+        radial-gradient(circle at 84% 18%, rgba(14, 165, 233, 0.1), transparent 24%),
+        #f8fafc;
+    }
     .session-panel { display: none; }
     .session-panel.open { display: block; }
+    .glass-panel {
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+      backdrop-filter: blur(7px);
+    }
+    .history-signal {
+      border: 1px solid rgb(226 232 240);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      box-shadow: 0 18px 36px -30px rgba(15, 23, 42, 0.45);
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+    .history-signal:hover {
+      transform: translateY(-2px);
+      border-color: rgb(199 210 254);
+      box-shadow: 0 22px 42px -30px rgba(79, 70, 229, 0.4);
+    }
+    .history-filter {
+      border: 1px solid rgb(226 232 240);
+      background: white;
+      color: rgb(71 85 105);
+      transition: all 160ms ease;
+    }
+    .history-filter.active {
+      background: rgb(224 231 255);
+      border-color: rgb(99 102 241);
+      color: rgb(49 46 129);
+      box-shadow: 0 10px 18px -16px rgba(79, 70, 229, 0.75);
+    }
+    .session-item {
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+    .session-item:hover {
+      transform: translateY(-2px);
+      border-color: rgb(199 210 254);
+      box-shadow: 0 20px 38px -30px rgba(15, 23, 42, 0.45);
+    }
+    .session-score-meter {
+      position: relative;
+      overflow: hidden;
+    }
+    .session-score-meter::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, rgba(255, 255, 255, 0.12) 10%, rgba(255, 255, 255, 0.42) 26%, rgba(255, 255, 255, 0.1) 42%);
+      animation: shimmer 2.2s linear infinite;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-140%); }
+      100% { transform: translateX(140%); }
+    }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-900 flex min-h-screen">
   {% include 'partials/sidebar.html' %}
   <div class="flex-1 min-w-0 flex flex-col min-h-screen">
+    {% if total_sessions > 0 %}
+      {% widthratio status_distribution.completed total_sessions 100 as completion_rate %}
+    {% else %}
+      {% with 0 as completion_rate %}{% endwith %}
+    {% endif %}
     <main class="max-w-7xl mx-auto w-full px-6 py-7 space-y-6">
-      <header class="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-700 via-indigo-600 to-cyan-500 p-6 text-white shadow-sm">
+      <header class="rounded-3xl border border-indigo-200 bg-gradient-to-br from-indigo-700 via-indigo-600 to-cyan-500 p-6 text-white shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p class="text-xs uppercase tracking-[0.14em] text-indigo-100">Performance and History</p>
-            <h1 class="mt-1 text-3xl font-semibold tracking-tight">Track progress, replay sessions, review insights</h1>
-            <p class="mt-2 text-sm text-indigo-50">Overall performance first, then full history with detailed analytics and feedback trails.</p>
+            <h1 class="mt-1 text-3xl font-semibold tracking-tight">Your interview growth cockpit</h1>
+            <p class="mt-2 text-sm text-indigo-50 max-w-3xl">See momentum, identify weak spots, replay key moments, and get concrete next actions from every session.</p>
           </div>
-          <div class="rounded-2xl border border-white/25 bg-white/15 px-5 py-4 text-right backdrop-blur-sm">
-            <p class="text-xs uppercase tracking-wide text-indigo-100">Overall Score</p>
+          <div class="glass-panel rounded-2xl px-5 py-4 text-right">
+            <p class="text-xs uppercase tracking-wide text-indigo-100">Overall Performance</p>
             <p class="mt-1 text-4xl font-bold">{{ overall_score }}</p>
-            <p class="text-xs text-indigo-100">Across {{ total_sessions }} sessions</p>
+            <p class="text-xs text-indigo-100">Across {{ total_sessions }} sessions • {{ completion_rate|default:'0' }}% completed</p>
+          </div>
+        </div>
+        <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="glass-panel rounded-xl px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wide text-indigo-100">Completed Sessions</p>
+            <p class="mt-1 text-2xl font-bold">{{ status_distribution.completed }}</p>
+          </div>
+          <div class="glass-panel rounded-xl px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wide text-indigo-100">Active in Progress</p>
+            <p class="mt-1 text-2xl font-bold">{{ status_distribution.active }}</p>
+          </div>
+          <div class="glass-panel rounded-xl px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wide text-indigo-100">Needs Review</p>
+            <p class="mt-1 text-2xl font-bold">{{ status_distribution.aborted }}</p>
           </div>
         </div>
       </header>
 
-      <section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Completed</p>
-          <p class="mt-1 text-2xl font-bold text-green-700">{{ status_distribution.completed }}</p>
+      <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <article class="history-signal rounded-2xl p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Best Session Score</p>
+          <p id="bestSessionScore" class="mt-1 text-2xl font-bold text-indigo-700">--</p>
+          <p class="mt-1 text-xs text-gray-500">Highest quality signal in your history</p>
         </article>
-        <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Active</p>
-          <p class="mt-1 text-2xl font-bold text-amber-700">{{ status_distribution.active }}</p>
+        <article class="history-signal rounded-2xl p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Completion Health</p>
+          <p id="completionHealth" class="mt-1 text-2xl font-bold text-emerald-700">--</p>
+          <p class="mt-1 text-xs text-gray-500">Tracks how many sessions reach completion</p>
         </article>
-        <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Aborted</p>
-          <p class="mt-1 text-2xl font-bold text-rose-700">{{ status_distribution.aborted }}</p>
+        <article class="history-signal rounded-2xl p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500">AI Coach Pulse</p>
+          <p id="coachPulseTitle" class="mt-1 text-lg font-bold text-gray-900">--</p>
+          <p id="coachPulseBody" class="mt-1 text-xs text-gray-600">--</p>
         </article>
       </section>
 
       <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold tracking-tight">Session Bars, Replay, Feedback, Analytics</h2>
-          <span class="text-xs font-medium text-gray-500">Use search, then open session cards for deeper analysis</span>
+          <h2 class="text-lg font-semibold tracking-tight">Session Timeline, Insights, and Replay Intelligence</h2>
+          <span class="text-xs font-medium text-gray-500">Filter by status, sort by impact, and drill into analytics instantly</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" data-status="all" class="history-filter active rounded-full px-3 py-1.5 text-xs font-semibold">All</button>
+          <button type="button" data-status="completed" class="history-filter rounded-full px-3 py-1.5 text-xs font-semibold">Completed</button>
+          <button type="button" data-status="active" class="history-filter rounded-full px-3 py-1.5 text-xs font-semibold">Active</button>
+          <button type="button" data-status="aborted" class="history-filter rounded-full px-3 py-1.5 text-xs font-semibold">Aborted</button>
+
+          <div class="ml-auto w-full sm:w-auto">
+            <select id="sessionSortSelect" class="w-full sm:w-auto rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="recent">Sort: Most Recent</option>
+              <option value="score_desc">Sort: Highest Score</option>
+              <option value="score_asc">Sort: Lowest Score</option>
+              <option value="latency_asc">Sort: Fastest Responses</option>
+              <option value="latency_desc">Sort: Slowest Responses</option>
+            </select>
+          </div>
         </div>
 
         <div class="relative">
@@ -69,24 +167,33 @@
           No sessions matched your search.
         </p>
 
+        <div id="sessionList" class="space-y-3">
         {% for item in session_cards %}
           <article
-            class="session-item rounded-xl border border-gray-200 bg-gray-50/80"
+            class="session-item rounded-2xl border border-gray-200 bg-gray-50/80"
             data-search="{{ item.title|lower }} {{ item.role|lower }} {{ item.difficulty|lower }} {{ item.status|lower }} {{ item.started_at|date:'M d, Y h:i A'|lower }}"
+            data-status="{{ item.status|lower }}"
+            data-score="{{ item.session_score }}"
+            data-latency="{{ item.avg_latency }}"
+            data-start="{{ item.started_at|date:'U' }}"
           >
             <div class="px-4 py-4">
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p class="text-sm font-semibold text-gray-900">{{ item.title }}</p>
                   <p class="mt-1 text-xs text-gray-500">{{ item.role }} | {{ item.difficulty }} | {{ item.started_at|date:'M d, Y h:i A' }}</p>
+                  <div class="mt-2 flex flex-wrap gap-1.5">
+                    <span class="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-medium text-gray-600">{{ item.turn_count }} turns</span>
+                    <span class="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">{{ item.difficulty }}</span>
+                  </div>
                 </div>
                 <div class="text-right">
                   <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold {% if item.status == 'completed' %}bg-green-100 text-green-700{% elif item.status == 'active' %}bg-amber-100 text-amber-700{% else %}bg-rose-100 text-rose-700{% endif %}">{{ item.status|title }}</span>
                   <p class="mt-1 text-sm font-bold text-indigo-700">Score {{ item.session_score }}/100</p>
                 </div>
               </div>
-              <div class="mt-3 h-2.5 w-full rounded-full bg-gray-200 overflow-hidden">
-                <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500" style="width: {{ item.session_score }}%;"></div>
+              <div class="session-score-meter mt-3 h-2.5 w-full rounded-full bg-gray-200 overflow-hidden">
+                <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 via-violet-500 to-cyan-500" style="width: {{ item.session_score }}%;"></div>
               </div>
               <div class="mt-3 flex flex-wrap gap-2">
                 <a href="{% url 'replay_page' %}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200">Replay</a>
@@ -101,7 +208,7 @@
                   <div class="rounded-xl border border-gray-200 bg-white p-3">
                     <p class="text-xs uppercase tracking-wide text-gray-500">Session Review</p>
                     <p class="mt-1 text-sm text-gray-700">{{ item.review_text }}</p>
-                    <p class="mt-2 text-xs text-gray-500">Turns: {{ item.turn_count }} | Avg latency: {{ item.avg_latency }} ms</p>
+                    <p class="mt-2 text-xs text-gray-500">Turns: {{ item.turn_count }}</p>
                   </div>
                   <div class="rounded-xl border border-gray-200 bg-white p-3">
                     <p class="text-xs uppercase tracking-wide text-gray-500">Feedback Highlights</p>
@@ -132,6 +239,7 @@
             <p class="text-sm text-gray-600">No interview sessions found yet. Start an interview to see analytics here.</p>
           </article>
         {% endfor %}
+        </div>
       </section>
     </main>
 
@@ -143,19 +251,93 @@
         var sessionSearchInput = document.getElementById('sessionSearchInput');
         var sessionSearchEmpty = document.getElementById('sessionSearchEmpty');
         var sessionItems = Array.prototype.slice.call(document.querySelectorAll('.session-item'));
+        var statusButtons = Array.prototype.slice.call(document.querySelectorAll('[data-status]'));
+        var sortSelect = document.getElementById('sessionSortSelect');
+        var sessionList = document.getElementById('sessionList');
+        var bestSessionScore = document.getElementById('bestSessionScore');
+        var completionHealth = document.getElementById('completionHealth');
+        var coachPulseTitle = document.getElementById('coachPulseTitle');
+        var coachPulseBody = document.getElementById('coachPulseBody');
         var chartDataEl = document.getElementById('resultsChartData');
         var chartData = chartDataEl ? JSON.parse(chartDataEl.textContent || '[]') : [];
         var chartMap = {};
         var rendered = {};
+        var activeStatusFilter = 'all';
+
+        function parseNum(value, fallback) {
+          var n = Number(value);
+          return isNaN(n) ? fallback : n;
+        }
+
+        function sortSessionItems() {
+          if (!sessionList || !sortSelect || !sessionItems.length) return;
+          var mode = sortSelect.value || 'recent';
+          var items = sessionItems.slice();
+
+          items.sort(function (a, b) {
+            var aScore = parseNum(a.getAttribute('data-score'), 0);
+            var bScore = parseNum(b.getAttribute('data-score'), 0);
+            var aLatency = parseNum(a.getAttribute('data-latency'), 0);
+            var bLatency = parseNum(b.getAttribute('data-latency'), 0);
+            var aStart = parseNum(a.getAttribute('data-start'), 0);
+            var bStart = parseNum(b.getAttribute('data-start'), 0);
+
+            if (mode === 'score_desc') return bScore - aScore;
+            if (mode === 'score_asc') return aScore - bScore;
+            if (mode === 'latency_asc') return aLatency - bLatency;
+            if (mode === 'latency_desc') return bLatency - aLatency;
+            return bStart - aStart;
+          });
+
+          items.forEach(function (item) { sessionList.appendChild(item); });
+        }
+
+        function updateSignals(visibleItems) {
+          if (!visibleItems.length) {
+            if (bestSessionScore) bestSessionScore.textContent = '--';
+            if (completionHealth) completionHealth.textContent = '--';
+            if (coachPulseTitle) coachPulseTitle.textContent = 'No sessions in view';
+            if (coachPulseBody) coachPulseBody.textContent = 'Change filters or search to inspect another group of sessions.';
+            return;
+          }
+
+          var scores = visibleItems.map(function (item) { return parseNum(item.getAttribute('data-score'), 0); });
+          var completedCount = visibleItems.filter(function (item) {
+            return (item.getAttribute('data-status') || '').toLowerCase() === 'completed';
+          }).length;
+
+          var maxScore = Math.max.apply(null, scores);
+          var completionRate = Math.round((completedCount * 100) / visibleItems.length);
+
+          if (bestSessionScore) bestSessionScore.textContent = maxScore + '/100';
+          if (completionHealth) completionHealth.textContent = completionRate + '%';
+
+          var pulseTitle = 'Steady Progress';
+          var pulseBody = 'Keep doing replay + feedback loops after each interview to maintain momentum.';
+          if (maxScore >= 85) {
+            pulseTitle = 'Excellent Momentum';
+            pulseBody = 'You are hitting high-quality responses. Focus on consistency under pressure.';
+          } else if (maxScore < 65) {
+            pulseTitle = 'Build Foundations';
+            pulseBody = 'Prioritize structure and concise impact statements before adding complexity.';
+          }
+
+          if (coachPulseTitle) coachPulseTitle.textContent = pulseTitle;
+          if (coachPulseBody) coachPulseBody.textContent = pulseBody;
+        }
 
         function applySessionSearch() {
           if (!sessionSearchInput || !sessionItems.length) return;
           var query = (sessionSearchInput.value || '').toLowerCase().trim();
           var visibleCount = 0;
+          var visibleItems = [];
 
           sessionItems.forEach(function (item) {
             var haystack = String(item.getAttribute('data-search') || '').toLowerCase();
-            var matches = !query || haystack.indexOf(query) !== -1;
+            var status = String(item.getAttribute('data-status') || '').toLowerCase();
+            var matchesSearch = !query || haystack.indexOf(query) !== -1;
+            var matchesStatus = activeStatusFilter === 'all' || status === activeStatusFilter;
+            var matches = matchesSearch && matchesStatus;
             item.classList.toggle('hidden', !matches);
 
             if (!matches) {
@@ -165,12 +347,15 @@
               if (toggleBtn) toggleBtn.textContent = 'Open Analytics';
             } else {
               visibleCount += 1;
+              visibleItems.push(item);
             }
           });
 
           if (sessionSearchEmpty) {
             sessionSearchEmpty.classList.toggle('hidden', visibleCount !== 0);
           }
+
+          updateSignals(visibleItems);
         }
 
         for (var i = 0; i < chartData.length; i += 1) {
@@ -242,6 +427,25 @@
         if (sessionSearchInput) {
           sessionSearchInput.addEventListener('input', applySessionSearch);
         }
+
+        if (sortSelect) {
+          sortSelect.addEventListener('change', function () {
+            sortSessionItems();
+            applySessionSearch();
+          });
+        }
+
+        statusButtons.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            activeStatusFilter = String(btn.getAttribute('data-status') || 'all').toLowerCase();
+            statusButtons.forEach(function (b) {
+              b.classList.toggle('active', b === btn);
+            });
+            applySessionSearch();
+          });
+        });
+
+        sortSessionItems();
 
         if (toggleButtons.length) {
           toggleButtons[0].click();
