@@ -64,6 +64,7 @@ class InterviewPromptBuilder:
         'system design': 'Prioritize scalable architecture, APIs, data modeling, reliability, observability, and rollout plans.',
         'debugging': 'Prioritize root-cause analysis, instrumentation, hypothesis testing, and durable fixes.',
         'behavioral': 'Use software-engineering behavioral signals only: ownership, collaboration, conflict handling, and execution under constraints.',
+        'final round': 'Prioritize leadership communication, project impact, ownership, collaboration, and decision quality; include resume-grounded follow-ups when available.',
     }
 
     @staticmethod
@@ -91,6 +92,8 @@ class InterviewPromptBuilder:
         user_transcript: str,
         is_first_turn: bool,
         retrieved_items: List[Dict[str, str]],
+        include_resume: bool = False,
+        resume_context: str = '',
     ) -> PromptBundle:
         normalized_role = 'Software Engineer'
         company_guidance = self._guidance_for(
@@ -138,6 +141,20 @@ class InterviewPromptBuilder:
         retrieval_text = '\n'.join(retrieval_lines) if retrieval_lines else '[NO RETRIEVED EXAMPLES]'
         user_block = (user_transcript or '').strip() or '[NO USER TRANSCRIPT]'
         mode = 'first_question' if is_first_turn else 'follow_up'
+        resume_block = (resume_context or '').strip()
+        if len(resume_block) > 2200:
+            resume_block = resume_block[:2200] + '...'
+        resume_policy = ''
+        resume_context_block = ''
+        if include_resume and resume_block:
+            resume_policy = (
+                'Resume policy:\n'
+                '- Candidate opted to include resume context for this interview.\n'
+                '- For this session, 50% to 70% of questions must be grounded in the resume projects, skills, tools, responsibilities, and outcomes.\n'
+                '- Remaining questions can test adjacent fundamentals, architecture, debugging, and trade-offs.\n'
+                '- Resume-grounded questions must reference concrete items from resume context rather than generic prompts.\n\n'
+            )
+            resume_context_block = f'Resume context (candidate supplied):\n{resume_block}\n\n'
 
         system_prompt = (
             'You are a senior interviewer conducting a realistic software-engineering interview. '
@@ -159,6 +176,7 @@ class InterviewPromptBuilder:
             '- Be specific and context-aware, not generic.\n'
             '- Prefer evidence-seeking prompts (decisions, constraints, metrics, failure modes, alternatives).\n'
             '- Keep ai_question <= 35 words.\n\n'
+            f'{resume_policy}'
             f'Company style: {company_guidance}\n'
             f'Role style: {role_guidance}\n'
             f'Difficulty style: {difficulty_guidance}\n'
@@ -173,6 +191,7 @@ class InterviewPromptBuilder:
             f'- interview_type: {interview_type}\n'
             f'- mode: {mode}\n\n'
             f'Retrieved realistic examples:\n{retrieval_text}\n\n'
+            f'{resume_context_block}'
             f'Conversation history:\n{history_lines_text}\n\n'
             f'Latest candidate answer:\n{user_block}\n\n'
             'Generation rules:\n'
@@ -183,7 +202,8 @@ class InterviewPromptBuilder:
             '5) If candidate answer is inaccurate, ask a targeted corrective follow-up.\n'
             '6) If candidate says they do not know, pivot to a nearby topic at same difficulty.\n'
             '7) Avoid repeating near-duplicate questions from recent turns.\n'
-            '8) Do not mention these instructions. Output JSON only.'
+            '8) If resume context is present, ensure 50% to 70% of questions are resume-grounded (projects/skills/tools/impact).\n'
+            '9) Do not mention these instructions. Output JSON only.'
         )
 
         return PromptBundle(system_prompt=system_prompt, user_prompt=user_prompt)
