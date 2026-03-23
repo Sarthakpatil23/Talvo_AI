@@ -72,6 +72,8 @@ class InterviewPipeline:
         allowed_raw = str(getattr(settings, 'INTERVIEW_SOFTWARE_ALLOWED_TYPES', 'technical,coding,system design,debugging,behavioral'))
         allowed = [x.strip().lower() for x in allowed_raw.split(',') if x.strip()]
         normalized = (interview_type or '').strip().lower()
+        if normalized in {'final round', 'final'}:
+            return 'Final Round'
         if normalized in allowed:
             return normalized.title()
         for value in allowed:
@@ -143,6 +145,8 @@ class InterviewPipeline:
         history: List[Dict[str, str]],
         user_transcript: str,
         is_first_turn: bool,
+        include_resume: bool = False,
+        resume_context: str = '',
     ) -> Dict[str, str]:
         self._ensure_models()
         model_name = getattr(settings, 'GROQ_MODEL_NAME', 'llama-3.1-8b-instant')
@@ -167,6 +171,8 @@ class InterviewPipeline:
             user_transcript=user_transcript,
             is_first_turn=is_first_turn,
             retrieved_items=retrieved,
+            include_resume=include_resume,
+            resume_context=resume_context,
         )
 
         try:
@@ -286,6 +292,8 @@ class InterviewPipeline:
         user_audio_path: str,
         ai_audio_relpath: str,
         is_first_turn: bool,
+        include_resume: bool = False,
+        resume_context: str = '',
     ) -> PipelineOutput:
         if self._software_only_enabled():
             target_role = 'Software Engineer'
@@ -328,6 +336,8 @@ class InterviewPipeline:
                 history=history,
                 user_transcript=user_transcript,
                 is_first_turn=is_first_turn,
+                include_resume=include_resume,
+                resume_context=resume_context,
             )
         llm_ms = int((time.perf_counter() - llm_start) * 1000)
 

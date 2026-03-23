@@ -2,6 +2,7 @@ import json
 import ast
 import csv
 import io
+import os
 import random
 import re
 import subprocess
@@ -94,7 +95,13 @@ def history_page(request):
 
 @login_required
 def interview_setup(request):
-	return render(request, 'Interview-Setup-82549d84a8874a5d8a6eac01c3e830e0.html')
+	profile, _ = UserProfile.objects.get_or_create(user=request.user)
+	has_resume = bool((profile.resume_text or '').strip())
+	return render(
+		request,
+		'Interview-Setup-82549d84a8874a5d8a6eac01c3e830e0.html',
+		{'has_resume': has_resume},
+	)
 
 
 @login_required
@@ -113,6 +120,7 @@ def live_interview(request):
 		'prefill_type': prefill_type,
 		'prefill_round': prefill_round,
 		'prefill_mode': request.GET.get('mode', 'avatar'),
+		'prefill_include_resume': _as_bool(request.GET.get('include_resume', '0')),
 	}
 	return render(request, 'Live-Interview-36d6010513664b89ae2c813c331e830e.html', context)
 
@@ -137,6 +145,252 @@ def _build_media_url(request, rel_path: str):
 	if not base.endswith('/'):
 		base += '/'
 	return request.build_absolute_uri(f"{base}{clean}")
+
+
+def _as_bool(value) -> bool:
+	if isinstance(value, bool):
+		return value
+	text = str(value or '').strip().lower()
+	return text in {'1', 'true', 'yes', 'on'}
+
+
+def _decode_pdf_literal_string(raw: str) -> str:
+	if not raw:
+		return ''
+	# Handle common PDF string escapes used in tagged/accessible PDFs.
+	text = raw.replace(r'\(', '(').replace(r'\)', ')').replace(r'\\', '\\')
+	text = re.sub(r'\\([0-7]{1,3})', lambda m: chr(int(m.group(1), 8)), text)
+	return text
+
+
+def _extract_structured_pdf_text(raw_bytes: bytes, max_chars: int) -> str:
+	if not raw_bytes:
+		return ''
+
+	decoded = raw_bytes.decode('latin-1', errors='ignore')
+	chunks = []
+
+	# Tagged PDFs often store semantic text in /E (...) or /E <...> nodes.
+	for match in re.finditer(r'/E\s*\((.*?)\)', decoded, flags=re.DOTALL):
+		literal = _decode_pdf_literal_string(match.group(1)).strip()
+		if literal:
+			chunks.append(literal)
+
+	for match in re.finditer(r'/E\s*<([0-9A-Fa-f]+)>', decoded):
+		hex_data = match.group(1)
+		if len(hex_data) % 2:
+			continue
+		try:
+			blob = bytes.fromhex(hex_data)
+		except Exception:
+			continue
+		for codec in ('utf-16-be', 'utf-8', 'latin-1'):
+			try:
+				literal = blob.decode(codec, errors='ignore').strip()
+			except Exception:
+				literal = ''
+			if literal:
+				chunks.append(literal)
+				break
+
+	if not chunks:
+		return ''
+
+	seen = set()
+	ordered = []
+	for item in chunks:
+		item = item.replace('\x00', ' ').strip()
+		if not item:
+			continue
+		key = item.lower()
+		if key in seen:
+			continue
+		seen.add(key)
+		ordered.append(item)
+
+	return '\n'.join(ordered).strip()[:max_chars]
+
+
+def _extract_resume_text(upload) -> str:
+	if not upload:
+		return ''
+
+	name = str(getattr(upload, 'name', '') or '')
+	ext = os.path.splitext(name)[1].lower()
+	max_chars = 20000
+
+	if ext in {'.txt', '.md', '.rst'}:
+		raw = upload.read()
+		if isinstance(raw, bytes):
+			text = raw.decode('utf-8', errors='ignore')
+		else:
+			text = str(raw)
+		upload.seek(0)
+		return text.strip()[:max_chars]
+
+	if ext == '.pdf':
+		try:
+			raw = upload.read()
+			upload.seek(0)
+			if not isinstance(raw, bytes):
+				raw = bytes(raw or b'')
+
+			# Primary extractor for PDFs: handles many resume layouts better.
+			text = ''
+			try:
+				import pdfplumber
+				chunks = []
+				with pdfplumber.open(io.BytesIO(raw)) as pdf:
+					for page in pdf.pages:
+						page_text = (page.extract_text() or '').strip()
+						if page_text:
+							chunks.append(page_text.replace('\x00', ' '))
+				text = '\n'.join(chunks).strip()[:max_chars]
+			except Exception:
+				text = ''
+
+			if text:
+				upload.seek(0)
+				return text
+
+			from pypdf import PdfReader
+			reader = PdfReader(io.BytesIO(raw))
+			chunks = []
+			for page in reader.pages:
+				page_text = ''
+				try:
+					page_text = (page.extract_text() or '').strip()
+				except Exception:
+					page_text = ''
+				if not page_text:
+					try:
+						page_text = (page.extract_text(extraction_mode='layout') or '').strip()
+					except Exception:
+						page_text = ''
+				if page_text:
+					chunks.append(page_text.replace('\x00', ' '))
+			text = '\n'.join(x for x in chunks if x).strip()[:max_chars]
+			if not text:
+				text = _extract_structured_pdf_text(raw, max_chars)
+			upload.seek(0)
+			return text
+		except Exception:
+			upload.seek(0)
+			return ''
+
+	if ext == '.docx':
+		try:
+			from docx import Document
+			doc = Document(upload)
+			lines = [p.text.strip() for p in doc.paragraphs if (p.text or '').strip()]
+			upload.seek(0)
+			return '\n'.join(lines).strip()[:max_chars]
+		except Exception:
+			upload.seek(0)
+			return ''
+
+	try:
+		raw = upload.read()
+		if isinstance(raw, bytes):
+			text = raw.decode('utf-8', errors='ignore')
+		else:
+			text = str(raw)
+		upload.seek(0)
+		return text.strip()[:max_chars]
+	except Exception:
+		try:
+			upload.seek(0)
+		except Exception:
+			pass
+		return ''
+
+
+def _extract_resume_signals(resume_text: str) -> dict:
+	text = str(resume_text or '').strip()
+	if not text:
+		return {'skills': [], 'projects': [], 'highlights': []}
+
+	lower = text.lower()
+	known_skills = [
+		'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'go', 'rust',
+		'django', 'flask', 'fastapi', 'react', 'node', 'spring',
+		'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform',
+		'sql', 'postgresql', 'mysql', 'mongodb', 'redis',
+		'git', 'linux', 'ci/cd', 'machine learning', 'deep learning', 'nlp',
+	]
+
+	found_skills = []
+	for skill in known_skills:
+		if skill in lower:
+			found_skills.append(skill)
+
+	lines = [ln.strip(' \t-•*') for ln in text.splitlines() if ln.strip()]
+	project_lines = []
+	highlights = []
+
+	project_zone = False
+	for line in lines:
+		l = line.lower()
+		if any(tag in l for tag in ['project', 'projects', 'work experience', 'experience']):
+			project_zone = True
+			continue
+		if project_zone and any(tag in l for tag in ['education', 'certification', 'skills', 'achievements']):
+			project_zone = False
+		if project_zone and len(project_lines) < 8:
+			project_lines.append(line)
+		if any(tok in l for tok in ['built', 'developed', 'designed', 'implemented', 'improved', 'optimized', 'reduced', 'increased']) and len(highlights) < 8:
+			highlights.append(line)
+
+	return {
+		'skills': found_skills[:20],
+		'projects': project_lines[:8],
+		'highlights': highlights[:8],
+	}
+
+
+def _build_resume_context_blob(resume_text: str) -> str:
+	signals = _extract_resume_signals(resume_text)
+	short_text = str(resume_text or '').strip()
+	if len(short_text) > 2600:
+		short_text = short_text[:2600] + '...'
+
+	skills = ', '.join(signals.get('skills', [])[:15]) or 'Not clearly extracted'
+	projects = signals.get('projects', []) or ['Not clearly extracted']
+	highlights = signals.get('highlights', []) or ['Not clearly extracted']
+
+	project_block = '\n'.join(f'- {p}' for p in projects[:6])
+	highlight_block = '\n'.join(f'- {h}' for h in highlights[:6])
+
+	return (
+		'Resume analysis summary:\n'
+		f'Skills inferred: {skills}\n'
+		f'Projects inferred:\n{project_block}\n'
+		f'Experience highlights:\n{highlight_block}\n\n'
+		'Resume text excerpt:\n'
+		f'{short_text}'
+	)
+
+
+def _refresh_resume_text_from_saved_file(profile: UserProfile) -> str:
+	if (profile.resume_text or '').strip():
+		return profile.resume_text.strip()
+
+	if not profile.resume_file:
+		return ''
+
+	try:
+		profile.resume_file.open('rb')
+		text = _extract_resume_text(profile.resume_file)
+	finally:
+		try:
+			profile.resume_file.close()
+		except Exception:
+			pass
+
+	if text.strip():
+		profile.resume_text = text
+		profile.save(update_fields=['resume_text', 'updated_at'])
+	return text.strip()
 
 
 def _enforce_software_focus(role: str, interview_type: str):
@@ -1203,6 +1457,7 @@ def live_interview_start_api(request):
 	target_role = (payload.get('target_role') or '').strip() or 'Software Engineer'
 	target_company = (payload.get('target_company') or '').strip() or 'Google'
 	difficulty = (payload.get('difficulty') or '').strip() or 'Medium'
+	include_resume = _as_bool(payload.get('include_resume', False))
 	round = (payload.get('round') or '').strip().lower()
 	if round == 'final':
 		interview_type = 'Final Round'
@@ -1212,12 +1467,39 @@ def live_interview_start_api(request):
 		interview_type = (payload.get('interview_type') or '').strip() or 'Technical'
 	target_role, interview_type = _enforce_software_focus(target_role, interview_type)
 
+	profile, _ = UserProfile.objects.get_or_create(user=request.user)
+	resume_text = _refresh_resume_text_from_saved_file(profile)
+	has_resume = bool(resume_text or profile.resume_file)
+	if include_resume and (round == 'final' or interview_type.lower() == 'final round') and not has_resume:
+		return JsonResponse(
+			{
+				'ok': False,
+				'error': 'Resume not added. Please upload your resume first in Settings tab.',
+			},
+			status=400,
+		)
+
+	if include_resume and (round == 'final' or interview_type.lower() == 'final round') and not resume_text:
+		return JsonResponse(
+			{
+				'ok': False,
+				'error': 'Resume file found but text extraction failed. Re-upload a text-readable PDF/DOCX/TXT from Settings.',
+			},
+			status=400,
+		)
+
+	resume_context = _build_resume_context_blob(resume_text) if include_resume else ''
+	if not include_resume:
+		resume_context = ''
+
 	session = InterviewSession.objects.create(
 		user=request.user,
 		target_role=target_role,
 		target_company=target_company,
 		difficulty=difficulty,
 		interview_type=interview_type,
+		include_resume=bool(include_resume),
+		resume_context=resume_context,
 	)
 
 	_, ai_rel = _build_audio_paths(session, 1)
@@ -1233,6 +1515,8 @@ def live_interview_start_api(request):
 			user_audio_path='',
 			ai_audio_relpath=ai_rel,
 			is_first_turn=True,
+			include_resume=session.include_resume,
+			resume_context=session.resume_context,
 		)
 	except PipelineUnavailableError as exc:
 		session.status = InterviewSession.STATUS_ABORTED
@@ -1369,6 +1653,8 @@ def live_interview_turn_api(request):
 			user_audio_path=str(user_audio_abs),
 			ai_audio_relpath=ai_rel,
 			is_first_turn=False,
+			include_resume=session.include_resume,
+			resume_context=session.resume_context,
 		)
 	except PipelineUnavailableError as exc:
 		return JsonResponse({'ok': False, 'error': str(exc)}, status=503)
@@ -1524,7 +1810,50 @@ def feedback_dashboard(request):
 
 @login_required
 def settings_page(request):
+	profile, _ = UserProfile.objects.get_or_create(user=request.user)
+	upload_message = ''
+	upload_error = ''
+	has_resume_file = bool(profile.resume_file)
+
+	if request.method == 'POST':
+		action = str(request.POST.get('resume_action') or 'upload').strip().lower()
+		if action == 'delete':
+			if profile.resume_file:
+				profile.resume_file.delete(save=False)
+			profile.resume_file = None
+			profile.resume_text = ''
+			profile.save(update_fields=['resume_file', 'resume_text', 'updated_at'])
+			has_resume_file = False
+			upload_message = 'Resume deleted. You can upload a new resume now.'
+		else:
+			if has_resume_file:
+				upload_error = 'Resume already uploaded. Delete existing resume before uploading a new one.'
+			else:
+				resume_file = request.FILES.get('resume_file')
+				if not resume_file:
+					upload_error = 'Please choose a resume file to upload.'
+				else:
+					allowed = {'.pdf', '.docx', '.txt', '.md'}
+					ext = os.path.splitext(str(resume_file.name or '').lower())[1]
+					if ext not in allowed:
+						upload_error = 'Unsupported file type. Upload PDF, DOCX, TXT, or MD.'
+					else:
+						resume_text = _extract_resume_text(resume_file)
+						profile.resume_file = resume_file
+						profile.resume_text = resume_text
+						profile.save(update_fields=['resume_file', 'resume_text', 'updated_at'])
+						has_resume_file = True
+						if resume_text.strip():
+							upload_message = 'Resume uploaded successfully. Final round can now include resume-based questions.'
+						else:
+							upload_error = 'Resume uploaded, but text extraction failed. Delete it and upload a text-readable PDF/DOCX/TXT.'
+
 	context = _build_user_metrics_context(request.user)
+	context['resume_uploaded'] = bool((profile.resume_text or '').strip())
+	context['resume_file_uploaded'] = has_resume_file
+	context['resume_file_name'] = os.path.basename(profile.resume_file.name) if profile.resume_file else ''
+	context['resume_upload_message'] = upload_message
+	context['resume_upload_error'] = upload_error
 	return render(request, 'Settings-f0098eb3e15f4b279780bd050d42ab32.html', context)
 
 

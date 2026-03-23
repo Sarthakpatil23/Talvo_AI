@@ -688,6 +688,7 @@
       var initialType = "{{ prefill_type|default:'Technical'|escapejs }}" || 'Technical';
       var initialRound = "{{ prefill_round|default:'technical'|escapejs }}" || 'technical';
       var initialMode = "{{ prefill_mode|default:'avatar'|escapejs }}" || 'avatar';
+      var initialIncludeResume = "{{ prefill_include_resume|yesno:'1,0' }}" === '1';
       var interviewMode = initialMode.toLowerCase() === 'voice' ? 'voice' : 'avatar';
       var isFinalRound = initialRound.toLowerCase() === 'final';
       var dashboardUrl = "{% url 'dashboard' %}";
@@ -1322,7 +1323,8 @@
             target_company: initialCompany,
             difficulty: initialDifficulty,
             interview_type: initialType,
-            round: initialRound
+            round: initialRound,
+            include_resume: initialIncludeResume
           })
         });
 

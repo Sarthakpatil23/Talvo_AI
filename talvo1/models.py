@@ -21,6 +21,8 @@ class UserProfile(models.Model):
 		blank=True,
 		validators=[MinValueValidator(1), MaxValueValidator(10)],
 	)
+	resume_file = models.FileField(upload_to='resumes/', blank=True, null=True)
+	resume_text = models.TextField(blank=True)
 	profile_completed = models.BooleanField(default=False)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
@@ -44,6 +46,8 @@ class InterviewSession(models.Model):
 	target_company = models.CharField(max_length=140)
 	difficulty = models.CharField(max_length=20, default='Medium')
 	interview_type = models.CharField(max_length=40, default='Behavioral')
+	include_resume = models.BooleanField(default=False)
+	resume_context = models.TextField(blank=True)
 	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
 	started_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
