@@ -1,4 +1,5 @@
 ﻿<!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
@@ -73,6 +74,27 @@
                 </div>
                 <p class="mt-1 text-xs text-gray-600">Real-world scenarios</p>
               </button>
+              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="TCS" data-insight="Enterprise delivery, communication, and implementation depth" data-questions="8" data-followup="High">
+                <div class="mb-2 flex items-center gap-2">
+                  <img src="{% static 'talvo1/images/companies/tcs.svg' %}" alt="TCS logo" class="h-7 w-16 rounded object-contain bg-white" loading="lazy"/>
+                  <p class="font-semibold text-sm">TCS</p>
+                </div>
+                <p class="mt-1 text-xs text-gray-600">Enterprise solutioning focus</p>
+              </button>
+              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Wipro" data-insight="Service delivery quality, ownership, and execution clarity" data-questions="8" data-followup="High">
+                <div class="mb-2 flex items-center gap-2">
+                  <img src="{% static 'talvo1/images/companies/wipro.svg' %}" alt="Wipro logo" class="h-7 w-14 rounded object-contain bg-white" loading="lazy"/>
+                  <p class="font-semibold text-sm">Wipro</p>
+                </div>
+                <p class="mt-1 text-xs text-gray-600">Delivery and ownership based rounds</p>
+              </button>
+              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Tech Mahindra" data-insight="Architecture, reliability, and operational problem solving" data-questions="9" data-followup="High">
+                <div class="mb-2 flex items-center gap-2">
+                  <img src="{% static 'talvo1/images/companies/tech_mahindra.svg' %}" alt="Tech Mahindra logo" class="h-7 w-16 rounded object-contain bg-white" loading="lazy"/>
+                  <p class="font-semibold text-sm">Tech Mahindra</p>
+                </div>
+                <p class="mt-1 text-xs text-gray-600">Architecture and troubleshooting focus</p>
+              </button>
               <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Custom" data-insight="Custom panel generated from your context" data-questions="8" data-followup="Adaptive">
                 <div class="mb-2 flex items-center gap-2">
                   <span class="inline-flex h-5 w-5 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
@@ -85,8 +107,18 @@
             </div>
 
             <div id="customCompanyWrap" class="hidden">
-              <label for="customCompany" class="text-sm font-medium text-gray-700">Enter company name</label>
-              <input id="customCompany" class="mt-1 w-full rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g., Stripe"/>
+              <label for="customCompanySelect" class="text-sm font-medium text-gray-700">Choose custom company</label>
+              <select id="customCompanySelect" class="mt-1 w-full rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <option value="Infosys">Infosys</option>
+                <option value="Cognizant">Cognizant</option>
+                <option value="Capgemini">Capgemini</option>
+                <option value="Accenture">Accenture</option>
+                <option value="HCL">HCL</option>
+                <option value="IBM">IBM</option>
+                <option value="Deloitte">Deloitte</option>
+                <option value="Other">Other (type manually)</option>
+              </select>
+              <input id="customCompanyOther" class="mt-2 hidden w-full rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Enter company name"/>
             </div>
           </article>
 
@@ -158,8 +190,23 @@
             </div>
           </article>
 
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
+          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
             <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 5</p>
+            <h2 class="text-xl font-semibold tracking-tight">Interviewer Mode</h2>
+            <div id="modeButtons" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button type="button" class="mode-pill active rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-left transition-all duration-200" data-mode="avatar">
+                <p class="text-sm font-semibold text-indigo-800">AI Avatar + Voice</p>
+                <p class="mt-1 text-xs text-indigo-700">Use avatar/image with lip-sync during AI responses.</p>
+              </button>
+              <button type="button" class="mode-pill rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition-all duration-200" data-mode="voice">
+                <p class="text-sm font-semibold text-gray-800">Voice Only</p>
+                <p class="mt-1 text-xs text-gray-600">Use audio with a dynamic sound animation instead of avatar.</p>
+              </button>
+            </div>
+          </article>
+
+          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 6</p>
             <h2 class="text-xl font-semibold tracking-tight">Final Action</h2>
             <button id="startInterviewBtn" type="button" class="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-500 py-3.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(99,102,241,0.2)] transition-all duration-200 hover:opacity-90">Start Interview</button>
           </article>
@@ -230,7 +277,8 @@
     (function () {
       var companyCards = Array.prototype.slice.call(document.querySelectorAll('.company-card'));
       var customWrap = document.getElementById('customCompanyWrap');
-      var customInput = document.getElementById('customCompany');
+      var customCompanySelect = document.getElementById('customCompanySelect');
+      var customCompanyOther = document.getElementById('customCompanyOther');
       var companyInsight = document.getElementById('companyInsight');
       var questionCount = document.getElementById('questionCount');
       var followupDepth = document.getElementById('followupDepth');
@@ -244,6 +292,7 @@
       var sessionLength = document.getElementById('sessionLength');
       var sessionLengthValue = document.getElementById('sessionLengthValue');
       var difficultyButtons = Array.prototype.slice.call(document.querySelectorAll('.difficulty-pill'));
+      var modeButtons = Array.prototype.slice.call(document.querySelectorAll('.mode-pill'));
       var interviewType = document.getElementById('interviewType');
       var targetRoleInput = document.getElementById('targetRole');
       var startInterviewBtn = document.getElementById('startInterviewBtn');
@@ -293,15 +342,36 @@
           aiRecommendation.textContent = 'Balance system-level reasoning with practical implementation details and product outcomes.';
         } else if (company === 'Startup') {
           aiRecommendation.textContent = 'Prioritize speed, ambiguity handling, and clear decision rationale under constraints.';
+        } else if (company === 'TCS') {
+          aiRecommendation.textContent = 'Focus on clear implementation details, delivery timelines, and how you resolve integration challenges.';
+        } else if (company === 'Wipro') {
+          aiRecommendation.textContent = 'Structure answers around ownership, delivery quality, and measurable business outcomes.';
+        } else if (company === 'Tech Mahindra') {
+          aiRecommendation.textContent = 'Highlight architecture trade-offs, supportability, and production incident handling.';
         } else {
           aiRecommendation.textContent = 'Define the company context clearly so the interview panel can be tailored to your target role.';
         }
 
         var isCustom = company === 'Custom';
         customWrap.classList.toggle('hidden', !isCustom);
-        if (isCustom) customInput.focus();
+        if (isCustom && customCompanySelect) customCompanySelect.focus();
 
         updateReadiness();
+      }
+
+      function resolveSelectedMode() {
+        var selected = modeButtons.find(function (btn) { return btn.classList.contains('active'); });
+        return (selected && selected.getAttribute('data-mode')) || 'avatar';
+      }
+
+      function resolveCustomCompanyName() {
+        if (!customCompanySelect) return 'Custom';
+        var selected = (customCompanySelect.value || '').trim();
+        if (selected === 'Other') {
+          var typed = customCompanyOther ? (customCompanyOther.value || '').trim() : '';
+          return typed || 'Custom';
+        }
+        return selected || 'Custom';
       }
 
       companyCards.forEach(function (card) {
@@ -330,6 +400,30 @@
           updateReadiness();
         });
       });
+
+      modeButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          modeButtons.forEach(function (item) {
+            item.classList.remove('active', 'border-indigo-200', 'bg-indigo-50');
+            item.classList.add('border-gray-200', 'bg-white');
+            var title = item.querySelector('p');
+            if (title) title.classList.remove('text-indigo-800');
+          });
+
+          btn.classList.add('active', 'border-indigo-200', 'bg-indigo-50');
+          btn.classList.remove('border-gray-200', 'bg-white');
+          var title = btn.querySelector('p');
+          if (title) title.classList.add('text-indigo-800');
+        });
+      });
+
+      if (customCompanySelect) {
+        customCompanySelect.addEventListener('change', function () {
+          var isOther = (customCompanySelect.value || '') === 'Other';
+          customCompanyOther.classList.toggle('hidden', !isOther);
+          if (isOther) customCompanyOther.focus();
+        });
+      }
 
       function renderLength() {
         sessionLengthValue.textContent = sessionLength.value + ' min';
@@ -366,7 +460,7 @@
           var activeCompanyCard = companyCards.find(function (c) { return c.classList.contains('active'); });
           var company = (activeCompanyCard && activeCompanyCard.getAttribute('data-company')) || 'Google';
           if (company === 'Custom') {
-            company = (customInput.value || '').trim() || 'Custom';
+            company = resolveCustomCompanyName();
           }
 
           var activeDifficulty = difficultyButtons.find(function (btn) { return btn.classList.contains('active'); });
@@ -376,7 +470,8 @@
             role: (targetRoleInput && targetRoleInput.value) ? targetRoleInput.value.trim() : 'Software Engineer',
             company: company,
             difficulty: difficulty,
-            type: interviewType.value
+            type: interviewType.value,
+            mode: resolveSelectedMode()
           });
 
           window.location.href = "{% url 'live_interview' %}?" + params.toString();

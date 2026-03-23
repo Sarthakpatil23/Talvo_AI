@@ -8,6 +8,15 @@
     animation: uiFadeIn 220ms ease-out;
   }
 
+  body.ui-page-ready.ui-violet-shell {
+    background-image:
+      radial-gradient(circle at 12% -8%, rgba(139, 92, 246, 0.16), transparent 38%),
+      radial-gradient(circle at 95% 105%, rgba(99, 102, 241, 0.14), transparent 36%),
+      linear-gradient(180deg, rgba(238, 242, 255, 0.58), rgba(249, 250, 251, 0.9));
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
   @keyframes uiFadeIn {
     from {
       opacity: 0;
@@ -116,10 +125,31 @@
     replay: "{% url 'replay_page' %}",
     feedback: "{% url 'feedback_dashboard' %}",
     settings: "{% url 'settings_page' %}",
+    profile: "{% url 'profile_page' %}",
+    results: "{% url 'results_page' %}",
     privacy: "{% url 'privacy_policy' %}",
     terms: "{% url 'terms_of_service' %}",
     contact: "{% url 'contact_page' %}"
   };
+
+  function applyVioletShell() {
+    var path = window.location.pathname;
+    var appPaths = [
+      ROUTES.dashboard,
+      ROUTES.history,
+      ROUTES.interviewSetup,
+      ROUTES.live,
+      ROUTES.replay,
+      ROUTES.feedback,
+      ROUTES.settings,
+      ROUTES.profile,
+      ROUTES.results
+    ];
+
+    if (appPaths.indexOf(path) !== -1) {
+      document.body.classList.add("ui-violet-shell");
+    }
+  }
 
   function normalize(text) {
     return (text || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -200,6 +230,7 @@
   function enhanceButtons() {
     document.querySelectorAll("button").forEach(function (el) {
       if (el.closest("form")) return;
+      if (el.hasAttribute("data-toggle")) return;
       var route = routeForText(el.textContent);
       if (!route) return;
 
@@ -337,6 +368,7 @@
   addMobileNavigation();
   addStatesAndMetrics();
   labelIconButtons();
+  applyVioletShell();
   document.body.classList.add("ui-page-ready");
 })();
 </script>
