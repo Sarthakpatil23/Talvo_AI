@@ -335,6 +335,47 @@
     .ide-muted {
       color: #93a1b8;
     }
+    .ide-problem-copy {
+      color: #f1f5f9;
+      line-height: 1.75;
+      white-space: pre-wrap;
+    }
+    .ide-constraint-box {
+      margin-top: 12px;
+      border: 1px solid #253047;
+      background: #0b1220;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+    }
+    .ide-example-card {
+      border: 1px solid #23314a;
+      background: #0b1323;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .ide-example-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #7dd3fc;
+      margin-bottom: 8px;
+    }
+    .ide-example-row {
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: #dbeafe;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .ide-example-row:last-child {
+      margin-bottom: 0;
+      color: #93c5fd;
+      font-style: italic;
+    }
     .ide-editor-wrap {
       flex: 1;
       min-height: 0;
@@ -563,8 +604,12 @@
               </div>
               <div class="ide-scroll space-y-4 px-4 py-3 text-sm leading-6 text-slate-200">
                 <div>
-                  <p id="codingPrompt" class="text-slate-100">Preparing coding prompt...</p>
-                  <p id="codingConstraints" class="mt-2 text-xs ide-muted"></p>
+                  <p id="codingPrompt" class="ide-problem-copy">Preparing coding prompt...</p>
+                  <div id="codingConstraints" class="ide-constraint-box hidden"></div>
+                </div>
+                <div>
+                  <p class="ide-section-title">Examples</p>
+                  <div id="codingExamples" class="mt-2 space-y-2"></div>
                 </div>
                 <div>
                   <p class="ide-section-title">Visible Tests</p>
@@ -648,6 +693,7 @@
       var codingMeta = document.getElementById('codingMeta');
       var codingPrompt = document.getElementById('codingPrompt');
       var codingConstraints = document.getElementById('codingConstraints');
+      var codingExamples = document.getElementById('codingExamples');
       var codingVisibleTests = document.getElementById('codingVisibleTests');
       var codingEditor = document.getElementById('codingEditor');
       var runOutputBtn = document.getElementById('runOutputBtn');
@@ -923,11 +969,19 @@
       function renderVisibleTests(tests) {
         if (!codingVisibleTests) return;
         codingVisibleTests.innerHTML = '';
+        if (codingExamples) codingExamples.innerHTML = '';
         if (!tests || !tests.length) {
           var empty = document.createElement('span');
           empty.className = 'text-xs text-gray-500';
           empty.textContent = 'No visible tests provided.';
           codingVisibleTests.appendChild(empty);
+
+          if (codingExamples) {
+            var noExamples = document.createElement('p');
+            noExamples.className = 'text-xs ide-muted';
+            noExamples.textContent = 'Examples will appear when visible tests are available.';
+            codingExamples.appendChild(noExamples);
+          }
           return;
         }
         tests.forEach(function (test, index) {
@@ -935,6 +989,33 @@
           pill.className = 'test-pill';
           pill.textContent = 'T' + (index + 1) + ' args=' + JSON.stringify(test.args || []);
           codingVisibleTests.appendChild(pill);
+
+          if (codingExamples) {
+            var card = document.createElement('div');
+            card.className = 'ide-example-card';
+
+            var title = document.createElement('p');
+            title.className = 'ide-example-title';
+            title.textContent = 'Example ' + (index + 1);
+            card.appendChild(title);
+
+            var inputRow = document.createElement('p');
+            inputRow.className = 'ide-example-row';
+            inputRow.textContent = 'Input: ' + JSON.stringify(test.args || []);
+            card.appendChild(inputRow);
+
+            var outputRow = document.createElement('p');
+            outputRow.className = 'ide-example-row';
+            outputRow.textContent = 'Expected Output: ' + JSON.stringify(test.expected);
+            card.appendChild(outputRow);
+
+            var explainRow = document.createElement('p');
+            explainRow.className = 'ide-example-row';
+            explainRow.textContent = 'Explanation: Use this as a sanity check before hidden tests.';
+            card.appendChild(explainRow);
+
+            codingExamples.appendChild(card);
+          }
         });
       }
 
@@ -988,7 +1069,11 @@
         if (codingTitle) codingTitle.textContent = data.title || 'Coding Question';
         if (codingMeta) codingMeta.textContent = (data.company || '') + ' | ' + (data.difficulty || '') + ' | ' + (data.selection_reason || 'AI selected question');
         if (codingPrompt) codingPrompt.textContent = data.prompt || 'Solve the given coding problem.';
-        if (codingConstraints) codingConstraints.textContent = data.constraints || '';
+        if (codingConstraints) {
+          var constraintsText = (data.constraints || '').trim();
+          codingConstraints.textContent = constraintsText;
+          codingConstraints.classList.toggle('hidden', !constraintsText);
+        }
         if (codingEditor && (!codingEditor.value || !codingQuestionLoaded)) {
           codingEditor.value = data.starter_code || '';
         }

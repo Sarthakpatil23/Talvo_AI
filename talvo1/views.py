@@ -871,6 +871,194 @@ def _build_feedback_context(user, requested_session_id):
 	}
 
 
+def _seconds_to_clock_label(total_seconds):
+	seconds = max(0, int(total_seconds or 0))
+	minutes, sec = divmod(seconds, 60)
+	hours, minutes = divmod(minutes, 60)
+	if hours:
+		return f"{hours}:{minutes:02d}:{sec:02d}"
+	return f"{minutes:02d}:{sec:02d}"
+
+
+def _extract_feedback_signal(feedback_text):
+	text = str(feedback_text or '').strip()
+	if not text:
+		return {'improvement': '', 'strength': ''}
+
+	segments = [seg.strip() for seg in re.split(r'(?<=[.!?])\s+', text) if seg.strip()]
+	improvement_keywords = [
+		'improve', 'could', 'should', 'missing', 'lack', 'unclear', 'weak',
+		'concise', 'shorter', 'better', 'confusing', 'vague', 'overly long',
+	]
+	strength_keywords = [
+		'strong', 'great', 'good', 'clear', 'excellent', 'effective',
+		'well', 'solid', 'confident', 'structured',
+	]
+
+	improvement = ''
+	strength = ''
+	for segment in segments:
+		lower = segment.lower()
+		if not improvement and any(token in lower for token in improvement_keywords):
+			improvement = segment
+		if not strength and any(token in lower for token in strength_keywords):
+			strength = segment
+		if improvement and strength:
+			break
+
+	return {'improvement': improvement, 'strength': strength}
+
+
+def _build_replay_context(request, user, requested_session_id):
+	sessions = list(
+		InterviewSession.objects.filter(user=user)
+		.order_by('-started_at')
+		.prefetch_related('turns')
+	)
+
+	if not sessions:
+		return {
+			'has_replay_data': False,
+			'session_options': [],
+			'impact_categories': [],
+			'impact_values': [],
+		}
+
+	session_by_id = {str(s.id): s for s in sessions}
+	selected_session = session_by_id.get(str(requested_session_id)) if requested_session_id else sessions[0]
+	if selected_session is None:
+		selected_session = sessions[0]
+
+	turns = list(selected_session.turns.all().order_by('turn_index'))
+	if not turns:
+		return {
+			'has_replay_data': False,
+			'session_options': [
+				{
+					'id': str(s.id),
+					'label': f"{s.target_company} | {s.target_role} | {timezone.localtime(s.started_at).strftime('%b %d, %Y')}",
+				}
+				for s in sessions
+			],
+			'impact_categories': [],
+			'impact_values': [],
+		}
+
+	base_time = turns[0].created_at
+	last_time = turns[-1].created_at
+	duration_seconds = max(30, int((last_time - base_time).total_seconds()) + 45)
+
+	replay_rows = []
+	replay_markers = []
+	evidence_cards = []
+	strength_hits = 0
+	improvement_hits = 0
+	user_word_total = 0
+
+	for turn in turns:
+		relative_seconds = max(0, int((turn.created_at - base_time).total_seconds()))
+		time_label = _seconds_to_clock_label(relative_seconds)
+		user_text = str(turn.user_transcript or '').strip()
+		ai_text = str(turn.ai_response or '').strip()
+		feedback = str(turn.ai_feedback or '').strip()
+		signal = _extract_feedback_signal(feedback)
+
+		if signal['improvement']:
+			marker_tone = 'warn'
+			improvement_hits += 1
+		elif signal['strength']:
+			marker_tone = 'good'
+			strength_hits += 1
+		else:
+			marker_tone = 'neutral'
+
+		if user_text:
+			user_word_total += len(user_text.split())
+
+		ai_audio_url = _build_media_url(request, turn.ai_audio_path) if turn.ai_audio_path else ''
+		replay_rows.append(
+			{
+				'turn_index': turn.turn_index,
+				'time_label': time_label,
+				'relative_seconds': relative_seconds,
+				'user_text': user_text or ai_text or 'No transcript available for this turn.',
+				'ai_prompt': ai_text or 'No AI prompt captured.',
+				'feedback': feedback,
+				'marker_tone': marker_tone,
+				'ai_audio_url': ai_audio_url,
+			}
+		)
+
+		replay_markers.append(
+			{
+				'time_label': time_label,
+				'relative_seconds': relative_seconds,
+				'marker_tone': marker_tone,
+				'ai_audio_url': ai_audio_url,
+			}
+		)
+
+		if signal['improvement']:
+			evidence_cards.append(
+				{
+					'tone': 'improve',
+					'time_label': time_label,
+					'title': 'Improve Here',
+					'detail': signal['improvement'],
+				}
+			)
+		if signal['strength']:
+			evidence_cards.append(
+				{
+					'tone': 'good',
+					'time_label': time_label,
+					'title': 'Strong Moment',
+					'detail': signal['strength'],
+				}
+			)
+
+	if not evidence_cards:
+		evidence_cards.append(
+			{
+				'tone': 'neutral',
+				'time_label': _seconds_to_clock_label(0),
+				'title': 'Replay Insight',
+				'detail': 'Feedback markers will appear as turns are captured with AI feedback.',
+			}
+		)
+
+	avg_words = int(user_word_total / max(1, len(turns)))
+	communication_score = _clamp_score(56 + min(22, int(avg_words * 0.9)) + strength_hits * 2 - improvement_hits * 2)
+	clarity_score = _clamp_score(60 + strength_hits * 3 - improvement_hits * 3)
+	confidence_score = _clamp_score(58 + strength_hits * 2 - improvement_hits * 2)
+
+	active_marker = replay_markers[min(len(replay_markers) - 1, max(0, len(replay_markers) // 2))]
+
+	return {
+		'has_replay_data': True,
+		'session_options': [
+			{
+				'id': str(s.id),
+				'label': f"{s.target_company} | {s.target_role} | {timezone.localtime(s.started_at).strftime('%b %d, %Y')}",
+			}
+			for s in sessions
+		],
+		'selected_session_id': str(selected_session.id),
+		'selected_session': selected_session,
+		'session_title': f"{selected_session.target_company} {selected_session.target_role}",
+		'session_subtitle': f"{selected_session.interview_type} | {selected_session.difficulty}",
+		'replay_duration_seconds': duration_seconds,
+		'replay_duration_label': _seconds_to_clock_label(duration_seconds),
+		'replay_active_time': active_marker['time_label'],
+		'replay_active_seconds': active_marker['relative_seconds'],
+		'replay_rows': replay_rows,
+		'replay_markers': replay_markers,
+		'replay_evidence': evidence_cards[:8],
+		'impact_categories': ['Communication', 'Clarity', 'Confidence'],
+		'impact_values': [communication_score, clarity_score, confidence_score],
+	}
+
+
 def _normalize_company_name(raw_company: str) -> str:
 	return ' '.join((raw_company or '').strip().split())
 
@@ -1876,7 +2064,8 @@ def live_interview_coding_evaluate_api(request):
 
 @login_required
 def replay_page(request):
-	return render(request, 'Replay-Page-4014a9e4ef52443eb457663a353786b0.html')
+	context = _build_replay_context(request, request.user, request.GET.get('session'))
+	return render(request, 'Replay-Page-4014a9e4ef52443eb457663a353786b0.html', context)
 
 
 @login_required

@@ -86,9 +86,26 @@
   <div class="flex-1 min-w-0 flex flex-col min-h-screen">
     <main class="mx-auto max-w-7xl w-full p-4 sm:p-6 lg:p-8">
       <header class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 animate-in">
-      <div><p class="text-xs uppercase tracking-[0.16em] text-gray-500">Replay</p><h1 class="mt-1 text-2xl sm:text-3xl font-black tracking-tight">Session timeline and marker insights</h1></div>
-      <a href="{% url 'feedback_dashboard' %}" class="rounded-xl bg-gradient-to-r w-full sm:w-auto text-center from-indigo-600 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200">View Feedback</a>
+      <div>
+        <p class="text-xs uppercase tracking-[0.16em] text-gray-500">Replay</p>
+        <h1 class="mt-1 text-2xl sm:text-3xl font-black tracking-tight">{{ session_title|default:'Session timeline and marker insights' }}</h1>
+        <p class="mt-1 text-sm text-gray-500">{{ session_subtitle|default:'Dynamic replay with time-based evidence markers' }}</p>
+      </div>
+      <div class="flex w-full flex-col gap-2 sm:w-auto">
+        {% if session_options %}
+        <form method="get" class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-2 py-1.5">
+          <label for="replaySession" class="text-xs font-semibold text-gray-500">Session</label>
+          <select id="replaySession" name="session" class="rounded-md border-gray-200 bg-white text-xs text-gray-700" onchange="this.form.submit()">
+            {% for option in session_options %}
+            <option value="{{ option.id }}" {% if option.id == selected_session_id %}selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        {% endif %}
+        <a href="{% url 'feedback_dashboard' %}{% if selected_session_id %}?session={{ selected_session_id }}{% endif %}" class="rounded-xl bg-gradient-to-r w-full sm:w-auto text-center from-indigo-600 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200">View Feedback</a>
+      </div>
     </header>
+    {% if has_replay_data %}
     <section class="mt-6 grid gap-6 md:grid-cols-[1.25fr_.75fr]">
       <article class="space-y-4 sm:space-y-5 rounded-3xl ui-surface p-4 sm:p-5 animate-in" style="animation-delay: 40ms;">
         <div class="relative replay-stage aspect-video overflow-hidden rounded-2xl border border-gray-400 sm:border-gray-700 bg-gray-950">
@@ -96,9 +113,10 @@
           <div class="absolute inset-0 grid place-items-center text-gray-300">
             <div class="text-center">
               <p class="text-sm uppercase tracking-[0.16em] text-gray-500">Replay Preview</p>
-              <p class="mt-2 text-lg font-semibold text-gray-200">Google PM L4 - Behavioral Round</p>
+              <p class="mt-2 text-lg font-semibold text-gray-200">{{ session_title }}</p>
             </div>
           </div>
+          <audio id="replayAudio" preload="metadata" class="hidden"></audio>
           <button type="button" id="playToggle" class="absolute bottom-4 left-4 rounded-full bg-white/90 p-2.5 text-gray-900 shadow-sm transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path id="playIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5v14l11-7z"/></svg>
           </button>
@@ -107,40 +125,38 @@
 
         <div class="rounded-xl border border-gray-200 bg-gray-50/85 p-4">
           <div class="mb-2 flex items-center justify-between text-xs text-gray-500">
-            <span id="playbackTime">08:32 / 18:42</span>
+            <span id="playbackTime">{{ replay_active_time }} / {{ replay_duration_label }}</span>
             <span class="header-pill rounded-full px-2.5 py-0.5">1.0x</span>
           </div>
-          <input id="timelineScrubber" type="range" min="0" max="100" value="46" class="w-full accent-indigo-600"/>
+          <input id="timelineScrubber" type="range" min="0" max="{{ replay_duration_seconds }}" value="{{ replay_active_seconds }}" class="w-full accent-indigo-600"/>
           <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-            <button type="button" data-marker="2:14" class="timeline-marker rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-gray-600">02:14</button>
-            <button type="button" data-marker="5:09" class="timeline-marker rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-gray-600">05:09</button>
-            <button type="button" data-marker="8:32" class="timeline-marker marker-active rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-indigo-700">08:32</button>
-            <button type="button" data-marker="12:48" class="timeline-marker rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-gray-600">12:48</button>
+            {% for marker in replay_markers %}
+            <button
+              type="button"
+              data-marker="{{ marker.time_label }}"
+              data-seconds="{{ marker.relative_seconds }}"
+              data-audio-url="{{ marker.ai_audio_url }}"
+              class="timeline-marker {% if marker.time_label == replay_active_time %}marker-active border-indigo-200 bg-indigo-50 text-indigo-700{% else %}border border-gray-200 bg-white text-gray-600{% endif %} rounded-lg px-2 py-1.5"
+            >{{ marker.time_label }}</button>
+            {% endfor %}
           </div>
         </div>
 
         <article class="rounded-2xl border border-gray-200 bg-white/92 p-4 ui-lift">
           <div class="mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
             <h2 class="text-base font-bold">Transcript Timeline</h2>
-            <span class="text-xs font-semibold text-gray-500">14 turns</span>
+            <span class="text-xs font-semibold text-gray-500">{{ replay_rows|length }} turns</span>
           </div>
           <div id="transcriptList" class="space-y-3 text-sm">
-            <div data-time="02:14" class="transcript-row rounded-xl border border-gray-200 bg-gray-50 p-3">
-              <p class="text-xs uppercase tracking-wide text-indigo-600">AI · 02:14</p>
-              <p class="mt-1 text-gray-700">How did you align priorities when your stakeholders wanted conflicting outcomes?</p>
+            {% for row in replay_rows %}
+            <div data-time="{{ row.time_label }}" class="transcript-row {% if row.time_label == replay_active_time %}transcript-active border-indigo-200 bg-indigo-50{% else %}border-gray-200 bg-gray-50{% endif %} rounded-xl border p-3">
+              <p class="text-xs uppercase tracking-wide text-indigo-600">You · {{ row.time_label }}</p>
+              <p class="mt-1 text-gray-800">{{ row.user_text }}</p>
+              {% if row.feedback %}
+              <p class="mt-2 text-xs text-gray-500">Feedback: {{ row.feedback }}</p>
+              {% endif %}
             </div>
-            <div data-time="05:09" class="transcript-row rounded-xl border border-gray-200 bg-gray-50 p-3">
-              <p class="text-xs uppercase tracking-wide text-gray-500">You · 05:09</p>
-              <p class="mt-1 text-gray-700">I structured trade-offs by impact and risk, then forced clarity on one KPI owner.</p>
-            </div>
-            <div data-time="08:32" class="transcript-row transcript-active rounded-xl border border-indigo-200 bg-indigo-50 p-3">
-              <p class="text-xs uppercase tracking-wide text-indigo-600">You · 08:32</p>
-              <p class="mt-1 text-gray-800">We improved launch confidence from 58% to 86% and cut escalations by 40%.</p>
-            </div>
-            <div data-time="12:48" class="transcript-row rounded-xl border border-gray-200 bg-gray-50 p-3">
-              <p class="text-xs uppercase tracking-wide text-gray-500">AI · 12:48</p>
-              <p class="mt-1 text-gray-700">What would you do differently if time-to-market pressure doubled?</p>
-            </div>
+            {% endfor %}
           </div>
         </article>
       </article>
@@ -157,26 +173,29 @@
         <article class="rounded-3xl ui-surface p-4 sm:p-5 ui-lift">
           <h2 class="text-lg font-bold">Evidence Cards</h2>
           <ul class="mt-4 space-y-3 text-sm">
-            <li class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 sm:px-4 text-emerald-900">
-              <p class="font-semibold">+ Strong Quantification</p>
-              <p class="mt-1 text-emerald-800">@08:32 included exact impact metrics and timeframe.</p>
+            {% for card in replay_evidence %}
+            <li class="rounded-xl border {% if card.tone == 'good' %}border-emerald-200 bg-emerald-50 text-emerald-900{% elif card.tone == 'improve' %}border-amber-200 bg-amber-50 text-amber-900{% else %}border-sky-200 bg-sky-50 text-sky-900{% endif %} px-3 py-3 sm:px-4">
+              <p class="font-semibold">{{ card.title }}</p>
+              <p class="mt-1 {% if card.tone == 'good' %}text-emerald-800{% elif card.tone == 'improve' %}text-amber-800{% else %}text-sky-800{% endif %}">@{{ card.time_label }} {{ card.detail }}</p>
             </li>
-            <li class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 sm:px-4 text-amber-900">
-              <p class="font-semibold">~ Improve Conciseness</p>
-              <p class="mt-1 text-amber-800">@05:09 had useful structure but longer setup than needed.</p>
-            </li>
-            <li class="rounded-xl border border-sky-200 bg-sky-50 px-3 py-3 sm:px-4 text-sky-900">
-              <p class="font-semibold">+ Leadership Signal</p>
-              <p class="mt-1 text-sky-800">Clear ownership model and cross-functional alignment language.</p>
-            </li>
+            {% endfor %}
           </ul>
         </article>
       </aside>
     </section>
+    {% else %}
+    <section class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+      No replay data found yet. Complete at least one interview session to generate timestamped replay and mistake markers.
+    </section>
+    {% endif %}
   </main>
+
+  {{ impact_categories|json_script:"impactCategoriesData" }}
+  {{ impact_values|json_script:"impactValuesData" }}
 
   <script>
     (function () {
+      var replayAudio = document.getElementById('replayAudio');
       var playToggle = document.getElementById('playToggle');
       var playIconPath = document.getElementById('playIconPath');
       var playbackBadge = document.getElementById('playbackBadge');
@@ -185,29 +204,47 @@
       var playbackTime = document.getElementById('playbackTime');
       var scrubber = document.getElementById('timelineScrubber');
       var isPlaying = false;
-      var markerOrder = ['02:14', '05:09', '08:32', '12:48'];
+      var durationLabel = "{{ replay_duration_label|default:'00:00'|escapejs }}";
+
+      var markerData = timelineMarkers.map(function (marker) {
+		return {
+			time: marker.dataset.marker,
+			seconds: Number(marker.dataset.seconds || 0),
+			audioUrl: marker.dataset.audioUrl || ''
+		};
+	  });
 
       function paintScrubber() {
+		if (!scrubber) return;
         var value = Number(scrubber.value);
-        scrubber.style.background = 'linear-gradient(to right, #4f46e5 0%, #4f46e5 ' + value + '%, #cbd5e1 ' + value + '%, #cbd5e1 100%)';
+        var max = Math.max(1, Number(scrubber.max || 1));
+        var pct = Math.max(0, Math.min(100, (value / max) * 100));
+        scrubber.style.background = 'linear-gradient(to right, #4f46e5 0%, #4f46e5 ' + pct + '%, #cbd5e1 ' + pct + '%, #cbd5e1 100%)';
       }
 
       function markerFromValue(value) {
-        if (value < 25) return '02:14';
-        if (value < 42) return '05:09';
-        if (value < 65) return '08:32';
-        return '12:48';
+        if (!markerData.length) return '';
+        var nearest = markerData[0];
+        var bestDelta = Math.abs(nearest.seconds - value);
+        for (var i = 1; i < markerData.length; i += 1) {
+          var delta = Math.abs(markerData[i].seconds - value);
+          if (delta < bestDelta) {
+            bestDelta = delta;
+            nearest = markerData[i];
+          }
+        }
+        return nearest.time;
       }
 
       function setScrubberForMarker(time) {
-        if (time === '02:14') scrubber.value = 12;
-        else if (time === '05:09') scrubber.value = 34;
-        else if (time === '08:32') scrubber.value = 52;
-        else scrubber.value = 78;
+        if (!scrubber) return;
+        var selected = markerData.find(function (item) { return item.time === time; });
+        if (selected) scrubber.value = selected.seconds;
         paintScrubber();
       }
 
       function activateMarker(time) {
+        if (!time) return;
         timelineMarkers.forEach(function (m) {
           m.classList.remove('marker-active', 'border-indigo-200', 'bg-indigo-50', 'text-indigo-700');
           m.classList.add('border-gray-200', 'bg-white', 'text-gray-600');
@@ -226,8 +263,19 @@
           }
         });
 
-        playbackTime.textContent = time + ' / 18:42';
+        if (playbackTime) playbackTime.textContent = time + ' / ' + durationLabel;
         setScrubberForMarker(time);
+
+        var selected = markerData.find(function (item) { return item.time === time; });
+        if (selected && replayAudio && selected.audioUrl) {
+          if (replayAudio.src !== selected.audioUrl) {
+            replayAudio.src = selected.audioUrl;
+          }
+          if (isPlaying) {
+            replayAudio.currentTime = 0;
+            replayAudio.play().catch(function () {});
+          }
+        }
       }
 
       timelineMarkers.forEach(function (marker) {
@@ -242,21 +290,43 @@
         });
       });
 
-      scrubber.addEventListener('input', function () {
-        paintScrubber();
-        activateMarker(markerFromValue(Number(scrubber.value)));
-      });
+      if (scrubber) {
+        scrubber.addEventListener('input', function () {
+          paintScrubber();
+          activateMarker(markerFromValue(Number(scrubber.value)));
+        });
+      }
 
-      playToggle.addEventListener('click', function () {
-        isPlaying = !isPlaying;
-        playbackBadge.textContent = isPlaying ? 'Playing' : 'Paused';
-        playIconPath.setAttribute('d', isPlaying ? 'M7 6h3v12H7zM14 6h3v12h-3z' : 'M8 5v14l11-7z');
-      });
+      if (playToggle) {
+        playToggle.addEventListener('click', function () {
+          isPlaying = !isPlaying;
+          if (playbackBadge) playbackBadge.textContent = isPlaying ? 'Playing' : 'Paused';
+          if (playIconPath) playIconPath.setAttribute('d', isPlaying ? 'M7 6h3v12H7zM14 6h3v12h-3z' : 'M8 5v14l11-7z');
+
+          var active = document.querySelector('.timeline-marker.marker-active');
+          if (!active || !replayAudio || !active.dataset.audioUrl) return;
+          if (replayAudio.src !== active.dataset.audioUrl) {
+            replayAudio.src = active.dataset.audioUrl;
+          }
+          if (isPlaying) replayAudio.play().catch(function () {});
+          else replayAudio.pause();
+        });
+      }
+
+      if (replayAudio) {
+        replayAudio.addEventListener('ended', function () {
+          isPlaying = false;
+          if (playbackBadge) playbackBadge.textContent = 'Paused';
+          if (playIconPath) playIconPath.setAttribute('d', 'M8 5v14l11-7z');
+        });
+      }
 
       document.addEventListener('keydown', function (event) {
         if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
         var current = markerFromValue(Number(scrubber.value));
+        var markerOrder = markerData.map(function (item) { return item.time; });
         var index = markerOrder.indexOf(current);
+        if (index < 0) index = 0;
         var next = event.key === 'ArrowRight' ? Math.min(index + 1, markerOrder.length - 1) : Math.max(index - 1, 0);
         activateMarker(markerOrder[next]);
       });
@@ -265,11 +335,18 @@
 
       var impactTarget = document.querySelector('#impactChart');
       if (impactTarget && typeof ApexCharts !== 'undefined') {
+        var categoriesEl = document.getElementById('impactCategoriesData');
+        var valuesEl = document.getElementById('impactValuesData');
+        var categories = categoriesEl ? JSON.parse(categoriesEl.textContent || '[]') : [];
+        var values = valuesEl ? JSON.parse(valuesEl.textContent || '[]') : [];
+        if (!categories.length) categories = ['Communication', 'Clarity', 'Confidence'];
+        if (!values.length) values = [0, 0, 0];
+
         var impactChart = new ApexCharts(impactTarget, {
           chart: { type: 'bar', height: '100%', toolbar: { show: false } },
-          series: [{ name: 'Score Lift', data: [12, 9, 15] }],
+          series: [{ name: 'Replay Score', data: values }],
           xaxis: {
-            categories: ['Communication', 'Clarity', 'Confidence'],
+            categories: categories,
             labels: { style: { colors: '#6b7280', fontSize: '11px' } }
           },
           yaxis: { labels: { style: { colors: '#9ca3af', fontSize: '11px' } } },
@@ -277,10 +354,14 @@
           plotOptions: { bar: { borderRadius: 6, columnWidth: '45%' } },
           dataLabels: { enabled: false },
           grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
-          tooltip: { y: { formatter: function (val) { return '+' + val + ' pts'; } } },
+          tooltip: { y: { formatter: function (val) { return String(Math.round(val)) + '/100'; } } },
           legend: { show: false }
         });
         impactChart.render();
+      }
+
+      if (markerData.length) {
+        activateMarker("{{ replay_active_time|escapejs }}" || markerData[0].time);
       }
     })();
   </script>
