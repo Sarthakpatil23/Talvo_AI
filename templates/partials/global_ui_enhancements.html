@@ -230,6 +230,7 @@
   function enhanceButtons() {
     document.querySelectorAll("button").forEach(function (el) {
       if (el.closest("form")) return;
+      if (el.hasAttribute("data-toggle")) return;
       var route = routeForText(el.textContent);
       if (!route) return;
 

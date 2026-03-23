@@ -72,7 +72,8 @@ def dashboard(request):
 
 @login_required
 def history_page(request):
-	return render(request, 'History-Page-a3d819cc716944daa8cb80c50d943ada.html')
+	context = _build_results_context(request.user)
+	return render(request, 'History-Page-a3d819cc716944daa8cb80c50d943ada.html', context)
 
 
 @login_required
@@ -462,8 +463,7 @@ def profile_page(request):
 
 @login_required
 def results_page(request):
-	context = _build_results_context(request.user)
-	return render(request, 'Results-Analytics.html', context)
+	return redirect('history_page')
 
 
 def privacy_policy(request):

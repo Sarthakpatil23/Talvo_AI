@@ -1,79 +1,255 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Talvo History</title>
+  <title>Talvo Performance and History</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <style>body{font-family:'Plus Jakarta Sans',sans-serif;}</style>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .session-panel { display: none; }
+    .session-panel.open { display: block; }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-900 flex min-h-screen">
   {% include 'partials/sidebar.html' %}
   <div class="flex-1 min-w-0 flex flex-col min-h-screen">
-    <main class="max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
-      <header class="flex flex-wrap items-end justify-between gap-4">
-        <div class="space-y-2">
-          <p class="text-sm text-gray-500 uppercase tracking-wide">Session History</p>
-          <h1 class="text-3xl font-semibold tracking-tight">Replay and review your journey</h1>
-          <p class="text-sm text-gray-600">Inspect previous sessions, compare trends, and jump back into your best attempts.</p>
+    <main class="max-w-7xl mx-auto w-full px-6 py-7 space-y-6">
+      <header class="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-700 via-indigo-600 to-cyan-500 p-6 text-white shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-[0.14em] text-indigo-100">Performance and History</p>
+            <h1 class="mt-1 text-3xl font-semibold tracking-tight">Track progress, replay sessions, review insights</h1>
+            <p class="mt-2 text-sm text-indigo-50">Overall performance first, then full history with detailed analytics and feedback trails.</p>
+          </div>
+          <div class="rounded-2xl border border-white/25 bg-white/15 px-5 py-4 text-right backdrop-blur-sm">
+            <p class="text-xs uppercase tracking-wide text-indigo-100">Overall Score</p>
+            <p class="mt-1 text-4xl font-bold">{{ overall_score }}</p>
+            <p class="text-xs text-indigo-100">Across {{ total_sessions }} sessions</p>
+          </div>
         </div>
-        <a href="{% url 'replay_page' %}" class="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">Open Latest Replay</a>
       </header>
 
-      <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <input class="rounded-xl border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Search role or date"/>
-          <select class="rounded-xl border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"><option>All roles</option><option>Product Manager</option><option>SDE</option></select>
-          <select class="rounded-xl border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"><option>Any score</option><option>8.0+</option><option>7.0+</option></select>
-          <button class="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">Apply Filters</button>
-        </div>
+      <section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Completed</p>
+          <p class="mt-1 text-2xl font-bold text-green-700">{{ status_distribution.completed }}</p>
+        </article>
+        <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Active</p>
+          <p class="mt-1 text-2xl font-bold text-amber-700">{{ status_distribution.active }}</p>
+        </article>
+        <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-wide text-gray-500">Aborted</p>
+          <p class="mt-1 text-2xl font-bold text-rose-700">{{ status_distribution.aborted }}</p>
+        </article>
       </section>
 
-      <section class="space-y-4">
-        <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 class="text-xl font-semibold tracking-tight">Senior PM Mock - Behavioral</h2>
-              <p class="text-sm text-gray-600 mt-1">Mar 17, 2026 | 22 min</p>
-            </div>
-            <span class="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-600">Score 8.2</span>
-          </div>
-          <div class="mt-4 flex flex-wrap gap-2">
-            <a href="{% url 'replay_page' %}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200">Replay</a>
-            <a href="{% url 'feedback_dashboard' %}" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all duration-200">Feedback</a>
-          </div>
-        </article>
+      <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold tracking-tight">Session Bars, Replay, Feedback, Analytics</h2>
+          <span class="text-xs font-medium text-gray-500">Use search, then open session cards for deeper analysis</span>
+        </div>
 
-        <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 class="text-xl font-semibold tracking-tight">SDE System Design Round</h2>
-              <p class="text-sm text-gray-600 mt-1">Mar 15, 2026 | 28 min</p>
-            </div>
-            <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">Score 7.6</span>
-          </div>
-          <div class="mt-4 flex flex-wrap gap-2">
-            <a href="{% url 'replay_page' %}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200">Replay</a>
-            <a href="{% url 'feedback_dashboard' %}" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all duration-200">Feedback</a>
-          </div>
-        </article>
+        <div class="relative">
+          <input
+            id="sessionSearchInput"
+            type="search"
+            placeholder="Search sessions by company, role, status, or date (e.g., Mar 22, 2026)"
+            class="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+          </svg>
+        </div>
 
-        <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 class="text-xl font-semibold tracking-tight">UX Portfolio Defense</h2>
-              <p class="text-sm text-gray-600 mt-1">Mar 13, 2026 | 19 min</p>
+        <p id="sessionSearchEmpty" class="hidden rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+          No sessions matched your search.
+        </p>
+
+        {% for item in session_cards %}
+          <article
+            class="session-item rounded-xl border border-gray-200 bg-gray-50/80"
+            data-search="{{ item.title|lower }} {{ item.role|lower }} {{ item.difficulty|lower }} {{ item.status|lower }} {{ item.started_at|date:'M d, Y h:i A'|lower }}"
+          >
+            <div class="px-4 py-4">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-semibold text-gray-900">{{ item.title }}</p>
+                  <p class="mt-1 text-xs text-gray-500">{{ item.role }} | {{ item.difficulty }} | {{ item.started_at|date:'M d, Y h:i A' }}</p>
+                </div>
+                <div class="text-right">
+                  <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold {% if item.status == 'completed' %}bg-green-100 text-green-700{% elif item.status == 'active' %}bg-amber-100 text-amber-700{% else %}bg-rose-100 text-rose-700{% endif %}">{{ item.status|title }}</span>
+                  <p class="mt-1 text-sm font-bold text-indigo-700">Score {{ item.session_score }}/100</p>
+                </div>
+              </div>
+              <div class="mt-3 h-2.5 w-full rounded-full bg-gray-200 overflow-hidden">
+                <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500" style="width: {{ item.session_score }}%;"></div>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <a href="{% url 'replay_page' %}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200">Replay</a>
+                <a href="{% url 'feedback_dashboard' %}" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all duration-200">Feedback</a>
+                <button type="button" data-toggle="session-{{ item.id }}" class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-all duration-200">Open Analytics</button>
+              </div>
             </div>
-            <span class="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">Score 8.0</span>
-          </div>
-          <div class="mt-4 flex flex-wrap gap-2">
-            <a href="{% url 'replay_page' %}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200">Replay</a>
-            <a href="{% url 'feedback_dashboard' %}" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all duration-200">Feedback</a>
-          </div>
-        </article>
+
+            <div id="session-{{ item.id }}" class="session-panel border-t border-gray-200 px-4 py-4">
+              <div class="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
+                <div class="space-y-4">
+                  <div class="rounded-xl border border-gray-200 bg-white p-3">
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Session Review</p>
+                    <p class="mt-1 text-sm text-gray-700">{{ item.review_text }}</p>
+                    <p class="mt-2 text-xs text-gray-500">Turns: {{ item.turn_count }} | Avg latency: {{ item.avg_latency }} ms</p>
+                  </div>
+                  <div class="rounded-xl border border-gray-200 bg-white p-3">
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Feedback Highlights</p>
+                    <ul class="mt-2 space-y-2 text-sm text-gray-700">
+                      {% for line in item.feedback_lines %}
+                        <li class="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">{{ line }}</li>
+                      {% empty %}
+                        <li class="text-gray-500">No explicit feedback text captured yet for this session.</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+                <div class="space-y-4">
+                  <div class="rounded-xl border border-gray-200 bg-white p-3">
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Quality Trend</p>
+                    <div id="quality-chart-{{ item.id }}" class="mt-2 h-40 w-full"></div>
+                  </div>
+                  <div class="rounded-xl border border-gray-200 bg-white p-3">
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Latency Trend</p>
+                    <div id="latency-chart-{{ item.id }}" class="mt-2 h-36 w-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        {% empty %}
+          <article class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+            <p class="text-sm text-gray-600">No interview sessions found yet. Start an interview to see analytics here.</p>
+          </article>
+        {% endfor %}
       </section>
     </main>
+
+    {{ results_chart_data|json_script:"resultsChartData" }}
+
+    <script>
+      (function () {
+        var toggleButtons = Array.prototype.slice.call(document.querySelectorAll('[data-toggle]'));
+        var sessionSearchInput = document.getElementById('sessionSearchInput');
+        var sessionSearchEmpty = document.getElementById('sessionSearchEmpty');
+        var sessionItems = Array.prototype.slice.call(document.querySelectorAll('.session-item'));
+        var chartDataEl = document.getElementById('resultsChartData');
+        var chartData = chartDataEl ? JSON.parse(chartDataEl.textContent || '[]') : [];
+        var chartMap = {};
+        var rendered = {};
+
+        function applySessionSearch() {
+          if (!sessionSearchInput || !sessionItems.length) return;
+          var query = (sessionSearchInput.value || '').toLowerCase().trim();
+          var visibleCount = 0;
+
+          sessionItems.forEach(function (item) {
+            var haystack = String(item.getAttribute('data-search') || '').toLowerCase();
+            var matches = !query || haystack.indexOf(query) !== -1;
+            item.classList.toggle('hidden', !matches);
+
+            if (!matches) {
+              var openPanel = item.querySelector('.session-panel.open');
+              if (openPanel) openPanel.classList.remove('open');
+              var toggleBtn = item.querySelector('[data-toggle]');
+              if (toggleBtn) toggleBtn.textContent = 'Open Analytics';
+            } else {
+              visibleCount += 1;
+            }
+          });
+
+          if (sessionSearchEmpty) {
+            sessionSearchEmpty.classList.toggle('hidden', visibleCount !== 0);
+          }
+        }
+
+        for (var i = 0; i < chartData.length; i += 1) {
+          chartMap[String(chartData[i].session_id)] = chartData[i];
+        }
+
+        function renderCharts(sessionId) {
+          if (rendered[sessionId]) return;
+          if (typeof ApexCharts === 'undefined') return;
+
+          var dataset = chartMap[String(sessionId)] || { labels: [], quality: [], latency: [] };
+          var labels = dataset.labels && dataset.labels.length ? dataset.labels : ['T1'];
+          var quality = dataset.quality && dataset.quality.length ? dataset.quality : [0];
+          var latency = dataset.latency && dataset.latency.length ? dataset.latency : [0];
+
+          var qualityTarget = document.querySelector('#quality-chart-' + sessionId);
+          var latencyTarget = document.querySelector('#latency-chart-' + sessionId);
+          if (!qualityTarget || !latencyTarget) return;
+
+          var qualityChart = new ApexCharts(qualityTarget, {
+            chart: { type: 'line', height: '100%', toolbar: { show: false } },
+            series: [{ name: 'Quality', data: quality }],
+            xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: '#6b7280' } } },
+            yaxis: { min: 0, max: 100, tickAmount: 4, labels: { style: { fontSize: '10px', colors: '#9ca3af' } } },
+            stroke: { curve: 'smooth', width: 2.8, colors: ['#4f46e5'] },
+            grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
+            markers: { size: 3 },
+            tooltip: { y: { formatter: function (val) { return Math.round(val) + '/100'; } } },
+            dataLabels: { enabled: false },
+            legend: { show: false }
+          });
+
+          var latencyMax = Math.max.apply(null, latency.concat([1]));
+          var latencyChart = new ApexCharts(latencyTarget, {
+            chart: { type: 'bar', height: '100%', toolbar: { show: false } },
+            series: [{ name: 'Latency', data: latency }],
+            xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: '#6b7280' } } },
+            yaxis: { min: 0, max: latencyMax + 200, labels: { style: { fontSize: '10px', colors: '#9ca3af' } } },
+            plotOptions: { bar: { borderRadius: 4, columnWidth: '48%' } },
+            colors: ['#06b6d4'],
+            grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
+            tooltip: { y: { formatter: function (val) { return Math.round(val) + ' ms'; } } },
+            dataLabels: { enabled: false },
+            legend: { show: false }
+          });
+
+          qualityChart.render();
+          latencyChart.render();
+          rendered[sessionId] = true;
+        }
+
+        toggleButtons.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var targetId = btn.getAttribute('data-toggle');
+            if (!targetId) return;
+            var panel = document.getElementById(targetId);
+            if (!panel) return;
+
+            var shouldOpen = !panel.classList.contains('open');
+            panel.classList.toggle('open', shouldOpen);
+            btn.textContent = shouldOpen ? 'Close Analytics' : 'Open Analytics';
+            if (shouldOpen) {
+              var sid = String(targetId).replace('session-', '');
+              renderCharts(sid);
+            }
+          });
+        });
+
+        if (sessionSearchInput) {
+          sessionSearchInput.addEventListener('input', applySessionSearch);
+        }
+
+        if (toggleButtons.length) {
+          toggleButtons[0].click();
+        }
+
+        applySessionSearch();
+      })();
+    </script>
 
     {% include 'partials/global_ui_enhancements.html' %}
   </div>
