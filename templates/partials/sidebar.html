@@ -1,63 +1,110 @@
-<aside class="w-64 flex-shrink-0 bg-white border-r border-gray-200 hidden md:flex flex-col h-screen sticky top-0 z-40 shadow-sm transition-all duration-300">
-  <div class="h-16 flex items-center px-6 border-b border-gray-200">
-    <div class="flex items-center gap-3">
-        {% include 'partials/talvo_mark.html' %}
-        <span class="text-xl font-bold tracking-tight text-gray-900">Talvo<span class="text-indigo-600">AI</span></span>
-    </div>
+<style>
+  .tsb-nav-item {
+    border-left: 3px solid transparent;
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 10px 12px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 150ms ease;
+  }
+
+  .tsb-nav-item:hover {
+    background: #F1F5F9;
+    color: #0D1117;
+  }
+
+  .tsb-nav-item.active {
+    border-left-color: #0B3D91;
+    color: #0B3D91;
+    font-weight: 600;
+    background: #F8FAFF;
+  }
+
+  .tsb-notice-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #EF4444;
+    margin-left: auto;
+  }
+
+  .tsb-link-button {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+</style>
+
+{% with current=request.resolver_match.url_name %}
+<aside class="w-[240px] flex-shrink-0 bg-white border-r border-[#E2E8F0] hidden md:flex flex-col h-screen sticky top-0 z-40 shadow-sm">
+  <div class="h-16 flex items-center px-6 border-b border-[#E2E8F0]">
+    <a href="{% url 'dashboard' %}" class="flex items-center gap-3 text-xl font-bold tracking-tight text-[#0D1117]">
+      {% include 'partials/talvo_mark.html' %}
+      <span>Talvo<span class="text-[#7C4DFF]">AI</span></span>
+    </a>
   </div>
-  
-  <div class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-    <!-- Dashboard -->
-    <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-      </svg>
+
+  <div class="flex-1 overflow-y-auto py-4 px-4 space-y-1">
+    <a href="{% url 'dashboard' %}" class="tsb-nav-item {% if current == 'dashboard' %}active{% endif %}">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="{% if current == 'dashboard' %}currentColor{% else %}none{% endif %}" stroke="currentColor"><path d="M12 3l9 8h-3v9h-4v-6H10v6H6v-9H3l9-8z" stroke-width="1.8"/></svg>
       Dashboard
     </a>
-    
-    <!-- Interview Setup -->
-    <a href="{% url 'interview_setup' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-      </svg>
+
+    <a href="{% url 'interview_setup' %}" class="tsb-nav-item {% if current == 'interview_setup' %}active{% endif %}">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="14" height="12" rx="2" stroke-width="1.8"/><path d="M17 10l4-2v8l-4-2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Interview Setup
     </a>
-    
-    <!-- Performance and History -->
-    <a href="{% url 'history_page' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h11"></path>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20V12"></path>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20V9"></path>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 20V6"></path>
-        <circle cx="18" cy="8" r="3"></circle>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6.9v1.4l1 .7"></path>
-      </svg>
+
+    <a href="{% url 'history_page' %}" class="tsb-nav-item {% if current == 'history_page' or current == 'replay_page' or current == 'feedback_dashboard' or current == 'results_page' %}active{% endif %}">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h12" stroke-width="1.8" stroke-linecap="round"/><path d="M7 20v-8M12 20V9M17 20v-5" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="7" r="3" stroke-width="1.8"/></svg>
       Performance and History
+      <span class="tsb-notice-dot"></span>
     </a>
-    
-    <!-- Preferences / Settings -->
-    <a href="{% url 'settings_page' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-      </svg>
+
+    <a href="{% url 'settings_page' %}" class="tsb-nav-item {% if current == 'settings_page' or current == 'profile_page' %}active{% endif %}">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8.8A3.2 3.2 0 1112 15a3.2 3.2 0 010-6.2z" stroke-width="1.8"/><path d="M19.4 12a7.4 7.4 0 00-.1-1l2-1.6-2-3.5-2.5.8a7 7 0 00-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 00-1.7 1l-2.5-.8-2 3.5L4.7 11a7.4 7.4 0 000 2l-2 1.6 2 3.5 2.5-.8a7 7 0 001.7 1l.4 2.6h4l.4-2.6a7 7 0 001.7-1l2.5.8 2-3.5-2-1.6c.1-.3.1-.7.1-1z" stroke-width="1.4" stroke-linejoin="round"/></svg>
       Preferences
     </a>
+
+    <div class="pt-4 px-1">
+      <p class="text-[11px] tracking-[0.08em] uppercase text-[#64748B]">Quick Start</p>
+      <div class="mt-2 rounded-xl p-3 text-white" style="background: linear-gradient(135deg, #0B3D91, #7C4DFF);">
+        <p class="text-sm font-semibold">Ready to practice?</p>
+        <p class="mt-1 text-xs text-white/75">Start a 15-min session</p>
+        <a href="{% url 'interview_setup' %}" class="mt-3 inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#0B3D91]">Start Now
+          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
   </div>
-  
-  <div class="p-4 border-t border-gray-200">
-    <a href="{% url 'profile_page' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl transition-colors hover:bg-gray-50">
-        <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 font-semibold border border-gray-200 flex-shrink-0">
-          U
-      </div>
-      <div class="flex flex-col overflow-hidden">
-        <span class="text-sm font-medium text-gray-900 truncate">{{ request.user.get_full_name|default:request.user.email|default:'User Account' }}</span>
-        <span class="text-xs text-gray-500 truncate">{{ request.user.email|default:'Signed in user' }}</span>
-      </div>
+
+  <div class="border-t border-[#E2E8F0] px-4 py-4">
+    <a href="{% url 'profile_page' %}" class="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50">
+      <span class="inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white" style="background: linear-gradient(135deg, #0B3D91, #7C4DFF);">
+        {{ request.user.first_name|default:request.user.email|slice:':1'|upper }}
+      </span>
+      <span class="min-w-0">
+        <span class="block truncate text-sm font-semibold text-[#0D1117]">{{ request.user.get_full_name|default:request.user.email|default:'User Account' }}</span>
+        <span class="block truncate text-xs text-[#64748B]">{{ request.user.email|default:'Signed in user' }}</span>
+      </span>
     </a>
-    <form method="post" action="{% url 'logout_user' %}" class="mt-2 px-3">
-      {% csrf_token %}
-      <button type="submit" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100">Sign out</button>
-    </form>
+
+    <div class="mt-2 text-xs text-[#64748B]">
+      <a href="{% url 'settings_page' %}" class="hover:text-[#0D1117]">Settings</a>
+      <span class="px-1">|</span>
+      <form method="post" action="{% url 'logout_user' %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="tsb-link-button hover:text-[#0D1117]">Sign out</button>
+      </form>
+    </div>
   </div>
 </aside>
+{% endwith %}

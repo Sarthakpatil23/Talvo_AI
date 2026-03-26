@@ -134,6 +134,18 @@ def _load_tts():
     return TTS(model_name=model_name, progress_bar=False, gpu=use_gpu)
 
 
+def _ensure_whisper_loaded() -> None:
+    global _whisper_model
+    if _whisper_model is None:
+        _whisper_model = _load_whisper()
+
+
+def _ensure_tts_loaded() -> None:
+    global _tts_model
+    if _tts_model is None:
+        _tts_model = _load_tts()
+
+
 def _find_rhubarb_binary() -> str:
     configured = (os.getenv('RHUBARB_BINARY', '') or '').strip()
     candidates = [configured] if configured else []
@@ -180,12 +192,14 @@ def _generate_lipsync_json(audio_path: Path) -> Path | None:
 
 @app.on_event('startup')
 def startup() -> None:
-    global _whisper_model, _tts_model
     _configure_espeak()
-    if _whisper_model is None:
-        _whisper_model = _load_whisper()
-    if _tts_model is None:
-        _tts_model = _load_tts()
+
+    # Avoid blocking app bind/startup on large model loads.
+    # Models are initialized lazily in endpoint handlers.
+    preload_models = os.getenv('PRELOAD_SPEECH_MODELS', '0') in {'1', 'true', 'True'}
+    if preload_models:
+        _ensure_whisper_loaded()
+        _ensure_tts_loaded()
 
 
 @app.get('/health')
@@ -200,6 +214,8 @@ async def stt(audio: UploadFile = File(...)):
     suffix = Path(audio.filename or 'audio.webm').suffix or '.webm'
     tmp_path = None
     try:
+        _ensure_whisper_loaded()
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             tmp.write(await audio.read())
             tmp_path = tmp.name
@@ -249,6 +265,8 @@ def tts(payload: TTSRequest):
         raise HTTPException(status_code=400, detail='text is required')
 
     try:
+        _ensure_tts_loaded()
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
         _tts_model.tts_to_file(text=text, file_path=str(output_path))
         lipsync_path = _generate_lipsync_json(output_path)

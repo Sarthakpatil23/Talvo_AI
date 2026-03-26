@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 {% load static %}
 <html lang="en">
 <head>
@@ -7,298 +7,785 @@
   <title>Talvo Interview Setup</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .company-card.active {
-      border-color: rgb(99 102 241);
-      background: rgb(238 242 255);
-      transform: scale(1.02);
-      box-shadow: 0 10px 25px -18px rgba(79, 70, 229, 0.6);
+    :root {
+      --talvo-primary: #0B3D91;
+      --talvo-accent: #00A89C;
+      --talvo-secondary: #7C4DFF;
+      --talvo-bg: #F4F6FA;
+      --talvo-surface: #FFFFFF;
+      --talvo-border: #E2E8F0;
+      --talvo-text: #0D1117;
+      --talvo-muted: #64748B;
     }
-    .difficulty-pill.active {
-      background: linear-gradient(to right, rgb(79 70 229), rgb(99 102 241));
-      color: white;
-      box-shadow: 0 8px 18px -14px rgba(79, 70, 229, 0.7);
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--talvo-bg);
+      color: var(--talvo-text);
     }
+
+    .setup-shell {
+      max-width: 1280px;
+    }
+
+    .glass-shadow { box-shadow: 0 10px 30px -24px rgba(15, 23, 42, 0.55); }
+    .card-shadow { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 10px 24px -22px rgba(2, 6, 23, 0.4); }
+
+    .setup-section {
+      position: relative;
+      padding-left: 56px;
+      isolation: isolate;
+      animation: fadeInUp 420ms ease both;
+    }
+
+    .setup-section:nth-of-type(1) { animation-delay: 40ms; }
+    .setup-section:nth-of-type(2) { animation-delay: 120ms; }
+    .setup-section:nth-of-type(3) { animation-delay: 200ms; }
+    .setup-section:nth-of-type(4) { animation-delay: 280ms; }
+    .setup-section:nth-of-type(5) { animation-delay: 360ms; }
+
+    .step-rail {
+      position: absolute;
+      left: 15px;
+      top: 6px;
+      bottom: -28px;
+      width: 2px;
+      background: #d7deeb;
+      z-index: 0;
+    }
+
+    .step-dot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: #d7deeb;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 200ms ease;
+      z-index: 2;
+    }
+
+    .step-dot.done {
+      background: var(--talvo-primary);
+      color: #fff;
+      animation: popDone 260ms ease;
+    }
+
+    .step-dot.done .num { display: none; }
+    .step-dot.done .check { display: block; }
+    .step-dot .check { display: none; font-size: 13px; }
+
+    .setup-section:last-of-type .step-rail { display: none; }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #00A89C, #16c3b6);
+      transition: width 260ms ease;
+    }
+
+    .round-card,
+    .company-card,
+    .mode-pill,
+    .length-chip,
+    .difficulty-pill {
+      transition: all 200ms ease;
+      transform: translateZ(0);
+      border: 1px solid var(--talvo-border);
+      background: #fff;
+    }
+
+    .round-card:active,
+    .company-card:active,
+    .mode-pill:active,
+    .length-chip:active,
+    .difficulty-pill:active { transform: scale(0.98); }
+
+    .round-card { min-height: 168px; }
+    .round-card:hover,
+    .company-card:hover,
+    .mode-pill:hover {
+      border-color: rgba(11, 61, 145, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px -18px rgba(11, 61, 145, 0.55);
+    }
+
     .round-card.active {
-      border-color: rgb(99 102 241);
-      background: rgb(238 242 255);
-      box-shadow: 0 10px 24px -18px rgba(79, 70, 229, 0.6);
+      border-width: 2px;
+      border-color: var(--talvo-primary);
+      background: #EEF2FF;
+      box-shadow: 0 16px 30px -24px rgba(11, 61, 145, 0.62);
+    }
+
+    .company-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .company-card {
+      border-radius: 10px;
+      min-height: 80px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      position: relative;
+    }
+
+    .company-card.active {
+      border-width: 2px;
+      border-color: var(--talvo-primary);
+      background: #EEF2FF;
+      box-shadow: 0 8px 20px -16px rgba(11, 61, 145, 0.58);
       transform: translateY(-1px);
+    }
+
+    .selected-badge {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--talvo-primary);
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .round-card.active .selected-badge,
+    .company-card.active .selected-badge { display: inline-flex; }
+
+    .company-tooltip {
+      position: absolute;
+      top: -34px;
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      opacity: 0;
+      pointer-events: none;
+      background: #0f172a;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 6px 10px;
+      white-space: nowrap;
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 5;
+    }
+
+    .company-card:hover .company-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .field-wrap { position: relative; }
+
+    .floating-label {
+      position: absolute;
+      left: 42px;
+      top: 11px;
+      padding: 0 5px;
+      background: #fff;
+      color: #64748B;
+      font-size: 13px;
+      transition: all 160ms ease;
+      pointer-events: none;
+    }
+
+    .field-wrap.focused .floating-label,
+    .field-wrap.filled .floating-label {
+      top: -8px;
+      font-size: 11px;
+      color: var(--talvo-primary);
+    }
+
+    .input-modern,
+    .select-modern,
+    #topicInput,
+    #customCompanySelect,
+    #customCompanyOther {
+      border: 1px solid var(--talvo-border);
+      border-radius: 10px;
+      height: 44px;
+      background: #fff;
+      color: var(--talvo-text);
+      font-size: 14px;
+    }
+
+    .input-modern:focus,
+    .select-modern:focus,
+    #topicInput:focus,
+    #customCompanySelect:focus,
+    #customCompanyOther:focus {
+      border-color: var(--talvo-primary);
+      box-shadow: 0 0 0 3px rgba(11, 61, 145, 0.1);
+      outline: none;
+    }
+
+    .select-shell { position: relative; }
+    .select-chevron {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748B;
+      pointer-events: none;
+    }
+
+    .difficulty-shell {
+      position: relative;
+      border-radius: 999px;
+      background: #F1F5F9;
+      border: 1px solid var(--talvo-border);
+      padding: 4px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .difficulty-indicator {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      height: calc(100% - 8px);
+      width: calc((100% - 20px) / 3);
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 8px 18px -16px rgba(15, 23, 42, 0.58);
+      transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .difficulty-pill {
+      position: relative;
+      border: 0;
+      background: transparent;
+      border-radius: 999px;
+      padding: 10px 8px;
+      text-align: center;
+      z-index: 1;
+    }
+
+    .difficulty-pill .meta {
+      display: block;
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--talvo-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .length-chip {
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .length-chip.active {
+      background: var(--talvo-accent);
+      border-color: var(--talvo-accent);
+      color: #fff;
+      box-shadow: 0 10px 20px -15px rgba(0, 168, 156, 0.7);
+    }
+
+    .topic-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      background: #EEF2FF;
+      color: #0B3D91;
+      font-size: 12px;
+      padding: 6px 10px;
+      animation: fadeInUp 220ms ease;
+    }
+
+    .suggested-chip {
+      border-radius: 999px;
+      border: 1px solid var(--talvo-border);
+      color: var(--talvo-muted);
+      background: #fff;
+      font-size: 12px;
+      padding: 5px 10px;
+      transition: all 180ms ease;
+    }
+
+    .suggested-chip:hover {
+      border-color: rgba(11, 61, 145, 0.45);
+      color: var(--talvo-primary);
+      transform: translateY(-1px);
+    }
+
+    .sticky-summary {
+      position: sticky;
+      top: 24px;
+    }
+
+    .chat-left {
+      background: #0B3D91;
+      color: #fff;
+      border-radius: 14px 14px 14px 4px;
+      padding: 10px 12px;
+      font-size: 12px;
+      max-width: 86%;
+      margin-right: auto;
+    }
+
+    .chat-right {
+      background: #E2E8F0;
+      color: #0D1117;
+      border-radius: 14px 14px 4px 14px;
+      padding: 10px 12px;
+      font-size: 12px;
+      max-width: 86%;
+      margin-left: auto;
+    }
+
+    .sticky-start {
+      position: sticky;
+      bottom: 16px;
+      background: #fff;
+      border: 1px solid var(--talvo-border);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px -24px rgba(2, 6, 23, 0.55);
+      padding: 12px 14px;
+      z-index: 20;
+    }
+
+    .start-btn {
+      border-radius: 999px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #7C4DFF, #0B3D91);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(124, 77, 255, 0.35);
+      transition: all 200ms ease;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 26px rgba(124, 77, 255, 0.4);
+    }
+
+    .start-arrow { display: inline-block; transition: transform 180ms ease; }
+    .start-btn:hover .start-arrow { transform: translateX(3px); }
+
+    .optional-pill {
+      border: 1px solid var(--talvo-border);
+      border-radius: 999px;
+      color: var(--talvo-muted);
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+
+    .icon-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-14 { width: 14px; height: 14px; }
+    .icon-15 { width: 15px; height: 15px; }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-icon {
+      width: 14px;
+      height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popDone {
+      0% { transform: scale(0.8); }
+      55% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    @media (max-width: 1320px) {
+      .company-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 1024px) {
+      .setup-section { padding-left: 0; }
+      .step-dot, .step-rail { display: none; }
+      .sticky-summary { position: static; }
+      .sticky-start { position: static; }
+    }
+
+    @media (max-width: 760px) {
+      .company-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+      .difficulty-shell { grid-template-columns: repeat(1, minmax(0, 1fr)); border-radius: 16px; }
+      .difficulty-indicator { display: none; }
+      .difficulty-pill { border: 1px solid var(--talvo-border); }
+      .difficulty-pill.active { background: #fff; border-color: var(--talvo-primary); }
     }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900 flex min-h-screen">
+<body class="flex min-h-screen">
   {% include 'partials/sidebar.html' %}
-  <div class="flex-1 min-w-0 flex flex-col min-h-screen">
-    <main class="max-w-7xl mx-auto w-full px-6 py-8 space-y-8">
-      <header class="space-y-5">
-        <div class="flex flex-wrap items-end justify-between gap-4">
-          <div class="space-y-2">
-            <h1 class="text-3xl font-semibold tracking-tight">Prepare for your interview</h1>
-            <p class="text-sm text-gray-600">Set up your session before you begin</p>
+
+  <div class="flex-1 min-w-0">
+    <main class="setup-shell mx-auto w-full px-4 py-6 md:px-6 md:py-8">
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,65%)_minmax(0,35%)]">
+        <section class="space-y-5">
+          <div class="sticky top-3 z-20 rounded-xl border border-[var(--talvo-border)] bg-white/95 px-4 py-3 backdrop-blur glass-shadow">
+            <div class="mb-2 flex items-center justify-between gap-3 text-sm">
+              <p id="progressLabel" class="font-semibold text-[var(--talvo-text)]">0 of 5 steps configured</p>
+              <p id="progressPct" class="text-xs font-medium text-[var(--talvo-muted)]">0%</p>
+            </div>
+            <div class="h-2 overflow-hidden rounded-full bg-[#dbe3ef]">
+              <div id="topProgressFill" class="progress-fill"></div>
+            </div>
           </div>
-          <a href="{% url 'live_interview' %}" class="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-500 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90">Start Interview</a>
-        </div>
-        <div class="h-px w-full bg-gray-200"></div>
-      </header>
 
-      <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <form class="md:col-span-2 space-y-6" id="launchForm">
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 1</p>
-            <h2 class="text-xl font-semibold tracking-tight">Choose Interview Round</h2>
-            <div id="roundCards" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button type="button" class="round-card active rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md" data-round="technical" data-summary="Technical Coding" data-preview="Coding questions solved on IDE with AI evaluation.">
-                <p class="text-sm font-semibold text-gray-900">Technical Round</p>
-                <p class="mt-1 text-xs text-gray-600">Coding questions on Talvo IDE, evaluate with Run, tests, and AI feedback.</p>
-              </button>
-              <button type="button" class="round-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md" data-round="final" data-summary="Final Round" data-preview="Discussion-only interview. No IDE required.">
-                <p class="text-sm font-semibold text-gray-900">Final Round</p>
-                <p class="mt-1 text-xs text-gray-600">Leadership, communication, and decision-making round without coding IDE.</p>
-              </button>
+          <header class="relative overflow-hidden rounded-2xl p-8" style="background: linear-gradient(135deg, #0B3D91 0%, #1a1f6e 100%);">
+            <div class="relative z-10 flex flex-wrap items-start justify-between gap-5">
+              <div class="space-y-2">
+                <p class="text-xs font-medium text-white/70">Dashboard &gt; Interview Setup</p>
+                <h1 class="text-2xl font-bold text-white">Prepare for your Interview</h1>
+                <p class="text-sm text-white/70">Configure your session - takes less than a minute</p>
+              </div>
+              <div class="flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white/90">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#00A89C]/20 text-[#00A89C]">
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14a3 3 0 003-3V7a3 3 0 10-6 0v4a3 3 0 003 3zm0 0v3m-4-3a4 4 0 008 0"/></svg>
+                </span>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#00A89C]/20 text-[#00A89C]">
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8M8 14h6M6 19l-2 2V6a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H6z"/></svg>
+                </span>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#00A89C]/20 text-[#00A89C]">
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V5m5 14V9m5 10V7m5 12v-6"/></svg>
+                </span>
+              </div>
             </div>
-            <p id="roundPreviewText" class="text-sm text-gray-600">Coding questions solved on IDE with AI evaluation.</p>
-          </article>
+            <div class="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-[#00A89C]/20 blur-3xl"></div>
+          </header>
 
-          <article id="resumeOptionCard" class="hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-3" data-has-resume="{{ has_resume|yesno:'1,0' }}">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Final Round Option</p>
-            <h2 class="text-xl font-semibold tracking-tight">Resume-Based Questions</h2>
-            <label class="inline-flex items-start gap-3">
-              <input id="includeResumeToggle" type="checkbox" class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"/>
-              <span class="text-sm text-gray-700">Include my uploaded resume so AI asks project and skill-specific questions in final round.</span>
-            </label>
-            <p id="resumeStatusText" class="text-xs text-gray-500">You can upload your resume from Settings tab.</p>
-            <p id="resumeSetupError" class="hidden text-xs font-medium text-rose-600">Resume not added. Add it first in Settings tab.</p>
-          </article>
+          <form id="launchForm" class="space-y-6">
+            <article class="setup-section" data-step="1">
+              <span class="step-dot" id="stepDot1"><span class="num">1</span><span class="check">✓</span></span>
+              <span class="step-rail"></span>
+              <div class="space-y-1">
+                <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Interview Round</h2>
+                <p class="text-[13px] text-[var(--talvo-muted)]">Choose the type of session you want to practice</p>
+              </div>
+              <div id="roundCards" class="mt-4 grid gap-3 sm:grid-cols-2">
+                <button type="button" class="round-card active relative rounded-2xl p-5 text-left" data-round="technical" data-summary="Technical Coding" data-preview="Coding questions solved on IDE with AI evaluation.">
+                  <span class="selected-badge">✓</span>
+                  <p class="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--talvo-text)]"><span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#EEF2FF] text-[var(--talvo-primary)]"><svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></span>Technical Round <span class="rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[var(--talvo-primary)]">Most Popular</span></p>
+                  <p class="text-[13px] text-[var(--talvo-muted)]">Algorithms, data structures and coding problems with AI-powered code evaluation</p>
+                  <ul class="mt-3 space-y-1 text-xs text-[var(--talvo-muted)]">
+                    <li>○ Coding IDE included</li>
+                    <li>○ Run and test your code live</li>
+                  </ul>
+                </button>
+                <button type="button" class="round-card relative rounded-2xl p-5 text-left" data-round="final" data-summary="Final Round" data-preview="Discussion-only interview. No IDE required.">
+                  <span class="selected-badge">✓</span>
+                  <p class="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--talvo-text)]"><span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#EEF2FF] text-[var(--talvo-primary)]"><svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M9 9a3 3 0 116 0v1h1a2 2 0 012 2v3a2 2 0 01-2 2h-2v2h-4v-2H8a2 2 0 01-2-2v-3a2 2 0 012-2h1V9z"/></svg></span>Final Round</p>
+                  <p class="text-[13px] text-[var(--talvo-muted)]">Leadership, communication, and decision-making round without coding IDE.</p>
+                  <ul class="mt-3 space-y-1 text-xs text-[var(--talvo-muted)]">
+                    <li>○ Behavioral and collaboration heavy</li>
+                    <li>○ Resume-driven questioning supported</li>
+                  </ul>
+                </button>
+              </div>
+              <p id="roundPreviewText" class="mt-3 text-[13px] text-[var(--talvo-muted)]">Coding questions solved on IDE with AI evaluation.</p>
+            </article>
 
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 2</p>
-            <h2 class="text-xl font-semibold tracking-tight">Select Company</h2>
-            <div id="companyCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <button type="button" class="company-card active rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Google" data-insight="Focus on algorithms and problem solving" data-questions="8" data-followup="High">
-                <div class="mb-2 flex items-center gap-2">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google logo" class="h-5 w-5 object-contain" loading="lazy"/>
-                  <p class="font-semibold text-sm">Google</p>
-                </div>
-                <p class="mt-1 text-xs text-gray-600">Problem solving and algorithms</p>
-              </button>
-              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Amazon" data-insight="Expect behavioral and leadership questions" data-questions="10" data-followup="Very High">
-                <div class="mb-2 flex items-center gap-2">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon logo" class="h-5 w-auto max-w-[72px] object-contain" loading="lazy"/>
-                  <p class="font-semibold text-sm">Amazon</p>
-                </div>
-                <p class="mt-1 text-xs text-gray-600">Behavioral and leadership focus</p>
-              </button>
-              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Microsoft" data-insight="System design and practical thinking" data-questions="9" data-followup="High">
-                <div class="mb-2 flex items-center gap-2">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft logo" class="h-5 w-auto max-w-[76px] object-contain" loading="lazy"/>
-                  <p class="font-semibold text-sm">Microsoft</p>
-                </div>
-                <p class="mt-1 text-xs text-gray-600">System design and practical thinking</p>
-              </button>
-              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Startup" data-insight="Real-world ambiguity and rapid trade-offs" data-questions="7" data-followup="Medium">
-                <div class="mb-2 flex items-center gap-2">
-                  <span class="inline-flex h-5 w-5 items-center justify-center rounded-md bg-gray-100 text-gray-600">
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 14c0 3.5 2.5 5 5.5 5s5.5-2.5 5.5-5.5c0-4-3.5-6.5-3.5-10.5-2 .5-4.5 2.5-4.5 5.5-1.2-.6-2.3-1.8-3-3.5-.5 1.8 0 3.9.8 5.5"/></svg>
+            <article id="resumeOptionCard" class="setup-section hidden" data-step="1" data-has-resume="{{ has_resume|yesno:'1,0' }}">
+              <span class="step-dot" id="stepDotResume"><span class="num">1</span><span class="check">✓</span></span>
+              <span class="step-rail"></span>
+              <div class="rounded-2xl border border-[var(--talvo-border)] bg-white p-5 card-shadow">
+                <p class="text-sm font-semibold text-[var(--talvo-text)]">Resume-Based Questions</p>
+                <label class="mt-3 inline-flex items-start gap-3">
+                  <input id="includeResumeToggle" type="checkbox" class="mt-1 rounded border-slate-300 text-[var(--talvo-primary)] focus:ring-[var(--talvo-primary)]"/>
+                  <span class="text-[13px] text-[var(--talvo-muted)]">Include my uploaded resume so AI asks project and skill-specific questions in final round.</span>
+                </label>
+                <p id="resumeStatusText" class="mt-2 text-xs text-[var(--talvo-muted)]">You can upload your resume from Settings tab.</p>
+                <p id="resumeSetupError" class="mt-1 hidden text-xs font-medium text-rose-600">Resume not added. Add it first in Settings tab.</p>
+              </div>
+            </article>
+
+            <article class="setup-section" data-step="2">
+              <span class="step-dot" id="stepDot2"><span class="num">2</span><span class="check">✓</span></span>
+              <span class="step-rail"></span>
+              <div class="space-y-1">
+                <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Select Company</h2>
+                <p class="text-[13px] text-[var(--talvo-muted)]">Pick your target panel style and company context</p>
+              </div>
+              <div id="companyCards" class="company-grid mt-4 grid gap-3">
+                <button type="button" class="company-card active" data-company="Google" data-insight="Focus on algorithms and problem solving" data-questions="8" data-followup="High">
+                  <span class="selected-badge">✓</span>
+                  <span class="company-tooltip">Google: Focuses on algorithms, DSA, and system design</span>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google logo" class="h-8 w-8 object-contain" loading="lazy"/>
+                  <span>
+                    <span class="block text-sm font-semibold">Google</span>
+                    <span class="block text-xs text-[var(--talvo-muted)]">Algorithms heavy</span>
                   </span>
-                  <p class="font-semibold text-sm">Startup</p>
-                </div>
-                <p class="mt-1 text-xs text-gray-600">Real-world scenarios</p>
-              </button>
-              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="TCS" data-insight="Enterprise delivery, communication, and implementation depth" data-questions="8" data-followup="High">
-                <div class="mb-2 flex items-center gap-2">
-                  <img src="{% static 'talvo1/images/companies/tcs.svg' %}" alt="TCS logo" class="h-7 w-16 rounded object-contain bg-white" loading="lazy"/>
-                  <p class="font-semibold text-sm">TCS</p>
-                </div>
-                <p class="mt-1 text-xs text-gray-600">Enterprise solutioning focus</p>
-              </button>
-              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Wipro" data-insight="Service delivery quality, ownership, and execution clarity" data-questions="8" data-followup="High">
-                <div class="mb-2 flex items-center gap-2">
-                  <img src="{% static 'talvo1/images/companies/wipro.svg' %}" alt="Wipro logo" class="h-7 w-14 rounded object-contain bg-white" loading="lazy"/>
-                  <p class="font-semibold text-sm">Wipro</p>
-                </div>
-                <p class="mt-1 text-xs text-gray-600">Delivery and ownership based rounds</p>
-              </button>
-              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Tech Mahindra" data-insight="Architecture, reliability, and operational problem solving" data-questions="9" data-followup="High">
-                <div class="mb-2 flex items-center gap-2">
-                  <img src="{% static 'talvo1/images/companies/tech_mahindra.svg' %}" alt="Tech Mahindra logo" class="h-7 w-16 rounded object-contain bg-white" loading="lazy"/>
-                  <p class="font-semibold text-sm">Tech Mahindra</p>
-                </div>
-                <p class="mt-1 text-xs text-gray-600">Architecture and troubleshooting focus</p>
-              </button>
-              <button type="button" class="company-card rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1" data-company="Custom" data-insight="Custom panel generated from your context" data-questions="8" data-followup="Adaptive">
-                <div class="mb-2 flex items-center gap-2">
-                  <span class="inline-flex h-5 w-5 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3l1.6 3.4L17 8l-3.4 1.6L12 13l-1.6-3.4L7 8l3.4-1.6L12 3zM5 14l.9 1.9L8 17l-2.1 1.1L5 20l-.9-1.9L2 17l2.1-1.1L5 14zm14 2l1 2.1L22 19l-2 1-1 2-1-2-2-1 2-.9 1-2.1z"/></svg>
-                  </span>
-                  <p class="font-semibold text-sm">Custom</p>
-                </div>
-                <p class="mt-1 text-xs text-gray-600">Define your own</p>
-              </button>
-            </div>
-
-            <div id="customCompanyWrap" class="hidden">
-              <label for="customCompanySelect" class="text-sm font-medium text-gray-700">Choose custom company</label>
-              <select id="customCompanySelect" class="mt-1 w-full rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                <option value="Infosys">Infosys</option>
-                <option value="Cognizant">Cognizant</option>
-                <option value="Capgemini">Capgemini</option>
-                <option value="Accenture">Accenture</option>
-                <option value="HCL">HCL</option>
-                <option value="IBM">IBM</option>
-                <option value="Deloitte">Deloitte</option>
-                <option value="Other">Other (type manually)</option>
-              </select>
-              <input id="customCompanyOther" class="mt-2 hidden w-full rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Enter company name"/>
-            </div>
-          </article>
-
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 3</p>
-            <h2 class="text-xl font-semibold tracking-tight">Role and Context</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="md:col-span-2">
-                <label for="targetRole" class="text-sm font-medium text-gray-700">Target Role</label>
-                <div class="relative mt-1">
-                  <input id="targetRole" value="Software Engineer" readonly class="w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
-                  <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16M4 12h16M4 17h10"/></svg>
-                </div>
-                <p class="mt-1 text-xs text-gray-500">Software development track is currently locked while we optimize question quality.</p>
+                </button>
+                <button type="button" class="company-card" data-company="Amazon" data-insight="Expect behavioral and leadership questions" data-questions="10" data-followup="Very High">
+                  <span class="selected-badge">✓</span>
+                  <span class="company-tooltip">Amazon: Leadership principles and ownership depth</span>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon logo" class="h-8 w-8 object-contain" loading="lazy"/>
+                  <span><span class="block text-sm font-semibold">Amazon</span><span class="block text-xs text-[var(--talvo-muted)]">Behavioral intensity</span></span>
+                </button>
+                <button type="button" class="company-card" data-company="Microsoft" data-insight="System design and practical thinking" data-questions="9" data-followup="High">
+                  <span class="selected-badge">✓</span>
+                  <span class="company-tooltip">Microsoft: System design with practical execution</span>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft logo" class="h-8 w-8 object-contain" loading="lazy"/>
+                  <span><span class="block text-sm font-semibold">Microsoft</span><span class="block text-xs text-[var(--talvo-muted)]">Practical architecture</span></span>
+                </button>
+                <button type="button" class="company-card" data-company="Startup" data-insight="Real-world ambiguity and rapid trade-offs" data-questions="7" data-followup="Medium">
+                  <span class="selected-badge">✓</span>
+                  <span class="company-tooltip">Startup: Ambiguity, speed, and product judgement</span>
+                  <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 4l6 6-7 7-4 1 1-4 7-7zM9 15l-3 3m0 0H4v-2l3-3"/></svg></span>
+                  <span><span class="block text-sm font-semibold">Startup</span><span class="block text-xs text-[var(--talvo-muted)]">Ambiguous scenarios</span></span>
+                </button>
+                <button type="button" class="company-card" data-company="TCS" data-insight="Enterprise delivery, communication, and implementation depth" data-questions="8" data-followup="High">
+                  <span class="selected-badge">✓</span>
+                  <span class="company-tooltip">TCS: Enterprise delivery and implementation detail</span>
+                  <img src="{% static 'talvo1/images/companies/tcs.svg' %}" alt="TCS logo" class="h-8 w-8 object-contain" loading="lazy"/>
+                  <span><span class="block text-sm font-semibold">TCS</span><span class="block text-xs text-[var(--talvo-muted)]">Enterprise delivery</span></span>
+                </button>
+                <button type="button" class="company-card" data-company="Wipro" data-insight="Service delivery quality, ownership, and execution clarity" data-questions="8" data-followup="High">
+                  <span class="selected-badge">✓</span>
+                  <span class="company-tooltip">Wipro: Delivery quality and ownership clarity</span>
+                  <img src="{% static 'talvo1/images/companies/wipro.svg' %}" alt="Wipro logo" class="h-8 w-8 object-contain" loading="lazy"/>
+                  <span><span class="block text-sm font-semibold">Wipro</span><span class="block text-xs text-[var(--talvo-muted)]">Execution quality</span></span>
+                </button>
+                <button type="button" class="company-card" data-company="Tech Mahindra" data-insight="Architecture, reliability, and operational problem solving" data-questions="9" data-followup="High">
+                  <span class="selected-badge">✓</span>
+                  <span class="company-tooltip">Tech Mahindra: Reliability and architecture trade-offs</span>
+                  <img src="{% static 'talvo1/images/companies/tech_mahindra.svg' %}" alt="Tech Mahindra logo" class="h-8 w-8 object-contain" loading="lazy"/>
+                  <span><span class="block text-sm font-semibold">Tech Mah.</span><span class="block text-xs text-[var(--talvo-muted)]">Operational design</span></span>
+                </button>
+                <button type="button" class="company-card" data-company="Custom" data-insight="Custom panel generated from your context" data-questions="8" data-followup="Adaptive">
+                  <span class="selected-badge">✓</span>
+                  <span class="company-tooltip">Custom: Tailor question panel to your target</span>
+                  <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#EEF2FF] text-[var(--talvo-primary)]"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3l2.2 4.8L19 10l-4.8 2.2L12 17l-2.2-4.8L5 10l4.8-2.2L12 3z"/></svg></span>
+                  <span><span class="block text-sm font-semibold">Custom</span><span class="block text-xs text-[var(--talvo-muted)]">Choose manually</span></span>
+                </button>
               </div>
+
+              <div id="customCompanyWrap" class="mt-4 hidden rounded-2xl border border-[var(--talvo-border)] bg-white p-4 card-shadow">
+                <label for="customCompanySelect" class="text-[13px] font-medium text-slate-700">Choose custom company</label>
+                <div class="select-shell mt-2">
+                  <select id="customCompanySelect" class="w-full pl-3 pr-10 text-sm">
+                    <option value="Infosys">Infosys</option>
+                    <option value="Cognizant">Cognizant</option>
+                    <option value="Capgemini">Capgemini</option>
+                    <option value="Accenture">Accenture</option>
+                    <option value="HCL">HCL</option>
+                    <option value="IBM">IBM</option>
+                    <option value="Deloitte">Deloitte</option>
+                    <option value="Other">Other (type manually)</option>
+                  </select>
+                  <span class="select-chevron">⌄</span>
+                </div>
+                <input id="customCompanyOther" class="mt-2 hidden w-full px-3 text-sm" placeholder="Enter company name"/>
+              </div>
+            </article>
+
+            <article class="setup-section" data-step="3">
+              <span class="step-dot" id="stepDot3"><span class="num">3</span><span class="check">✓</span></span>
+              <span class="step-rail"></span>
+              <div class="space-y-1">
+                <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Role and Context</h2>
+                <p class="text-[13px] text-[var(--talvo-muted)]">Set role expectations and interview framing</p>
+              </div>
+              <div class="mt-4 rounded-2xl border border-[var(--talvo-border)] bg-white p-6 card-shadow">
+                <div class="field-wrap filled" id="targetRoleWrap">
+                  <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2M4 7h16v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7z"/></svg>
+                  <label class="floating-label" for="targetRole">Target Role</label>
+                  <input id="targetRole" value="Software Engineer" readonly class="input-modern w-full bg-slate-50 pl-10 pr-3"/>
+                </div>
+                <p class="mt-1 text-xs text-[var(--talvo-muted)]">Software development track is currently locked while we optimize question quality.</p>
+
+                <div class="mt-4 grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label for="experienceLevel" class="mb-1 block text-[13px] font-medium text-slate-700">Experience Level</label>
+                    <div class="select-shell">
+                      <select id="experienceLevel" class="select-modern w-full pl-3 pr-10 text-sm">
+                        <option>Mid</option>
+                        <option>Senior</option>
+                        <option>Lead</option>
+                      </select>
+                      <span class="select-chevron">⌄</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="interviewType" class="mb-1 block text-[13px] font-medium text-slate-700">Round Interview Type</label>
+                    <div class="select-shell">
+                      <select id="interviewType" disabled class="select-modern w-full bg-slate-50 pl-3 pr-10 text-sm text-slate-700">
+                        <option>Technical Coding</option>
+                        <option>Final Round</option>
+                      </select>
+                      <span class="select-chevron">⌄</span>
+                    </div>
+                    <p id="interviewTypeHint" class="mt-1 text-xs text-[var(--talvo-muted)]">Type is set automatically from selected round.</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="setup-section" data-step="4">
+              <span class="step-dot" id="stepDot4"><span class="num">4</span><span class="check">✓</span></span>
+              <span class="step-rail"></span>
+              <div class="space-y-1">
+                <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Difficulty</h2>
+                <p class="text-[13px] text-[var(--talvo-muted)]">Tune depth and follow-up intensity</p>
+              </div>
+              <div class="difficulty-shell mt-4">
+                <span id="difficultyIndicator" class="difficulty-indicator"></span>
+                <button type="button" class="difficulty-pill" data-difficulty="Easy" data-index="0"><span class="icon-label text-sm font-semibold"><svg class="icon-14 text-emerald-500" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>Easy</span><span class="meta">4-5 questions · Surface depth</span></button>
+                <button type="button" class="difficulty-pill active" data-difficulty="Medium" data-index="1"><span class="icon-label text-sm font-semibold"><svg class="icon-14 text-amber-500" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>Medium</span><span class="meta">5-6 questions · Balanced depth</span></button>
+                <button type="button" class="difficulty-pill" data-difficulty="Hard" data-index="2"><span class="icon-label text-sm font-semibold"><svg class="icon-14 text-rose-500" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>Hard</span><span class="meta">6-8 questions · Deep follow-ups</span></button>
+              </div>
+            </article>
+
+            <article class="setup-section" data-step="5">
+              <span class="step-dot" id="stepDot5"><span class="num">5</span><span class="check">✓</span></span>
+              <div class="space-y-1">
+                <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Session Style</h2>
+                <p class="text-[13px] text-[var(--talvo-muted)]">Set length, topics, and response mode</p>
+              </div>
+              <div class="mt-4 rounded-2xl border border-[var(--talvo-border)] bg-white p-6 card-shadow space-y-5">
+                <div>
+                  <p class="text-[13px] font-medium text-slate-700">Session Length</p>
+                  <input id="sessionLength" type="range" min="10" max="35" value="20" class="hidden"/>
+                  <div id="lengthChips" class="mt-2 flex flex-wrap gap-2">
+                    <button type="button" class="length-chip" data-minutes="5">5 min</button>
+                    <button type="button" class="length-chip" data-minutes="10">10 min</button>
+                    <button type="button" class="length-chip" data-minutes="15">15 min</button>
+                    <button type="button" class="length-chip active" data-minutes="20">20 min</button>
+                    <button type="button" class="length-chip" data-minutes="30">30 min</button>
+                  </div>
+                  <p id="sessionLengthHint" class="mt-2 text-xs text-[var(--talvo-muted)]">~4-6 questions · Recommended for daily practice</p>
+                </div>
+
+                <div>
+                  <div class="mb-2 flex items-center gap-2">
+                    <label for="topicInput" class="text-[13px] font-medium text-slate-700">Focus Topics</label>
+                    <span class="optional-pill">optional</span>
+                  </div>
+                  <div class="rounded-xl border border-dashed border-[var(--talvo-border)] bg-white p-3">
+                    <div id="topicChips" class="mb-2 flex flex-wrap gap-2">
+                      <button type="button" class="topic-chip" data-topic="API design">API design <span class="text-[var(--talvo-muted)]">×</span></button>
+                      <button type="button" class="topic-chip" data-topic="Scalability">Scalability <span class="text-[var(--talvo-muted)]">×</span></button>
+                      <button type="button" class="topic-chip" data-topic="Debugging">Debugging <span class="text-[var(--talvo-muted)]">×</span></button>
+                    </div>
+                    <input id="topicInput" class="w-full px-3" placeholder="Add a topic and press Enter..."/>
+                  </div>
+                  <div id="topicSuggestions" class="mt-2 flex flex-wrap gap-2">
+                    <button type="button" class="suggested-chip" data-topic="Arrays">Arrays</button>
+                    <button type="button" class="suggested-chip" data-topic="System Design">System Design</button>
+                    <button type="button" class="suggested-chip" data-topic="STAR Method">STAR Method</button>
+                    <button type="button" class="suggested-chip" data-topic="SQL">SQL</button>
+                  </div>
+                </div>
+
+                <div id="modeStepCard" class="space-y-3 rounded-xl border border-[var(--talvo-border)] bg-[#F8FAFF] p-4">
+                  <p class="text-[13px] font-medium text-slate-700">Interviewer Mode</p>
+                  <div id="modeButtons" class="grid gap-2 sm:grid-cols-2">
+                    <button type="button" class="mode-pill active rounded-xl px-4 py-3 text-left" data-mode="avatar">
+                      <p class="text-sm font-semibold text-[var(--talvo-text)]">AI Avatar + Voice <span class="ml-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">Beta</span></p>
+                      <p class="mt-1 text-xs text-[var(--talvo-muted)]">Avatar/image with lip-sync during AI responses. Beta feature, currently in development.</p>
+                    </button>
+                    <button type="button" class="mode-pill rounded-xl px-4 py-3 text-left" data-mode="voice">
+                      <p class="text-sm font-semibold text-[var(--talvo-text)]">Voice Only</p>
+                      <p class="mt-1 text-xs text-[var(--talvo-muted)]">Audio responses with dynamic voice visualizer.</p>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="sticky-start">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div id="startSummaryChips" class="flex flex-wrap items-center gap-2 text-xs text-[var(--talvo-muted)]">
+                  <span class="rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1">Google</span>
+                  <span class="rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1">Technical</span>
+                  <span class="rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1">Medium</span>
+                  <span class="rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1">20 min</span>
+                </div>
+                <button id="startInterviewBtn" type="button" class="start-btn">Start Interview <span class="start-arrow">→</span></button>
+              </div>
+            </article>
+          </form>
+        </section>
+
+        <aside class="sticky-summary">
+          <article class="overflow-hidden rounded-2xl border border-[var(--talvo-border)] bg-white card-shadow">
+            <div class="flex items-center justify-between gap-3 px-5 py-3" style="background: linear-gradient(135deg, #0B3D91, #1a1f6e);">
+              <p class="text-sm font-semibold text-white">AI Interview Preview</p>
+              <p class="text-xs text-white/75"><span class="text-[#00A89C]">●</span> Updates as you configure</p>
+            </div>
+            <div class="space-y-4 p-5">
+              <div class="space-y-2 rounded-xl border border-[var(--talvo-border)] bg-[#FAFBFF] p-3 text-sm">
+                <div class="flex items-center justify-between border-b border-[var(--talvo-border)] pb-2"><span class="text-[var(--talvo-muted)]">Company</span><span id="summaryCompany" class="font-semibold">Google</span></div>
+                <div class="flex items-center justify-between border-b border-[var(--talvo-border)] pb-2"><span class="text-[var(--talvo-muted)]">Difficulty</span><span id="difficultyBadge" class="font-semibold"><span class="icon-label"><svg class="icon-14 text-amber-500" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>Medium</span></span></div>
+                <div class="flex items-center justify-between border-b border-[var(--talvo-border)] pb-2"><span class="text-[var(--talvo-muted)]">Duration</span><span id="durationPreview" class="font-semibold"><span class="icon-label"><svg class="icon-15 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 2"/></svg>20 min</span></span></div>
+                <div class="flex items-center justify-between border-b border-[var(--talvo-border)] pb-2"><span class="text-[var(--talvo-muted)]">Questions</span><span id="questionCountLabel" class="font-semibold">? ~6 focused</span></div>
+                <div class="flex items-center justify-between"><span class="text-[var(--talvo-muted)]">Interview Type</span><span id="questionTypeLabel" class="font-semibold"><span class="icon-label"><svg class="icon-15 text-[var(--talvo-primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="12" rx="2" stroke-width="1.8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 20h8"/></svg>Technical Coding</span></span></div>
+              </div>
+
               <div>
-                <label for="experienceLevel" class="text-sm font-medium text-gray-700">Experience Level</label>
-                <select id="experienceLevel" class="mt-1 w-full rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                  <option>Mid</option>
-                  <option>Senior</option>
-                  <option>Lead</option>
-                </select>
-              </div>
-              <div>
-                <label for="interviewType" class="text-sm font-medium text-gray-700">Round Interview Type</label>
-                <select id="interviewType" disabled class="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                  <option>Technical Coding</option>
-                  <option>Final Round</option>
-                </select>
-                <p id="interviewTypeHint" class="mt-1 text-xs text-gray-500">Type is set automatically from selected round.</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 4</p>
-            <h2 class="text-xl font-semibold tracking-tight">Difficulty</h2>
-            <div class="rounded-xl border border-gray-200 bg-gray-50 p-1 grid grid-cols-3 gap-1">
-              <button type="button" class="difficulty-pill rounded-lg bg-white px-3 py-2 text-sm font-medium transition-all duration-200" data-difficulty="Easy">Easy</button>
-              <button type="button" class="difficulty-pill active rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200" data-difficulty="Medium">Medium</button>
-              <button type="button" class="difficulty-pill rounded-lg bg-white px-3 py-2 text-sm font-medium transition-all duration-200" data-difficulty="Hard">Hard</button>
-            </div>
-            <p class="text-sm text-gray-600">Affects question depth and follow-ups</p>
-          </article>
-
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 5</p>
-            <h2 class="text-xl font-semibold tracking-tight">Session Style</h2>
-            <div>
-              <div class="mb-2 flex items-center justify-between text-sm">
-                <label for="sessionLength" class="font-medium text-gray-700">Session Length</label>
-                <span id="sessionLengthValue" class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">20 min</span>
-              </div>
-              <input id="sessionLength" type="range" min="10" max="35" value="20" class="w-full accent-indigo-600"/>
-            </div>
-
-            <div>
-              <label for="topicInput" class="text-sm font-medium text-gray-700">Focus Topics</label>
-              <div class="mt-2 rounded-xl border border-gray-200 bg-white p-3">
-                <div id="topicChips" class="mb-2 flex flex-wrap gap-2">
-                  <button type="button" class="topic-chip inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700" data-topic="API design">API design <span class="text-gray-500">x</span></button>
-                  <button type="button" class="topic-chip inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700" data-topic="Scalability">Scalability <span class="text-gray-500">x</span></button>
-                  <button type="button" class="topic-chip inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700" data-topic="Debugging">Debugging <span class="text-gray-500">x</span></button>
+                <p class="text-sm font-semibold text-[var(--talvo-text)]">Conversation Preview</p>
+                <div class="mt-2 space-y-2">
+                  <div class="chat-left">Walk me through a stakeholder conflict where priorities were misaligned.</div>
+                  <div class="chat-right">I mapped impact vs risk and aligned each team on one measurable goal.</div>
+                  <div class="chat-left">What trade-off did you make and why?</div>
                 </div>
-                <input id="topicInput" class="w-full rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Type a topic and press Enter"/>
-              </div>
-            </div>
-          </article>
-
-          <article id="modeStepCard" class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 6</p>
-            <h2 class="text-xl font-semibold tracking-tight">Interviewer Mode</h2>
-            <div id="modeButtons" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button type="button" class="mode-pill active rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-left transition-all duration-200" data-mode="avatar">
-                <p class="text-sm font-semibold text-indigo-800">AI Avatar + Voice</p>
-                <p class="mt-1 text-xs text-indigo-700">Use avatar/image with lip-sync during AI responses.</p>
-              </button>
-              <button type="button" class="mode-pill rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition-all duration-200" data-mode="voice">
-                <p class="text-sm font-semibold text-gray-800">Voice Only</p>
-                <p class="mt-1 text-xs text-gray-600">Use audio with a dynamic sound animation instead of avatar.</p>
-              </button>
-            </div>
-          </article>
-
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
-            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">Step 7</p>
-            <h2 class="text-xl font-semibold tracking-tight">Final Action</h2>
-            <button id="startInterviewBtn" type="button" class="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-500 py-3.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(99,102,241,0.2)] transition-all duration-200 hover:opacity-90">Start Interview</button>
-          </article>
-        </form>
-
-        <aside class="md:col-span-1 space-y-6">
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 class="text-xl font-semibold tracking-tight">AI Interview Preview</h2>
-
-            <div class="mt-4 space-y-3 text-sm text-gray-600">
-              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Company Insight</p>
-                <p id="companyInsight" class="mt-1 font-medium text-gray-800">Focus on algorithms and problem solving</p>
+                <p class="mt-2 text-[11px] text-[var(--talvo-muted)]">Sample only</p>
               </div>
 
-              <div class="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
-                <span>Difficulty</span>
-                <span id="difficultyBadge" class="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">Medium</span>
-              </div>
-
-              <div class="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
-                <span>Estimated Duration</span>
-                <span id="durationPreview" class="font-semibold text-gray-800">20 min</span>
-              </div>
-
-              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                <p class="text-xs uppercase tracking-wide text-gray-500">What to Expect</p>
-                <ul class="mt-2 space-y-1 text-gray-700">
-                  <li><span id="questionCount">8</span> focused questions</li>
-                  <li><span id="questionTypeLabel">Technical</span> question style</li>
-                  <li><span id="followupDepth">High</span> follow-up depth</li>
-                </ul>
-              </div>
-
-              <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                <p class="text-xs uppercase tracking-wide text-gray-500">AI Recommendation</p>
-                <p id="aiRecommendation" class="mt-1 text-gray-700">Start with requirements, discuss constraints, then walk through tradeoffs and reliability checks.</p>
-              </div>
-
-              <div class="rounded-xl border border-gray-200 bg-white p-3">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Conversation Preview</p>
-                <div class="mt-2 space-y-2 text-xs">
-                  <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-2 text-indigo-900">AI: Walk me through a stakeholder conflict where priorities were misaligned.</div>
-                  <div class="rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-700">You: I mapped impact vs risk and aligned each team on one measurable goal.</div>
-                  <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-2 text-indigo-900">AI follow-up: What trade-off did you make and why?</div>
+              <div class="rounded-xl border border-[var(--talvo-border)] bg-[#FBFCFF] p-4">
+                <div id="setupReadinessChart" class="mx-auto h-44 w-full max-w-[260px]"></div>
+                <div class="mt-2 space-y-1 text-xs text-[var(--talvo-muted)]">
+                  <p id="checkCompany"><span class="status-line"><span class="status-icon"><svg class="icon-14 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.8"/></svg></span>Company selected</span></p>
+                  <p id="checkDifficulty"><span class="status-line"><span class="status-icon"><svg class="icon-14 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.8"/></svg></span>Difficulty set</span></p>
+                  <p id="checkTopics"><span class="status-line"><span class="status-icon"><svg class="icon-14 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.8"/></svg></span>Focus topics (optional)</span></p>
                 </div>
               </div>
-            </div>
 
-            <div id="setupReadinessChart" class="mt-5 h-44 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-50"></div>
-          </article>
+              <div class="rounded-xl border border-[var(--talvo-border)] bg-[#FAFBFF] p-3">
+                <p class="text-xs uppercase tracking-wide text-[var(--talvo-muted)]">Company Insight</p>
+                <p id="companyInsight" class="mt-1 text-sm text-slate-700">Focus on algorithms and problem solving</p>
+              </div>
 
-          <article class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 class="text-lg font-semibold tracking-tight">Interview Readiness</h3>
-            <div class="mt-3 h-2.5 rounded-full bg-gray-100 overflow-hidden">
-              <div id="readinessBar" class="h-full w-[74%] bg-gradient-to-r from-indigo-600 to-indigo-500"></div>
+              <div class="rounded-xl border border-[var(--talvo-border)] bg-[#FAFBFF] p-3">
+                <p class="text-xs uppercase tracking-wide text-[var(--talvo-muted)]">AI Recommendation</p>
+                <p id="aiRecommendation" class="mt-1 text-sm text-slate-700">Think out loud with structure, then optimize your answer with trade-offs and edge cases.</p>
+              </div>
             </div>
-            <p id="readinessText" class="mt-3 text-sm text-gray-600">You are 74% ready for this session</p>
           </article>
         </aside>
-      </section>
+      </div>
     </main>
 
     {% include 'partials/global_ui_enhancements.html' %}
@@ -313,18 +800,22 @@
       var customCompanyOther = document.getElementById('customCompanyOther');
       var roundPreviewText = document.getElementById('roundPreviewText');
       var companyInsight = document.getElementById('companyInsight');
-      var questionCount = document.getElementById('questionCount');
-      var followupDepth = document.getElementById('followupDepth');
-      var questionTypeLabel = document.getElementById('questionTypeLabel');
       var aiRecommendation = document.getElementById('aiRecommendation');
       var durationPreview = document.getElementById('durationPreview');
       var difficultyBadge = document.getElementById('difficultyBadge');
-      var readinessBar = document.getElementById('readinessBar');
-      var readinessText = document.getElementById('readinessText');
+      var questionCountLabel = document.getElementById('questionCountLabel');
+      var questionTypeLabel = document.getElementById('questionTypeLabel');
+      var summaryCompany = document.getElementById('summaryCompany');
+      var progressLabel = document.getElementById('progressLabel');
+      var progressPct = document.getElementById('progressPct');
+      var topProgressFill = document.getElementById('topProgressFill');
+      var startSummaryChips = document.getElementById('startSummaryChips');
 
       var sessionLength = document.getElementById('sessionLength');
-      var sessionLengthValue = document.getElementById('sessionLengthValue');
+      var sessionLengthHint = document.getElementById('sessionLengthHint');
+      var lengthChips = Array.prototype.slice.call(document.querySelectorAll('.length-chip'));
       var difficultyButtons = Array.prototype.slice.call(document.querySelectorAll('.difficulty-pill'));
+      var difficultyIndicator = document.getElementById('difficultyIndicator');
       var modeButtons = Array.prototype.slice.call(document.querySelectorAll('.mode-pill'));
       var modeStepCard = document.getElementById('modeStepCard');
       var interviewType = document.getElementById('interviewType');
@@ -338,29 +829,92 @@
 
       var topicChips = document.getElementById('topicChips');
       var topicInput = document.getElementById('topicInput');
+      var topicSuggestions = document.getElementById('topicSuggestions');
+      var checkCompany = document.getElementById('checkCompany');
+      var checkDifficulty = document.getElementById('checkDifficulty');
+      var checkTopics = document.getElementById('checkTopics');
+
+      var stepDots = {
+        1: document.getElementById('stepDot1'),
+        2: document.getElementById('stepDot2'),
+        3: document.getElementById('stepDot3'),
+        4: document.getElementById('stepDot4'),
+        5: document.getElementById('stepDot5')
+      };
+
       var setupReadinessChart = null;
       var selectedRound = 'technical';
       var hasResume = !!(resumeOptionCard && resumeOptionCard.getAttribute('data-has-resume') === '1');
+      var stepInteraction = {
+        1: false,
+        2: false,
+        3: false,
+        4: false,
+        5: false
+      };
+
+      function iconCircle(colorClass) {
+        return '<svg class="icon-14 ' + colorClass + '" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>';
+      }
+
+      function iconCheck(colorClass) {
+        return '<svg class="icon-14 ' + colorClass + '" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.5 12.2l2.1 2.1 4.8-5"/></svg>';
+      }
+
+      function iconClock(colorClass) {
+        return '<svg class="icon-15 ' + colorClass + '" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 2"/></svg>';
+      }
+
+      function iconType(type) {
+        if (type === 'final') {
+          return '<svg class="icon-15 text-[var(--talvo-primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" stroke-width="1.8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 9h6M9 12h6M9 15h4"/></svg>';
+        }
+        return '<svg class="icon-15 text-[var(--talvo-primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="12" rx="2" stroke-width="1.8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 20h8"/></svg>';
+      }
+
+      function setDifficultyBadge(diff) {
+        if (!difficultyBadge) return;
+        if (diff === 'Easy') difficultyBadge.innerHTML = '<span class="icon-label">' + iconCircle('text-emerald-500') + 'Easy</span>';
+        else if (diff === 'Hard') difficultyBadge.innerHTML = '<span class="icon-label">' + iconCircle('text-rose-500') + 'Hard</span>';
+        else difficultyBadge.innerHTML = '<span class="icon-label">' + iconCircle('text-amber-500') + 'Medium</span>';
+      }
+
+      function setDurationPreview(value) {
+        if (!durationPreview) return;
+        durationPreview.innerHTML = '<span class="icon-label">' + iconClock('text-slate-500') + value + ' min</span>';
+      }
+
+      function setInterviewTypeLabel(value) {
+        if (!questionTypeLabel) return;
+        var isFinal = String(value || '').indexOf('Final') >= 0;
+        questionTypeLabel.innerHTML = '<span class="icon-label">' + iconType(isFinal ? 'final' : 'technical') + (isFinal ? 'Final Round' : 'Technical Coding') + '</span>';
+      }
+
+      function setChecklistStatus(el, done, label) {
+        if (!el) return;
+        var icon = done ? iconCheck('text-emerald-500') : '<svg class="icon-14 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="1.8"/></svg>';
+        el.innerHTML = '<span class="status-line"><span class="status-icon">' + icon + '</span>' + label + '</span>';
+      }
 
       function setMode(mode) {
         modeButtons.forEach(function (item) {
           var isActive = item.getAttribute('data-mode') === mode;
           item.classList.toggle('active', isActive);
-          item.classList.toggle('border-indigo-200', isActive);
-          item.classList.toggle('bg-indigo-50', isActive);
-          item.classList.toggle('border-gray-200', !isActive);
-          item.classList.toggle('bg-white', !isActive);
-          var title = item.querySelector('p');
-          if (title) {
-            title.classList.toggle('text-indigo-800', isActive);
-          }
+          item.style.borderColor = isActive ? 'var(--talvo-primary)' : 'var(--talvo-border)';
+          item.style.background = isActive ? '#EEF2FF' : '#FFFFFF';
         });
       }
 
+      function getActiveCompanyCard() {
+        return companyCards.find(function (c) { return c.classList.contains('active'); }) || companyCards[0];
+      }
+
+      function getActiveDifficultyButton() {
+        return difficultyButtons.find(function (btn) { return btn.classList.contains('active'); }) || difficultyButtons[1];
+      }
+
       function setRound(card) {
-        roundCards.forEach(function (item) {
-          item.classList.remove('active');
-        });
+        roundCards.forEach(function (item) { item.classList.remove('active'); });
         card.classList.add('active');
 
         selectedRound = card.getAttribute('data-round') || 'technical';
@@ -371,7 +925,7 @@
           if (resumeOptionCard) resumeOptionCard.classList.remove('hidden');
           if (modeStepCard) modeStepCard.classList.remove('hidden');
           interviewType.value = 'Final Round';
-          questionTypeLabel.textContent = 'Final Round';
+          setInterviewTypeLabel('Final Round');
           if (interviewTypeHint) interviewTypeHint.textContent = 'Final round selected. IDE is disabled in live interview.';
           if (resumeStatusText) {
             resumeStatusText.textContent = hasResume
@@ -385,27 +939,8 @@
           if (modeStepCard) modeStepCard.classList.add('hidden');
           setMode('voice');
           interviewType.value = 'Technical Coding';
-          questionTypeLabel.textContent = 'Technical Coding';
+          setInterviewTypeLabel('Technical Coding');
           if (interviewTypeHint) interviewTypeHint.textContent = 'Technical round selected. Coding IDE with AI evaluation is enabled.';
-        }
-      }
-
-      function updateReadiness() {
-        var diff = (difficultyBadge.textContent || '').trim();
-        var base = 74;
-        if (diff === 'Easy') base = 82;
-        if (diff === 'Hard') base = 66;
-        if ((companyCards.find(function (c) { return c.classList.contains('active'); }) || {}).dataset.company === 'Google') base -= 2;
-        if ((companyCards.find(function (c) { return c.classList.contains('active'); }) || {}).dataset.company === 'Startup') base += 3;
-
-        if (base < 55) base = 55;
-        if (base > 92) base = 92;
-
-        readinessBar.style.width = base + '%';
-        readinessText.textContent = 'You are ' + base + '% ready for this session';
-
-        if (setupReadinessChart) {
-          setupReadinessChart.updateSeries([base]);
         }
       }
 
@@ -418,10 +953,9 @@
         var qCount = card.getAttribute('data-questions') || '8';
         var follow = card.getAttribute('data-followup') || 'High';
 
+        if (summaryCompany) summaryCompany.textContent = company;
         companyInsight.textContent = insight;
-        questionCount.textContent = qCount;
-        followupDepth.textContent = follow;
-        questionTypeLabel.textContent = interviewType.value;
+        questionCountLabel.textContent = '? ~' + qCount + ' focused';
 
         if (company === 'Amazon') {
           aiRecommendation.textContent = 'Anchor every answer in ownership, scope, and measurable impact aligned to leadership principles.';
@@ -432,13 +966,13 @@
         } else if (company === 'Startup') {
           aiRecommendation.textContent = 'Prioritize speed, ambiguity handling, and clear decision rationale under constraints.';
         } else if (company === 'TCS') {
-          aiRecommendation.textContent = 'Focus on clear implementation details, delivery timelines, and how you resolve integration challenges.';
+          aiRecommendation.textContent = 'Focus on clear implementation details, delivery timelines, and integration challenges.';
         } else if (company === 'Wipro') {
-          aiRecommendation.textContent = 'Structure answers around ownership, delivery quality, and measurable business outcomes.';
+          aiRecommendation.textContent = 'Structure answers around ownership, delivery quality, and measurable outcomes.';
         } else if (company === 'Tech Mahindra') {
           aiRecommendation.textContent = 'Highlight architecture trade-offs, supportability, and production incident handling.';
         } else {
-          aiRecommendation.textContent = 'Define the company context clearly so the interview panel can be tailored to your target role.';
+          aiRecommendation.textContent = 'Define the company context clearly so the interview panel can be tailored to your role.';
         }
 
         var isCustom = company === 'Custom';
@@ -446,6 +980,7 @@
         if (isCustom && customCompanySelect) customCompanySelect.focus();
 
         updateReadiness();
+        updateProgress();
       }
 
       function resolveSelectedMode() {
@@ -464,43 +999,151 @@
         return selected || 'Custom';
       }
 
+      function setDifficulty(btn) {
+        difficultyButtons.forEach(function (x) { x.classList.remove('active'); });
+        btn.classList.add('active');
+
+        var diff = btn.getAttribute('data-difficulty') || 'Medium';
+        setDifficultyBadge(diff);
+
+        if (difficultyIndicator) {
+          var idx = Number(btn.getAttribute('data-index') || '1');
+          difficultyIndicator.style.transform = 'translateX(calc((' + idx + ') * (100% + 6px)))';
+        }
+
+        updateReadiness();
+        updateProgress();
+      }
+
+      function setSessionLength(value) {
+        sessionLength.value = String(value);
+        setDurationPreview(value);
+
+        lengthChips.forEach(function (chip) {
+          chip.classList.toggle('active', Number(chip.getAttribute('data-minutes')) === Number(value));
+        });
+
+        if (value <= 10) sessionLengthHint.textContent = '~3-4 questions · Fast warm-up session';
+        else if (value <= 15) sessionLengthHint.textContent = '~4-5 questions · Quick focused practice';
+        else if (value <= 20) sessionLengthHint.textContent = '~4-6 questions · Recommended for daily practice';
+        else sessionLengthHint.textContent = '~6-8 questions · Deep exploration session';
+
+        updateProgress();
+      }
+
+      function updateStartSummary() {
+        var company = getActiveCompanyCard().getAttribute('data-company') || 'Google';
+        var diff = getActiveDifficultyButton().getAttribute('data-difficulty') || 'Medium';
+        var type = selectedRound === 'final' ? 'Final' : 'Technical';
+        var duration = sessionLength.value + ' min';
+
+        startSummaryChips.innerHTML = '';
+        [company, type, diff, duration].forEach(function (text) {
+          var chip = document.createElement('span');
+          chip.className = 'rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1';
+          chip.textContent = text;
+          startSummaryChips.appendChild(chip);
+        });
+      }
+
+      function updateProgress() {
+        var done = 0;
+        var step1 = !!stepInteraction[1];
+        var step2 = !!stepInteraction[2];
+        var step3 = !!stepInteraction[3];
+        var step4 = !!stepInteraction[4];
+        var step5 = !!stepInteraction[5];
+
+        if (step1) done += 1;
+        if (step2) done += 1;
+        if (step3) done += 1;
+        if (step4) done += 1;
+        if (step5) done += 1;
+
+        [1, 2, 3, 4, 5].forEach(function (idx) {
+          var ok = (idx === 1 && step1) || (idx === 2 && step2) || (idx === 3 && step3) || (idx === 4 && step4) || (idx === 5 && step5);
+          if (stepDots[idx]) stepDots[idx].classList.toggle('done', ok);
+        });
+
+        var pct = Math.round((done / 5) * 100);
+        progressLabel.textContent = done + ' of 5 steps configured';
+        progressPct.textContent = pct + '%';
+        topProgressFill.style.width = pct + '%';
+
+        updateStartSummary();
+
+        setChecklistStatus(checkCompany, step2, 'Company selected');
+        setChecklistStatus(checkDifficulty, step4, 'Difficulty set');
+      }
+
+      function getTopicCount() {
+        return Array.prototype.slice.call(topicChips.querySelectorAll('.topic-chip')).length;
+      }
+
+      function animateNumber(fromVal, toVal, duration, cb) {
+        var start = performance.now();
+        function frame(now) {
+          var t = Math.min((now - start) / duration, 1);
+          var eased = 1 - Math.pow(1 - t, 3);
+          var current = Math.round(fromVal + (toVal - fromVal) * eased);
+          cb(current);
+          if (t < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      }
+
+      function updateReadiness() {
+        var diff = (getActiveDifficultyButton().getAttribute('data-difficulty') || 'Medium').trim();
+        var base = 72;
+        if (diff === 'Easy') base = 81;
+        if (diff === 'Hard') base = 64;
+
+        var company = (getActiveCompanyCard().getAttribute('data-company') || 'Google');
+        if (company === 'Google') base -= 2;
+        if (company === 'Startup') base += 3;
+
+        if (getTopicCount() >= 3) base += 2;
+        if (base < 55) base = 55;
+        if (base > 92) base = 92;
+
+        if (setupReadinessChart) {
+          var current = (setupReadinessChart.w && setupReadinessChart.w.globals && setupReadinessChart.w.globals.series && setupReadinessChart.w.globals.series[0]) || 0;
+          animateNumber(Math.round(current), base, 380, function (val) {
+            setupReadinessChart.updateSeries([val], false);
+          });
+        }
+
+        setChecklistStatus(checkTopics, getTopicCount() > 0, getTopicCount() > 0 ? 'Focus topics added' : 'Focus topics (optional)');
+      }
+
       companyCards.forEach(function (card) {
         card.addEventListener('click', function () {
+          stepInteraction[2] = true;
           setCompany(card);
         });
       });
 
       roundCards.forEach(function (card) {
         card.addEventListener('click', function () {
+          stepInteraction[1] = true;
           setRound(card);
           updateReadiness();
+          updateProgress();
         });
       });
 
       difficultyButtons.forEach(function (btn) {
         btn.addEventListener('click', function () {
-          difficultyButtons.forEach(function (x) {
-            x.classList.remove('active');
-            x.classList.add('bg-white');
-            x.classList.remove('text-white');
-          });
-          btn.classList.add('active');
-          btn.classList.remove('bg-white');
-          btn.classList.add('text-white');
-
-          var diff = btn.getAttribute('data-difficulty') || 'Medium';
-          difficultyBadge.textContent = diff;
-          difficultyBadge.className = 'rounded-full px-2.5 py-1 text-xs font-semibold';
-          if (diff === 'Easy') difficultyBadge.classList.add('bg-green-50', 'text-green-700');
-          else if (diff === 'Hard') difficultyBadge.classList.add('bg-rose-50', 'text-rose-700');
-          else difficultyBadge.classList.add('bg-indigo-50', 'text-indigo-700');
-          updateReadiness();
+          stepInteraction[4] = true;
+          setDifficulty(btn);
         });
       });
 
       modeButtons.forEach(function (btn) {
         btn.addEventListener('click', function () {
+          stepInteraction[5] = true;
           setMode(btn.getAttribute('data-mode') || 'avatar');
+          updateProgress();
         });
       });
 
@@ -512,35 +1155,74 @@
         });
       }
 
-      function renderLength() {
-        sessionLengthValue.textContent = sessionLength.value + ' min';
-        durationPreview.textContent = sessionLength.value + ' min';
+      lengthChips.forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          stepInteraction[5] = true;
+          var mins = Number(chip.getAttribute('data-minutes') || '20');
+          setSessionLength(mins);
+          updateReadiness();
+        });
+      });
+
+      sessionLength.addEventListener('input', function () {
+        stepInteraction[5] = true;
+        setSessionLength(Number(sessionLength.value || '20'));
+        updateReadiness();
+      });
+
+      var experienceLevel = document.getElementById('experienceLevel');
+      if (experienceLevel) {
+        experienceLevel.addEventListener('change', function () {
+          stepInteraction[3] = true;
+          updateProgress();
+        });
       }
-      sessionLength.addEventListener('input', renderLength);
 
       interviewType.addEventListener('change', function () {
-        questionTypeLabel.textContent = interviewType.value;
+        setInterviewTypeLabel(interviewType.value);
       });
 
       topicChips.addEventListener('click', function (e) {
         var chip = e.target.closest('.topic-chip');
         if (!chip) return;
         chip.remove();
+        updateReadiness();
+        updateProgress();
       });
+
+      function addTopicChip(value) {
+        var chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'topic-chip';
+        chip.setAttribute('data-topic', value);
+        chip.innerHTML = value + ' <span class="text-[var(--talvo-muted)]">×</span>';
+        topicChips.appendChild(chip);
+      }
 
       topicInput.addEventListener('keydown', function (e) {
         if (e.key !== 'Enter') return;
         e.preventDefault();
         var value = topicInput.value.trim();
         if (!value) return;
-        var chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'topic-chip inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700';
-        chip.setAttribute('data-topic', value);
-        chip.innerHTML = value + ' <span class="text-gray-500">x</span>';
-        topicChips.appendChild(chip);
+        stepInteraction[5] = true;
+        addTopicChip(value);
         topicInput.value = '';
+        updateReadiness();
+        updateProgress();
       });
+
+      if (topicSuggestions) {
+        topicSuggestions.addEventListener('click', function (e) {
+          var btn = e.target.closest('.suggested-chip');
+          if (!btn) return;
+          var value = btn.getAttribute('data-topic') || '';
+          if (!value) return;
+          stepInteraction[5] = true;
+          addTopicChip(value);
+          updateReadiness();
+          updateProgress();
+        });
+      }
 
       if (startInterviewBtn) {
         startInterviewBtn.addEventListener('click', function () {
@@ -552,13 +1234,11 @@
             return;
           }
 
-          var activeCompanyCard = companyCards.find(function (c) { return c.classList.contains('active'); });
+          var activeCompanyCard = getActiveCompanyCard();
           var company = (activeCompanyCard && activeCompanyCard.getAttribute('data-company')) || 'Google';
-          if (company === 'Custom') {
-            company = resolveCustomCompanyName();
-          }
+          if (company === 'Custom') company = resolveCustomCompanyName();
 
-          var activeDifficulty = difficultyButtons.find(function (btn) { return btn.classList.contains('active'); });
+          var activeDifficulty = getActiveDifficultyButton();
           var difficulty = (activeDifficulty && activeDifficulty.getAttribute('data-difficulty')) || 'Medium';
 
           var params = new URLSearchParams({
@@ -577,39 +1257,42 @@
 
       setCompany(companyCards[0]);
       setRound(roundCards[0]);
-      renderLength();
+      setDifficulty(difficultyButtons[1]);
+      setSessionLength(20);
+      setInterviewTypeLabel('Technical Coding');
+      updateProgress();
 
       var chartTarget = document.querySelector('#setupReadinessChart');
       if (chartTarget && typeof ApexCharts !== 'undefined') {
         setupReadinessChart = new ApexCharts(chartTarget, {
-          chart: { type: 'radialBar', height: 176, toolbar: { show: false } },
-          series: [74],
-          labels: ['Readiness'],
-          colors: ['#6366f1'],
+          chart: { type: 'radialBar', height: 190, toolbar: { show: false }, sparkline: { enabled: true } },
+          series: [0],
+          labels: ['Ready'],
+          colors: ['#00A89C'],
           plotOptions: {
             radialBar: {
-              startAngle: -135,
-              endAngle: 135,
-              hollow: { size: '58%' },
-              track: { background: '#e5e7eb' },
+              startAngle: -130,
+              endAngle: 130,
+              hollow: { size: '66%' },
+              track: { background: '#E2E8F0' },
               dataLabels: {
-                name: { offsetY: 26, color: '#6b7280', fontSize: '11px' },
+                name: { offsetY: 28, color: '#64748B', fontSize: '12px', fontWeight: 500 },
                 value: {
-                  offsetY: -4,
-                  color: '#111827',
-                  fontSize: '22px',
+                  offsetY: -6,
+                  color: '#0D1117',
+                  fontSize: '30px',
                   fontWeight: 700,
                   formatter: function (val) { return Math.round(val) + '%'; }
                 }
               }
             }
           },
-          stroke: { lineCap: 'round' },
-          tooltip: { y: { formatter: function (val) { return Math.round(val) + '%'; } } }
+          stroke: { lineCap: 'round' }
         });
         setupReadinessChart.render();
-        updateReadiness();
       }
+
+      setTimeout(function () { updateReadiness(); }, 80);
     })();
   </script>
 </body>
