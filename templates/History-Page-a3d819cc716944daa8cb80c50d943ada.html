@@ -4,454 +4,1881 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Talvo Performance and History</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
+    :root {
+      --primary: #0B3D91;
+      --accent: #00A89C;
+      --secondary: #7C4DFF;
+      --background: #F4F6FA;
+      --surface: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #0D1117;
+      --muted: #64748B;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+    }
+
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'DM Sans', sans-serif;
       background:
-        radial-gradient(circle at 8% 4%, rgba(79, 70, 229, 0.12), transparent 28%),
-        radial-gradient(circle at 84% 18%, rgba(14, 165, 233, 0.1), transparent 24%),
-        #f8fafc;
+        radial-gradient(circle at 8% 4%, rgba(11, 61, 145, 0.16), transparent 32%),
+        radial-gradient(circle at 92% 14%, rgba(0, 168, 156, 0.12), transparent 30%),
+        linear-gradient(180deg, #f8faff 0%, var(--background) 100%);
+      color: var(--text);
     }
-    .session-panel { display: none; }
-    .session-panel.open { display: block; }
-    .glass-panel {
-      border: 1px solid rgba(255, 255, 255, 0.32);
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
-      backdrop-filter: blur(7px);
+
+    .page-shell {
+      padding: 32px;
     }
-    .history-signal {
-      border: 1px solid rgb(226 232 240);
-      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-      box-shadow: 0 18px 36px -30px rgba(15, 23, 42, 0.45);
-      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+
+    .hero-banner {
+      border-radius: 16px;
+      padding: 28px 32px;
+      background: linear-gradient(135deg, #0B3D91, #1a1050);
+      box-shadow: 0 22px 54px -36px rgba(11, 61, 145, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .history-signal:hover {
-      transform: translateY(-2px);
-      border-color: rgb(199 210 254);
-      box-shadow: 0 22px 42px -30px rgba(79, 70, 229, 0.4);
+
+    .quick-pill {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      color: rgba(255, 255, 255, 0.92);
+      border-radius: 999px;
+      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
     }
-    .history-filter {
-      border: 1px solid rgb(226 232 240);
-      background: white;
-      color: rgb(71 85 105);
-      transition: all 160ms ease;
-    }
-    .history-filter.active {
-      background: rgb(224 231 255);
-      border-color: rgb(99 102 241);
-      color: rgb(49 46 129);
-      box-shadow: 0 10px 18px -16px rgba(79, 70, 229, 0.75);
-    }
-    .session-item {
-      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-    }
-    .session-item:hover {
-      transform: translateY(-2px);
-      border-color: rgb(199 210 254);
-      box-shadow: 0 20px 38px -30px rgba(15, 23, 42, 0.45);
-    }
-    .session-score-meter {
+
+    .analytics-zone {
       position: relative;
-      overflow: hidden;
+      z-index: 1;
     }
-    .session-score-meter::after {
+
+    .stat-card {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      padding: 18px 18px 16px;
+      box-shadow: 0 18px 36px -32px rgba(15, 23, 42, 0.56);
+      overflow: hidden;
+      min-height: 150px;
+    }
+
+    .stat-card::before {
       content: '';
       position: absolute;
-      inset: 0;
-      background: linear-gradient(110deg, rgba(255, 255, 255, 0.12) 10%, rgba(255, 255, 255, 0.42) 26%, rgba(255, 255, 255, 0.1) 42%);
-      animation: shimmer 2.2s linear infinite;
-      mix-blend-mode: screen;
-      pointer-events: none;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent-color, var(--primary));
     }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    .stat-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--icon-bg, rgba(11, 61, 145, 0.1));
+      color: var(--icon-color, var(--primary));
+      border: 1px solid var(--icon-border, rgba(11, 61, 145, 0.18));
+    }
+
+    .progress-ring {
+      --ring-value: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: conic-gradient(var(--secondary) calc(var(--ring-value) * 1%), #e2e8f0 0);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .progress-ring::after {
+      content: '';
+      position: absolute;
+      inset: 5px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .chart-card {
+      border-radius: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 36px -34px rgba(15, 23, 42, 0.5);
+      padding: 18px;
+    }
+
+    .chip-select,
+    .search-input,
+    .sort-select {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+      border-radius: 999px;
+      transition: all 180ms ease;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .chip-select {
+      padding: 7px 34px 7px 14px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #64748B 50%),
+        linear-gradient(135deg, #64748B 50%, transparent 50%);
+      background-position:
+        calc(100% - 16px) calc(50% - 1px),
+        calc(100% - 12px) calc(50% - 1px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      appearance: none;
+    }
+
+    .chip-select.active {
+      color: var(--primary);
+      border-color: rgba(11, 61, 145, 0.35);
+      background-color: #eef2ff;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 20px -18px rgba(11, 61, 145, 0.8);
+      animation: chip-slide 200ms ease;
+    }
+
+    @keyframes chip-slide {
+      from { transform: translateY(2px); opacity: 0.6; }
+      to { transform: translateY(-1px); opacity: 1; }
+    }
+
+    .search-input {
+      border-radius: 8px;
+      padding: 10px 12px 10px 42px !important;
+      width: 280px;
+      min-height: 40px;
+      line-height: 1.2;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .search-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      isolation: isolate;
+    }
+
+    .search-icon {
+      pointer-events: none;
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: #94a3b8;
+      z-index: 2;
+    }
+
+    .search-input::placeholder {
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .search-input::-webkit-search-decoration,
+    .search-input::-webkit-search-cancel-button,
+    .search-input::-webkit-search-results-button,
+    .search-input::-webkit-search-results-decoration {
+      -webkit-appearance: none;
+    }
+
+    .search-input:focus,
+    .sort-select:focus,
+    .chip-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(11, 61, 145, 0.14);
+    }
+
+    .sort-select {
+      border-radius: 8px;
+      padding: 8px 34px 8px 10px;
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #64748B 50%),
+        linear-gradient(135deg, #64748B 50%, transparent 50%);
+      background-position:
+        calc(100% - 14px) calc(50% - 1px),
+        calc(100% - 10px) calc(50% - 1px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    .view-toggle {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #f8fafc;
+      padding: 3px;
+      display: inline-flex;
+      gap: 2px;
+    }
+
+    .view-toggle button {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 160ms ease;
+    }
+
+    .view-toggle button.active {
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 10px 18px -16px rgba(11, 61, 145, 0.82);
+    }
+
+    .history-month {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .month-header {
+      position: sticky;
+      top: 10px;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 240ms ease, transform 240ms ease;
+    }
+
+    .month-header.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .month-pill {
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+    }
+
+    .session-card {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 12px 30px -26px rgba(15, 23, 42, 0.58);
+      transition: all 180ms ease;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: card-fade 320ms ease forwards;
+      overflow: hidden;
+      position: relative;
+    }
+
+    @keyframes card-fade {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .session-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 24px 44px -34px rgba(15, 23, 42, 0.56);
+      border-color: rgba(11, 61, 145, 0.34);
+    }
+
+    .session-card:hover::before {
+      opacity: 1;
+    }
+
+    .session-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      opacity: 0;
+      background: var(--score-color, var(--accent));
+      transition: opacity 180ms ease;
+    }
+
+    .logo-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(11, 61, 145, 0.16), rgba(0, 168, 156, 0.16));
+      border: 1px solid rgba(11, 61, 145, 0.22);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .company-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      object-fit: contain;
+      background: #fff;
+      border: 1px solid rgba(11, 61, 145, 0.22);
+      padding: 5px;
+      flex-shrink: 0;
+    }
+
+    .company-logo-sm {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      object-fit: contain;
+      background: #fff;
+      border: 1px solid rgba(11, 61, 145, 0.2);
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    .radar-fallback {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+      padding: 8px 2px 0;
+    }
+
+    .radar-fallback-row {
+      display: grid;
+      grid-template-columns: 94px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .radar-fallback-track {
+      position: relative;
+      height: 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .radar-fallback-first,
+    .radar-fallback-latest {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+    }
+
+    .radar-fallback-first {
+      background: rgba(147, 197, 253, 0.85);
+    }
+
+    .radar-fallback-latest {
+      background: rgba(11, 61, 145, 0.92);
+      opacity: 0.95;
+    }
+
+    .duration-pill {
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f172a;
+      background: #eef2ff;
+      border: 1px solid #dbe4ff;
+    }
+
+    .score-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #f1f5f9;
+    }
+
+    .score-fill {
+      width: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--score-color, var(--accent));
+      transition: width 600ms ease-out;
+    }
+
+    .score-fill.animate {
+      width: var(--score-width, 0%);
+    }
+
+    .badge {
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+    }
+
+    .btn-ghost,
+    .btn-primary {
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 180ms ease;
+    }
+
+    .btn-ghost {
+      border: 1px solid rgba(11, 61, 145, 0.35);
+      color: var(--primary);
+      background: #fff;
+    }
+
+    .btn-ghost:hover {
+      background: #eff6ff;
+    }
+
+    .btn-primary {
+      border: 1px solid rgba(0, 168, 156, 0.3);
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #008f86;
+    }
+
+    .expand-toggle {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 12px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .expand-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 300ms ease;
+    }
+
+    .expand-panel.open {
+      max-height: 360px;
+    }
+
+    .mini-skill-track {
+      height: 4px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .mini-skill-fill {
+      height: 100%;
+      width: var(--skill-width, 0%);
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0B3D91, #00A89C);
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .grid-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      padding: 16px;
+      box-shadow: 0 12px 30px -26px rgba(15, 23, 42, 0.58);
+      transition: all 180ms ease;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: card-fade 320ms ease forwards;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .grid-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 24px 44px -34px rgba(15, 23, 42, 0.56);
+      border-color: rgba(11, 61, 145, 0.34);
+    }
+
+    .donut {
+      --score: 0;
+      --donut-color: #10B981;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: conic-gradient(var(--donut-color) 0deg, #e2e8f0 0deg);
+      position: relative;
+      display: grid;
+      place-items: center;
+      margin-inline: auto;
+      transition: background 700ms ease;
+    }
+
+    .donut::after {
+      content: '';
+      position: absolute;
+      inset: 7px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .donut-label {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      line-height: 1.05;
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .records-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 14px 34px -30px rgba(15, 23, 42, 0.55);
+      padding: 16px 18px;
+    }
+
+    .record-chip {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--warning);
+      background: #fff;
+      padding: 14px 14px 12px;
+      min-width: 220px;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+      box-shadow: 0 12px 26px -28px rgba(15, 23, 42, 0.56);
+    }
+
+    .record-chip:hover {
+      transform: scale(1.02);
+      box-shadow: 0 22px 34px -30px rgba(15, 23, 42, 0.56);
+    }
+
+    .records-scroll {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .company-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .company-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .company-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      overflow: hidden;
+    }
+
+    .company-fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .load-more-btn {
+      border: 1px solid rgba(11, 61, 145, 0.28);
+      color: var(--primary);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 18px;
+      background: #fff;
+      transition: all 180ms ease;
+    }
+
+    .load-more-btn:hover {
+      background: #eff6ff;
+      transform: translateY(-1px);
+    }
+
+    .skeleton-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      height: 126px;
+      background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
     @keyframes shimmer {
-      0% { transform: translateX(-140%); }
-      100% { transform: translateX(140%); }
+      from { background-position: 200% 0; }
+      to { background-position: -200% 0; }
+    }
+
+    .empty-state {
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      background: #fff;
+      padding: 40px 18px;
+      text-align: center;
+      max-width: 520px;
+      margin-inline: auto;
+    }
+
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #dbeafe, #e0f2fe);
+      display: grid;
+      place-items: center;
+    }
+
+    @media (max-width: 1280px) {
+      .history-grid,
+      .records-scroll {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .analytics-zone { position: static; }
+      .page-shell { padding: 24px; }
+      .month-header { top: 10px; }
+    }
+
+    @media (max-width: 768px) {
+      .page-shell { padding: 16px; }
+      .hero-banner { padding: 20px; }
+      .search-input { width: 100%; }
+      .history-grid,
+      .records-scroll {
+        grid-template-columns: 1fr;
+      }
+      .month-header { position: static; }
     }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900 flex min-h-screen">
+<body class="flex min-h-screen">
   {% include 'partials/sidebar.html' %}
-  <div class="flex-1 min-w-0 flex flex-col min-h-screen">
-    {% if total_sessions > 0 %}
-      {% widthratio status_distribution.completed total_sessions 100 as completion_rate %}
-    {% else %}
-      {% with 0 as completion_rate %}{% endwith %}
-    {% endif %}
-    <main class="max-w-7xl mx-auto w-full px-6 py-7 space-y-6">
-      <header class="rounded-3xl border border-indigo-200 bg-gradient-to-br from-indigo-700 via-indigo-600 to-cyan-500 p-6 text-white shadow-sm">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-[0.14em] text-indigo-100">Performance and History</p>
-            <h1 class="mt-1 text-3xl font-semibold tracking-tight">Your interview growth cockpit</h1>
-            <p class="mt-2 text-sm text-indigo-50 max-w-3xl">See momentum, identify weak spots, replay key moments, and get concrete next actions from every session.</p>
-          </div>
-          <div class="glass-panel rounded-2xl px-5 py-4 text-right">
-            <p class="text-xs uppercase tracking-wide text-indigo-100">Overall Performance</p>
-            <p class="mt-1 text-4xl font-bold">{{ overall_score }}</p>
-            <p class="text-xs text-indigo-100">Across {{ total_sessions }} sessions • {{ completion_rate|default:'0' }}% completed</p>
-          </div>
-        </div>
-        <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div class="glass-panel rounded-xl px-4 py-3">
-            <p class="text-[11px] uppercase tracking-wide text-indigo-100">Completed Sessions</p>
-            <p class="mt-1 text-2xl font-bold">{{ status_distribution.completed }}</p>
-          </div>
-          <div class="glass-panel rounded-xl px-4 py-3">
-            <p class="text-[11px] uppercase tracking-wide text-indigo-100">Active in Progress</p>
-            <p class="mt-1 text-2xl font-bold">{{ status_distribution.active }}</p>
-          </div>
-          <div class="glass-panel rounded-xl px-4 py-3">
-            <p class="text-[11px] uppercase tracking-wide text-indigo-100">Needs Review</p>
-            <p class="mt-1 text-2xl font-bold">{{ status_distribution.aborted }}</p>
-          </div>
-        </div>
-      </header>
 
-      <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        <article class="history-signal rounded-2xl p-4">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Best Session Score</p>
-          <p id="bestSessionScore" class="mt-1 text-2xl font-bold text-indigo-700">--</p>
-          <p class="mt-1 text-xs text-gray-500">Highest quality signal in your history</p>
+  <div class="flex-1 min-w-0 flex flex-col min-h-screen">
+    <main class="page-shell max-w-[1540px] mx-auto w-full space-y-8">
+      <section class="analytics-zone space-y-6">
+        <header class="hero-banner text-white">
+          <div class="flex flex-wrap items-start justify-between gap-5">
+            <div>
+              <p class="text-xs tracking-[0.02em] text-white/50">Dashboard &gt; Performance &amp; History</p>
+              <h1 class="mt-1 text-[28px] font-bold tracking-tight">Performance &amp; History</h1>
+              <p class="mt-2 text-sm text-white/70">Track your growth across all interview sessions</p>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2" id="heroQuickPills">
+              <span class="quick-pill">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19h16M5 15h4M10 11h4M15 7h4"/></svg>
+                <span>Total Sessions: <strong id="pillTotalSessions">0</strong></span>
+              </span>
+              <span class="quick-pill">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17l6-6 4 4 8-8"/><path stroke-linecap="round" stroke-width="1.8" d="M14 7h7v7"/></svg>
+                <span>Avg Score: <strong id="pillAvgScore">0</strong></span>
+              </span>
+              <span class="quick-pill">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M8 3v4m8-4v4m-8 6h8"/></svg>
+                <span>Since: <strong id="pillSince">-</strong></span>
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <section class="grid grid-cols-1 xl:grid-cols-5 md:grid-cols-2 gap-3" id="overviewCards">
+          <article class="stat-card" style="--accent-color:#0B3D91;--icon-color:#0B3D91;--icon-bg:rgba(11,61,145,.12);--icon-border:rgba(11,61,145,.26);">
+            <div class="flex items-center justify-between gap-3">
+              <span class="stat-icon">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="14" y="4" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="3" y="13" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="14" y="13" width="7" height="7" rx="1.5" stroke-width="1.8"/></svg>
+              </span>
+            </div>
+            <p class="mt-3 stat-value"><span data-count="totalSessions">0</span></p>
+            <p class="mt-1 text-sm font-semibold">Total Sessions</p>
+            <p class="mt-1 text-xs text-[#10B981]" id="deltaSessions">+0 this month</p>
+          </article>
+
+          <article class="stat-card" style="--accent-color:#7C4DFF;--icon-color:#7C4DFF;--icon-bg:rgba(124,77,255,.12);--icon-border:rgba(124,77,255,.24);">
+            <div class="flex items-center justify-between gap-3">
+              <span class="stat-icon">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linejoin="round" stroke-width="1.8" d="m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.25L12 17.3 6.4 20.25l1.07-6.25L2.94 9.58l6.26-.91L12 3Z"/></svg>
+              </span>
+              <span class="progress-ring" id="avgRing"></span>
+            </div>
+            <p class="mt-3 stat-value"><span data-count="avgScore">0</span><span class="text-xl">/100</span></p>
+            <p class="mt-1 text-sm font-semibold">Average Score</p>
+            <p class="mt-1 text-xs text-[#10B981]" id="deltaAverage">up 0 pts from first session</p>
+          </article>
+
+          <article class="stat-card" style="--accent-color:#F59E0B;--icon-color:#F59E0B;--icon-bg:rgba(245,158,11,.13);--icon-border:rgba(245,158,11,.28);">
+            <div class="flex items-center justify-between gap-3">
+              <span class="stat-icon">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 21h8M12 17v4M7 3h10v5a5 5 0 0 1-10 0V3Zm10 2h3a3 3 0 0 1-3 3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 5H4a3 3 0 0 0 3 3"/></svg>
+              </span>
+            </div>
+            <p class="mt-3 stat-value text-[#F59E0B]"><span data-count="bestScore">0</span></p>
+            <p class="mt-1 text-sm font-semibold">Personal Best</p>
+            <p class="mt-1 text-xs text-slate-500" id="bestContext">-</p>
+          </article>
+
+          <article class="stat-card" style="--accent-color:#00A89C;--icon-color:#00A89C;--icon-bg:rgba(0,168,156,.12);--icon-border:rgba(0,168,156,.26);">
+            <div class="flex items-center justify-between gap-3">
+              <span class="stat-icon">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M12 7v5l3 2"/></svg>
+              </span>
+            </div>
+            <p class="mt-3 stat-value"><span data-count="practiceHours">0</span><span class="text-xl"> hrs</span></p>
+            <p class="mt-1 text-sm font-semibold">Total Practice Time</p>
+            <p class="mt-1 text-xs text-slate-500" id="practiceContext">Avg 0 min/session</p>
+          </article>
+
+          <article class="stat-card" style="--accent-color:#10B981;--icon-color:#10B981;--icon-bg:rgba(16,185,129,.12);--icon-border:rgba(16,185,129,.26);">
+            <div class="flex items-center justify-between gap-3">
+              <span class="stat-icon">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 15l4-4 4 4 8-8"/><path stroke-linecap="round" stroke-width="1.8" d="M15 7h5v5"/></svg>
+              </span>
+            </div>
+            <p class="mt-3 stat-value text-[#10B981]" id="improvementRate">+0%</p>
+            <p class="mt-1 text-sm font-semibold">Score Improvement</p>
+            <p class="mt-1 text-xs text-slate-500">First to latest session</p>
+          </article>
+        </section>
+      </section>
+
+      <section class="grid grid-cols-1 xl:grid-cols-4 gap-3">
+        <article class="chart-card xl:col-span-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-lg font-semibold">Score Over Time</h2>
+            <div class="view-toggle" id="timelineGranularity">
+              <button type="button" data-range="weekly" class="active">Weekly</button>
+              <button type="button" data-range="monthly">Monthly</button>
+              <button type="button" data-range="all">All Time</button>
+            </div>
+          </div>
+          <div id="scoreOverTimeChart" class="h-64 mt-3"></div>
         </article>
-        <article class="history-signal rounded-2xl p-4">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Completion Health</p>
-          <p id="completionHealth" class="mt-1 text-2xl font-bold text-emerald-700">--</p>
-          <p class="mt-1 text-xs text-gray-500">Tracks how many sessions reach completion</p>
+
+        <article class="chart-card">
+          <h2 class="text-lg font-semibold">Score by Company</h2>
+          <div id="companyBars" class="company-bars"></div>
         </article>
-        <article class="history-signal rounded-2xl p-4">
-          <p class="text-xs uppercase tracking-wide text-gray-500">AI Coach Pulse</p>
-          <p id="coachPulseTitle" class="mt-1 text-lg font-bold text-gray-900">--</p>
-          <p id="coachPulseBody" class="mt-1 text-xs text-gray-600">--</p>
+
+        <article class="chart-card">
+          <h2 class="text-lg font-semibold">Skill Growth</h2>
+          <div id="skillRadarChart" class="h-64 mt-3"></div>
+          <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-4">
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full bg-[#93c5fd]"></span>First Session</span>
+            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full bg-[#0B3D91]"></span>Latest</span>
+          </div>
         </article>
       </section>
 
-      <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold tracking-tight">Session Timeline, Insights, and Replay Intelligence</h2>
-          <span class="text-xs font-medium text-gray-500">Filter by status, sort by impact, and drill into analytics instantly</span>
+      <section class="records-card">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700 border border-amber-200">
+            <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 21h8M12 17v4M7 3h10v5a5 5 0 0 1-10 0V3Zm10 2h3a3 3 0 0 1-3 3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 5H4a3 3 0 0 0 3 3"/></svg>
+          </span>
+          <h2 class="text-base font-semibold">Personal Records</h2>
         </div>
+        <div id="recordsStrip" class="records-scroll mt-3"></div>
+      </section>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <button type="button" data-status="all" class="history-filter active rounded-full px-3 py-1.5 text-xs font-semibold">All</button>
-          <button type="button" data-status="completed" class="history-filter rounded-full px-3 py-1.5 text-xs font-semibold">Completed</button>
-          <button type="button" data-status="active" class="history-filter rounded-full px-3 py-1.5 text-xs font-semibold">Active</button>
-          <button type="button" data-status="aborted" class="history-filter rounded-full px-3 py-1.5 text-xs font-semibold">Aborted</button>
+      <section class="chart-card">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="search-wrap">
+              <input id="sessionSearch" class="search-input" type="search" placeholder="Search sessions..."/>
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+            </div>
 
-          <div class="ml-auto w-full sm:w-auto">
-            <select id="sessionSortSelect" class="w-full sm:w-auto rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="recent">Sort: Most Recent</option>
-              <option value="score_desc">Sort: Highest Score</option>
-              <option value="score_asc">Sort: Lowest Score</option>
-              <option value="latency_asc">Sort: Fastest Responses</option>
-              <option value="latency_desc">Sort: Slowest Responses</option>
+            <select id="companyFilter" class="chip-select"><option value="">Company</option></select>
+            <select id="roundFilter" class="chip-select"><option value="">Round Type</option></select>
+            <select id="difficultyFilter" class="chip-select"><option value="">Difficulty</option></select>
+            <select id="dateFilter" class="chip-select">
+              <option value="">Date Range</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last year</option>
+            </select>
+            <select id="scoreFilter" class="chip-select">
+              <option value="">Score Range</option>
+              <option value="80-100">80-100</option>
+              <option value="60-79">60-79</option>
+              <option value="0-59">0-59</option>
             </select>
           </div>
-        </div>
 
-        <div class="relative">
-          <input
-            id="sessionSearchInput"
-            type="search"
-            placeholder="Search sessions by company, role, status, or date (e.g., Mar 22, 2026)"
-            class="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
-          </svg>
-        </div>
-
-        <p id="sessionSearchEmpty" class="hidden rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
-          No sessions matched your search.
-        </p>
-
-        <div id="sessionList" class="space-y-3">
-        {% for item in session_cards %}
-          <article
-            class="session-item rounded-2xl border border-gray-200 bg-gray-50/80"
-            data-search="{{ item.title|lower }} {{ item.role|lower }} {{ item.difficulty|lower }} {{ item.status|lower }} {{ item.started_at|date:'M d, Y h:i A'|lower }}"
-            data-status="{{ item.status|lower }}"
-            data-score="{{ item.session_score }}"
-            data-latency="{{ item.avg_latency }}"
-            data-start="{{ item.started_at|date:'U' }}"
-          >
-            <div class="px-4 py-4">
-              <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p class="text-sm font-semibold text-gray-900">{{ item.title }}</p>
-                  <p class="mt-1 text-xs text-gray-500">{{ item.role }} | {{ item.difficulty }} | {{ item.started_at|date:'M d, Y h:i A' }}</p>
-                  <div class="mt-2 flex flex-wrap gap-1.5">
-                    <span class="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-medium text-gray-600">{{ item.turn_count }} turns</span>
-                    <span class="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">{{ item.difficulty }}</span>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold {% if item.status == 'completed' %}bg-green-100 text-green-700{% elif item.status == 'active' %}bg-amber-100 text-amber-700{% else %}bg-rose-100 text-rose-700{% endif %}">{{ item.status|title }}</span>
-                  <p class="mt-1 text-sm font-bold text-indigo-700">Score {{ item.session_score }}/100</p>
-                </div>
-              </div>
-              <div class="session-score-meter mt-3 h-2.5 w-full rounded-full bg-gray-200 overflow-hidden">
-                <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 via-violet-500 to-cyan-500" style="width: {{ item.session_score }}%;"></div>
-              </div>
-              <div class="mt-3 flex flex-wrap gap-2">
-                <a href="{% url 'replay_page' %}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200">Replay</a>
-                <a href="{% url 'feedback_dashboard' %}?session={{ item.id }}" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all duration-200">Feedback</a>
-                <button type="button" data-toggle="session-{{ item.id }}" class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-all duration-200">Open Analytics</button>
-              </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <p class="text-xs text-slate-500" id="resultCount">Showing 0 sessions</p>
+            <div class="view-toggle" id="historyViewToggle">
+              <button type="button" class="active" data-view="list">List</button>
+              <button type="button" data-view="grid">Grid</button>
             </div>
-
-            <div id="session-{{ item.id }}" class="session-panel border-t border-gray-200 px-4 py-4">
-              <div class="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
-                <div class="space-y-4">
-                  <div class="rounded-xl border border-gray-200 bg-white p-3">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Session Review</p>
-                    <p class="mt-1 text-sm text-gray-700">{{ item.review_text }}</p>
-                    <p class="mt-2 text-xs text-gray-500">Turns: {{ item.turn_count }}</p>
-                  </div>
-                  <div class="rounded-xl border border-gray-200 bg-white p-3">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Feedback Highlights</p>
-                    <ul class="mt-2 space-y-2 text-sm text-gray-700">
-                      {% for line in item.feedback_lines %}
-                        <li class="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">{{ line }}</li>
-                      {% empty %}
-                        <li class="text-gray-500">No explicit feedback text captured yet for this session.</li>
-                      {% endfor %}
-                    </ul>
-                  </div>
-                </div>
-                <div class="space-y-4">
-                  <div class="rounded-xl border border-gray-200 bg-white p-3">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Quality Trend</p>
-                    <div id="quality-chart-{{ item.id }}" class="mt-2 h-40 w-full"></div>
-                  </div>
-                  <div class="rounded-xl border border-gray-200 bg-white p-3">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Latency Trend</p>
-                    <div id="latency-chart-{{ item.id }}" class="mt-2 h-36 w-full"></div>
-                  </div>
-                </div>
-              </div>
+            <div class="relative">
+              <select id="sortFilter" class="sort-select">
+                <option value="newest">Sort: Newest</option>
+                <option value="oldest">Sort: Oldest</option>
+                <option value="score_desc">Sort: Highest Score</option>
+                <option value="score_asc">Sort: Lowest Score</option>
+                <option value="duration_asc">Sort: Shortest</option>
+              </select>
             </div>
-          </article>
-        {% empty %}
-          <article class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-            <p class="text-sm text-gray-600">No interview sessions found yet. Start an interview to see analytics here.</p>
-          </article>
-        {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="space-y-4" id="historyZone">
+        <div id="historyContent"></div>
+        <div id="loadingSkeletons" class="hidden space-y-3">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="text-center" id="loadMoreWrap">
+          <button type="button" id="loadMoreBtn" class="load-more-btn">Load More Sessions</button>
         </div>
       </section>
     </main>
 
+    {{ session_cards|json_script:"sessionCardsData" }}
     {{ results_chart_data|json_script:"resultsChartData" }}
 
     <script>
       (function () {
-        var toggleButtons = Array.prototype.slice.call(document.querySelectorAll('[data-toggle]'));
-        var sessionSearchInput = document.getElementById('sessionSearchInput');
-        var sessionSearchEmpty = document.getElementById('sessionSearchEmpty');
-        var sessionItems = Array.prototype.slice.call(document.querySelectorAll('.session-item'));
-        var statusButtons = Array.prototype.slice.call(document.querySelectorAll('[data-status]'));
-        var sortSelect = document.getElementById('sessionSortSelect');
-        var sessionList = document.getElementById('sessionList');
-        var bestSessionScore = document.getElementById('bestSessionScore');
-        var completionHealth = document.getElementById('completionHealth');
-        var coachPulseTitle = document.getElementById('coachPulseTitle');
-        var coachPulseBody = document.getElementById('coachPulseBody');
-        var chartDataEl = document.getElementById('resultsChartData');
-        var chartData = chartDataEl ? JSON.parse(chartDataEl.textContent || '[]') : [];
-        var chartMap = {};
-        var rendered = {};
-        var activeStatusFilter = 'all';
+        var palette = {
+          primary: '#0B3D91',
+          accent: '#00A89C',
+          secondary: '#7C4DFF',
+          muted: '#64748B',
+          success: '#10B981',
+          warning: '#F59E0B',
+          error: '#EF4444'
+        };
 
-        function parseNum(value, fallback) {
-          var n = Number(value);
-          return isNaN(n) ? fallback : n;
+        var sessionRawEl = document.getElementById('sessionCardsData');
+        var chartRawEl = document.getElementById('resultsChartData');
+        var rawSessions = sessionRawEl ? JSON.parse(sessionRawEl.textContent || '[]') : [];
+        var rawChart = chartRawEl ? JSON.parse(chartRawEl.textContent || '[]') : [];
+        var chartBySession = {};
+        rawChart.forEach(function (item) {
+          chartBySession[String(item.session_id)] = item;
+        });
+
+        function toDate(value) {
+          var d = new Date(value);
+          return isNaN(d.getTime()) ? new Date() : d;
         }
 
-        function sortSessionItems() {
-          if (!sessionList || !sortSelect || !sessionItems.length) return;
-          var mode = sortSelect.value || 'recent';
-          var items = sessionItems.slice();
+        function scoreColor(score) {
+          if (score >= 80) return palette.success;
+          if (score >= 60) return palette.warning;
+          return palette.error;
+        }
 
-          items.sort(function (a, b) {
-            var aScore = parseNum(a.getAttribute('data-score'), 0);
-            var bScore = parseNum(b.getAttribute('data-score'), 0);
-            var aLatency = parseNum(a.getAttribute('data-latency'), 0);
-            var bLatency = parseNum(b.getAttribute('data-latency'), 0);
-            var aStart = parseNum(a.getAttribute('data-start'), 0);
-            var bStart = parseNum(b.getAttribute('data-start'), 0);
+        var companyLogoMap = {
+          google: 'https://cdn.simpleicons.org/google/4285F4',
+          amazon: 'https://cdn.simpleicons.org/amazon/FF9900',
+          microsoft: 'https://cdn.simpleicons.org/microsoft/5E5E5E',
+          meta: 'https://cdn.simpleicons.org/meta/0866FF',
+          apple: 'https://cdn.simpleicons.org/apple/111111',
+          netflix: 'https://cdn.simpleicons.org/netflix/E50914',
+          uber: 'https://cdn.simpleicons.org/uber/111111',
+          oracle: 'https://cdn.simpleicons.org/oracle/F80000',
+          adobe: 'https://cdn.simpleicons.org/adobe/FF0000',
+          salesforce: 'https://cdn.simpleicons.org/salesforce/00A1E0',
+          ibm: 'https://cdn.simpleicons.org/ibm/0F62FE',
+          infosys: 'https://cdn.simpleicons.org/infosys/007CC3',
+          wipro: 'https://cdn.simpleicons.org/wipro/341C53',
+          accenture: 'https://cdn.simpleicons.org/accenture/A100FF',
+          tcs: 'https://cdn.simpleicons.org/tata/2563EB'
+        };
 
-            if (mode === 'score_desc') return bScore - aScore;
-            if (mode === 'score_asc') return aScore - bScore;
-            if (mode === 'latency_asc') return aLatency - bLatency;
-            if (mode === 'latency_desc') return bLatency - aLatency;
-            return bStart - aStart;
+        function normalizeCompanyKey(company) {
+          return String(company || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+        }
+
+        function logoUrlForCompany(company) {
+          var key = normalizeCompanyKey(company);
+          if (!key) return '';
+          if (key.indexOf('google') !== -1) return companyLogoMap.google;
+          if (key.indexOf('amazon') !== -1) return companyLogoMap.amazon;
+          if (key.indexOf('microsoft') !== -1) return companyLogoMap.microsoft;
+          if (key.indexOf('meta') !== -1 || key.indexOf('facebook') !== -1) return companyLogoMap.meta;
+          if (key.indexOf('apple') !== -1) return companyLogoMap.apple;
+          if (key.indexOf('netflix') !== -1) return companyLogoMap.netflix;
+          if (key.indexOf('uber') !== -1) return companyLogoMap.uber;
+          if (key.indexOf('oracle') !== -1) return companyLogoMap.oracle;
+          if (key.indexOf('adobe') !== -1) return companyLogoMap.adobe;
+          if (key.indexOf('salesforce') !== -1) return companyLogoMap.salesforce;
+          if (key.indexOf('ibm') !== -1) return companyLogoMap.ibm;
+          if (key.indexOf('infosys') !== -1) return companyLogoMap.infosys;
+          if (key.indexOf('wipro') !== -1) return companyLogoMap.wipro;
+          if (key.indexOf('accenture') !== -1) return companyLogoMap.accenture;
+          if (key === 'tcs' || key.indexOf('tata consultancy') !== -1) return companyLogoMap.tcs;
+          return '';
+        }
+
+        function companyLogoMarkup(company, small) {
+          var url = logoUrlForCompany(company);
+          var initials = String(company || 'P').slice(0, 1).toUpperCase();
+          if (!url) {
+            return '<span class="logo-dot"' + (small ? ' style="width:24px;height:24px;font-size:11px;"' : '') + '>' + initials + '</span>';
+          }
+          return '<img class="' + (small ? 'company-logo-sm' : 'company-logo') + '" src="' + url + '" alt="' + company + ' logo" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';"/><span class="logo-dot" style="display:none;' + (small ? 'width:24px;height:24px;font-size:11px;' : '') + '">' + initials + '</span>';
+        }
+
+        function cleanText(value, fallback) {
+          var t = String(value || '').trim();
+          return t || fallback;
+        }
+
+        function deriveRoundType(interviewType) {
+          var lower = String(interviewType || '').toLowerCase();
+          if (lower.indexOf('final') !== -1) return 'Final';
+          if (lower.indexOf('behavior') !== -1) return 'Behavioral';
+          return 'Technical';
+        }
+
+        function deriveSkills(score, turns, latency) {
+          var base = Math.max(42, Math.min(96, score));
+          var smooth = Math.max(1, Math.round(turns));
+          var penalty = Math.min(7, Math.round((latency || 0) / 1200));
+          return {
+            clarity: Math.max(35, Math.min(99, base + 4 - penalty)),
+            structure: Math.max(35, Math.min(99, base - 2 + Math.round(smooth * 0.4))),
+            depth: Math.max(35, Math.min(99, base - 6 + Math.round(smooth * 0.7))),
+            confidence: Math.max(35, Math.min(99, base + 2 - Math.round(smooth * 0.2))),
+            conciseness: Math.max(35, Math.min(99, base - 9 - penalty + Math.round(smooth * 0.25)))
+          };
+        }
+
+        function parseCompanyAndType(title) {
+          var text = String(title || 'Practice - Technical');
+          var chunks = text.split(' - ');
+          return {
+            company: cleanText(chunks[0], 'Practice'),
+            interviewType: cleanText(chunks.slice(1).join(' - '), 'Technical')
+          };
+        }
+
+        var sessions = rawSessions.map(function (item) {
+          var pair = parseCompanyAndType(item.title);
+          var score = Number(item.session_score || 0);
+          var turns = Number(item.turn_count || 0);
+          var avgLatency = Number(item.avg_latency || 0);
+          var startedAt = toDate(item.started_at);
+          var approxDuration = Math.max(8, Math.round((turns * 2.3) + (avgLatency / 9000)));
+          var roundType = deriveRoundType(pair.interviewType);
+          return {
+            id: item.id,
+            company: pair.company,
+            interviewType: pair.interviewType,
+            roundType: roundType,
+            role: cleanText(item.role, 'Software Engineer'),
+            difficulty: cleanText(item.difficulty, 'Medium'),
+            status: cleanText(item.status, 'active').toLowerCase(),
+            startedAt: startedAt,
+            startedLabel: startedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+            startedTimeLabel: startedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+            turnCount: turns,
+            avgLatency: avgLatency,
+            durationMin: approxDuration,
+            score: score,
+            feedbackLines: Array.isArray(item.feedback_lines) ? item.feedback_lines : [],
+            reviewText: cleanText(item.review_text, 'Session summary unavailable.'),
+            skills: deriveSkills(score, turns, avgLatency)
+          };
+        });
+
+        sessions.sort(function (a, b) { return b.startedAt.getTime() - a.startedAt.getTime(); });
+
+        var state = {
+          view: 'list',
+          query: '',
+          company: '',
+          round: '',
+          difficulty: '',
+          dateRange: '',
+          scoreRange: '',
+          sort: 'newest',
+          visibleCount: 10,
+          loadingMore: false
+        };
+
+        var timelineButtons = Array.prototype.slice.call(document.querySelectorAll('#timelineGranularity button'));
+        var scoreChart = null;
+        var radarChart = null;
+
+        function getOldestSession(list) {
+          if (!list.length) return null;
+          var sorted = list.slice().sort(function (a, b) { return a.startedAt.getTime() - b.startedAt.getTime(); });
+          return sorted[0];
+        }
+
+        function getNewestSession(list) {
+          if (!list.length) return null;
+          return list[0];
+        }
+
+        function computeSummary(list) {
+          var total = list.length;
+          var avg = total ? Math.round(list.reduce(function (sum, s) { return sum + s.score; }, 0) / total) : 0;
+          var best = total ? list.reduce(function (a, b) { return a.score >= b.score ? a : b; }) : null;
+          var oldest = getOldestSession(list);
+          var latest = getNewestSession(list);
+          var monthNow = new Date();
+          var monthCount = list.filter(function (s) {
+            return s.startedAt.getMonth() === monthNow.getMonth() && s.startedAt.getFullYear() === monthNow.getFullYear();
+          }).length;
+          var totalMinutes = list.reduce(function (sum, s) { return sum + s.durationMin; }, 0);
+          var avgDuration = total ? Math.round(totalMinutes / total) : 0;
+          var firstScore = oldest ? oldest.score : 0;
+          var latestScore = latest ? latest.score : 0;
+          var improvement = firstScore > 0 ? Math.round(((latestScore - firstScore) / firstScore) * 100) : 0;
+
+          return {
+            total: total,
+            avg: avg,
+            best: best,
+            oldest: oldest,
+            latest: latest,
+            monthCount: monthCount,
+            totalHours: Math.round((totalMinutes / 60) * 10) / 10,
+            avgDuration: avgDuration,
+            firstScore: firstScore,
+            latestScore: latestScore,
+            improvement: improvement
+          };
+        }
+
+        function getCompanyMetrics(list) {
+          var map = {};
+          list.forEach(function (s) {
+            if (!map[s.company]) {
+              map[s.company] = { company: s.company, scores: [], last: s };
+            }
+            map[s.company].scores.push(s.score);
+            if (s.startedAt.getTime() > map[s.company].last.startedAt.getTime()) {
+              map[s.company].last = s;
+            }
+          });
+          var rows = Object.keys(map).map(function (name) {
+            var row = map[name];
+            var avg = Math.round(row.scores.reduce(function (sum, v) { return sum + v; }, 0) / row.scores.length);
+            return { company: name, avg: avg, count: row.scores.length, last: row.last };
+          });
+          rows.sort(function (a, b) { return b.avg - a.avg; });
+          return rows;
+        }
+
+        function calcBestStreakDays(list) {
+          if (!list.length) return { days: 0, range: 'No activity yet' };
+          var uniqueDays = {};
+          list.forEach(function (s) {
+            var key = s.startedAt.getFullYear() + '-' + (s.startedAt.getMonth() + 1) + '-' + s.startedAt.getDate();
+            uniqueDays[key] = s.startedAt;
+          });
+          var dates = Object.keys(uniqueDays).map(function (k) { return uniqueDays[k]; }).sort(function (a, b) {
+            return a.getTime() - b.getTime();
           });
 
-          items.forEach(function (item) { sessionList.appendChild(item); });
+          var best = { streak: 1, start: dates[0], end: dates[0] };
+          var currentStart = dates[0];
+          var currentLength = 1;
+
+          for (var i = 1; i < dates.length; i += 1) {
+            var diff = (dates[i].getTime() - dates[i - 1].getTime()) / 86400000;
+            if (Math.round(diff) === 1) {
+              currentLength += 1;
+            } else {
+              if (currentLength > best.streak) {
+                best = { streak: currentLength, start: currentStart, end: dates[i - 1] };
+              }
+              currentStart = dates[i];
+              currentLength = 1;
+            }
+          }
+          if (currentLength > best.streak) {
+            best = { streak: currentLength, start: currentStart, end: dates[dates.length - 1] };
+          }
+
+          var startLabel = best.start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          var endLabel = best.end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          return { days: best.streak, range: startLabel + ' - ' + endLabel };
         }
 
-        function updateSignals(visibleItems) {
-          if (!visibleItems.length) {
-            if (bestSessionScore) bestSessionScore.textContent = '--';
-            if (completionHealth) completionHealth.textContent = '--';
-            if (coachPulseTitle) coachPulseTitle.textContent = 'No sessions in view';
-            if (coachPulseBody) coachPulseBody.textContent = 'Change filters or search to inspect another group of sessions.';
+        function calcMostImprovedCompany(list) {
+          var grouped = {};
+          list.slice().sort(function (a, b) { return a.startedAt.getTime() - b.startedAt.getTime(); }).forEach(function (s) {
+            if (!grouped[s.company]) grouped[s.company] = [];
+            grouped[s.company].push(s);
+          });
+
+          var best = null;
+          Object.keys(grouped).forEach(function (company) {
+            var rows = grouped[company];
+            if (rows.length < 2) return;
+            var delta = rows[rows.length - 1].score - rows[0].score;
+            if (!best || delta > best.delta) {
+              best = { company: company, delta: delta, from: rows[0].startedAt, to: rows[rows.length - 1].startedAt };
+            }
+          });
+
+          if (!best) {
+            return { company: 'Practice', delta: 0, range: 'Need at least 2 sessions' };
+          }
+
+          var fromLabel = best.from.toLocaleDateString(undefined, { month: 'short' });
+          var toLabel = best.to.toLocaleDateString(undefined, { month: 'short' });
+          return { company: best.company, delta: best.delta, range: fromLabel + ' to ' + toLabel };
+        }
+
+        function setCount(el, target, suffix) {
+          if (!el) return;
+          var current = 0;
+          var step = Math.max(1, Math.round(target / 36));
+          var timer = setInterval(function () {
+            current += step;
+            if (current >= target) {
+              current = target;
+              clearInterval(timer);
+            }
+            el.textContent = String(current) + (suffix || '');
+          }, 24);
+        }
+
+        function renderSummary() {
+          var summary = computeSummary(sessions);
+          var sinceLabel = summary.oldest ? summary.oldest.startedAt.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '-';
+
+          var totalSessionsNode = document.querySelector('[data-count="totalSessions"]');
+          var avgScoreNode = document.querySelector('[data-count="avgScore"]');
+          var bestScoreNode = document.querySelector('[data-count="bestScore"]');
+          var practiceHoursNode = document.querySelector('[data-count="practiceHours"]');
+
+          setCount(totalSessionsNode, summary.total, '');
+          setCount(avgScoreNode, summary.avg, '');
+          setCount(bestScoreNode, summary.best ? summary.best.score : 0, '');
+
+          var hourTarget = Math.round(summary.totalHours * 10);
+          var hourCurrent = 0;
+          if (practiceHoursNode) {
+            var hourTimer = setInterval(function () {
+              hourCurrent += Math.max(1, Math.round(hourTarget / 36));
+              if (hourCurrent >= hourTarget) {
+                hourCurrent = hourTarget;
+                clearInterval(hourTimer);
+              }
+              practiceHoursNode.textContent = (hourCurrent / 10).toFixed(1);
+            }, 24);
+          }
+
+          var pillTotal = document.getElementById('pillTotalSessions');
+          var pillAvg = document.getElementById('pillAvgScore');
+          var pillSince = document.getElementById('pillSince');
+          if (pillTotal) pillTotal.textContent = summary.total;
+          if (pillAvg) pillAvg.textContent = summary.avg;
+          if (pillSince) pillSince.textContent = sinceLabel;
+
+          var deltaSessions = document.getElementById('deltaSessions');
+          if (deltaSessions) deltaSessions.textContent = '+' + summary.monthCount + ' this month';
+
+          var deltaAvg = document.getElementById('deltaAverage');
+          var avgDelta = summary.latestScore - summary.firstScore;
+          if (deltaAvg) {
+            var label = (avgDelta >= 0 ? 'up +' : 'down ') + avgDelta + ' pts from first session';
+            deltaAvg.textContent = label;
+            deltaAvg.style.color = avgDelta >= 0 ? '#10B981' : '#EF4444';
+          }
+
+          var bestContext = document.getElementById('bestContext');
+          if (bestContext && summary.best) {
+            bestContext.textContent = summary.best.company + ' ' + summary.best.role + ' - ' + summary.best.startedLabel;
+          }
+
+          var practiceContext = document.getElementById('practiceContext');
+          if (practiceContext) practiceContext.textContent = 'Avg ' + summary.avgDuration + ' min/session';
+
+          var improvementRate = document.getElementById('improvementRate');
+          if (improvementRate) {
+            var sign = summary.improvement >= 0 ? '+' : '';
+            improvementRate.textContent = sign + summary.improvement + '%';
+            improvementRate.style.color = summary.improvement >= 0 ? '#10B981' : '#EF4444';
+          }
+
+          var avgRing = document.getElementById('avgRing');
+          if (avgRing) {
+            avgRing.style.setProperty('--ring-value', Math.max(0, Math.min(100, summary.avg)));
+          }
+        }
+
+        function buildTimelineData(range) {
+          if (range === 'all') {
+            return sessions.slice().sort(function (a, b) { return a.startedAt.getTime() - b.startedAt.getTime(); }).map(function (s) {
+              return {
+                label: s.startedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                score: s.score,
+                best: false,
+                meta: s.company + ' - ' + s.role
+              };
+            });
+          }
+
+          var buckets = {};
+          sessions.forEach(function (s) {
+            var key;
+            var label;
+            if (range === 'monthly') {
+              key = s.startedAt.getFullYear() + '-' + s.startedAt.getMonth();
+              label = s.startedAt.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+            } else {
+              var temp = new Date(s.startedAt);
+              var firstJan = new Date(temp.getFullYear(), 0, 1);
+              var week = Math.ceil((((temp - firstJan) / 86400000) + firstJan.getDay() + 1) / 7);
+              key = temp.getFullYear() + '-w' + week;
+              label = 'W' + week + ' ' + String(temp.getFullYear()).slice(-2);
+            }
+
+            if (!buckets[key]) buckets[key] = { label: label, scores: [], latest: s.startedAt.getTime() };
+            buckets[key].scores.push(s.score);
+            buckets[key].latest = Math.max(buckets[key].latest, s.startedAt.getTime());
+          });
+
+          return Object.keys(buckets).map(function (k) {
+            var row = buckets[k];
+            return {
+              label: row.label,
+              score: Math.round(row.scores.reduce(function (sum, val) { return sum + val; }, 0) / row.scores.length),
+              best: false,
+              stamp: row.latest,
+              meta: row.scores.length + ' sessions'
+            };
+          }).sort(function (a, b) { return a.stamp - b.stamp; });
+        }
+
+        function renderScoreChart(range) {
+          if (typeof ApexCharts === 'undefined') return;
+          var data = buildTimelineData(range);
+          var summary = computeSummary(sessions);
+          var bestScore = summary.best ? summary.best.score : 0;
+          data.forEach(function (d) {
+            if (d.score === bestScore && bestScore > 0) d.best = true;
+          });
+
+          var categories = data.map(function (d) { return d.label; });
+          var values = data.map(function (d) { return d.score; });
+
+          if (scoreChart) {
+            scoreChart.destroy();
+          }
+
+          scoreChart = new ApexCharts(document.getElementById('scoreOverTimeChart'), {
+            chart: {
+              type: 'line',
+              height: '100%',
+              toolbar: { show: false },
+              animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 1200,
+                dynamicAnimation: { enabled: true, speed: 1200 }
+              }
+            },
+            series: [{ name: 'Score', data: values }],
+            stroke: {
+              curve: 'smooth',
+              width: 2.5,
+              colors: [palette.primary]
+            },
+            markers: {
+              size: values.map(function (val) { return val === bestScore ? 5 : 0; }),
+              colors: values.map(function (val) { return val === bestScore ? '#F59E0B' : palette.primary; }),
+              strokeColors: '#fff',
+              strokeWidth: 2,
+              hover: { sizeOffset: 2 }
+            },
+            fill: {
+              type: 'gradient',
+              gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.15,
+                opacityTo: 0,
+                colorStops: [
+                  [{ offset: 0, color: palette.primary, opacity: 0.16 }, { offset: 100, color: palette.primary, opacity: 0 }]
+                ]
+              }
+            },
+            xaxis: {
+              categories: categories,
+              labels: { style: { fontSize: '11px', colors: '#64748B' } }
+            },
+            yaxis: {
+              min: 0,
+              max: 100,
+              tickAmount: 5,
+              labels: { style: { fontSize: '11px', colors: '#64748B' } }
+            },
+            annotations: {
+              yaxis: [{
+                y: summary.avg,
+                borderColor: '#94A3B8',
+                strokeDashArray: 4,
+                label: {
+                  borderColor: '#94A3B8',
+                  style: { color: '#334155', background: '#EEF2F7', fontSize: '10px' },
+                  text: 'Average: ' + summary.avg
+                }
+              }]
+            },
+            dataLabels: { enabled: false },
+            tooltip: {
+              y: { formatter: function (val) { return Math.round(val) + '/100'; } }
+            },
+            grid: { borderColor: '#E2E8F0', strokeDashArray: 5 }
+          });
+
+          scoreChart.render();
+        }
+
+        function renderCompanyBars() {
+          var target = document.getElementById('companyBars');
+          if (!target) return;
+          var rows = getCompanyMetrics(sessions).slice(0, 6);
+          target.innerHTML = rows.map(function (row) {
+            var color = row.avg >= 80 ? palette.success : row.avg >= 60 ? palette.warning : palette.error;
+            return '' +
+              '<div class="company-row">' +
+                '<span style="display:inline-flex;align-items:center;justify-content:center;">' + companyLogoMarkup(row.company, true) + '</span>' +
+                '<div class="company-track"><div class="company-fill" style="width:' + row.avg + '%;background:' + color + ';"></div></div>' +
+                '<span class="text-[12px] font-semibold text-slate-700">' + row.avg + '</span>' +
+              '</div>' +
+              '<div class="-mt-1 ml-8 text-[11px] text-slate-500">' + row.company + '</div>';
+          }).join('');
+        }
+
+        function renderRadarFallback(labels, firstSeries, latestSeries) {
+          var target = document.getElementById('skillRadarChart');
+          if (!target) return;
+          target.innerHTML = '<div class="radar-fallback">' + labels.map(function (label, idx) {
+            var firstValue = Math.max(0, Math.min(100, Number(firstSeries[idx] || 0)));
+            var latestValue = Math.max(0, Math.min(100, Number(latestSeries[idx] || 0)));
+            return '' +
+              '<div class="radar-fallback-row">' +
+                '<span>' + label + '</span>' +
+                '<div class="radar-fallback-track">' +
+                  '<div class="radar-fallback-first" style="width:' + firstValue + '%"></div>' +
+                  '<div class="radar-fallback-latest" style="width:' + latestValue + '%"></div>' +
+                '</div>' +
+                '<span>' + latestValue + '%</span>' +
+              '</div>';
+          }).join('') + '</div>';
+        }
+
+        function renderRadar() {
+          var target = document.getElementById('skillRadarChart');
+          if (!target) return;
+
+          var sorted = sessions.slice().sort(function (a, b) { return a.startedAt.getTime() - b.startedAt.getTime(); });
+          var first = sorted[0];
+          var latest = sorted[sorted.length - 1];
+          var labels = ['Clarity', 'Structure', 'Depth', 'Confidence', 'Conciseness'];
+
+          var firstSeries = first ? [first.skills.clarity, first.skills.structure, first.skills.depth, first.skills.confidence, first.skills.conciseness] : [0, 0, 0, 0, 0];
+          var latestSeries = latest ? [latest.skills.clarity, latest.skills.structure, latest.skills.depth, latest.skills.confidence, latest.skills.conciseness] : [0, 0, 0, 0, 0];
+
+          // Force a stable custom render path to avoid browser/layout-specific
+          // Apex radar glitches that collapse labels into the chart center.
+          if (radarChart) {
+            radarChart.destroy();
+            radarChart = null;
+          }
+          target.innerHTML = '';
+          renderRadarFallback(labels, firstSeries, latestSeries);
+        }
+
+        function buildFilterOptions() {
+          function setSelectOptions(selectId, values) {
+            var select = document.getElementById(selectId);
+            if (!select) return;
+            var first = select.options[0];
+            select.innerHTML = '';
+            select.appendChild(first);
+            values.forEach(function (val) {
+              var option = document.createElement('option');
+              option.value = val;
+              option.textContent = val;
+              select.appendChild(option);
+            });
+          }
+
+          var companies = Array.from(new Set(sessions.map(function (s) { return s.company; }))).sort();
+          var rounds = Array.from(new Set(sessions.map(function (s) { return s.roundType; }))).sort();
+          var difficulties = Array.from(new Set(sessions.map(function (s) { return s.difficulty; }))).sort();
+
+          setSelectOptions('companyFilter', companies);
+          setSelectOptions('roundFilter', rounds);
+          setSelectOptions('difficultyFilter', difficulties);
+        }
+
+        function applyFilterClasses() {
+          ['companyFilter', 'roundFilter', 'difficultyFilter', 'dateFilter', 'scoreFilter'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('active', !!el.value);
+          });
+        }
+
+        function matchesScoreRange(score, range) {
+          if (!range) return true;
+          var parts = range.split('-');
+          if (parts.length !== 2) return true;
+          var min = Number(parts[0]);
+          var max = Number(parts[1]);
+          return score >= min && score <= max;
+        }
+
+        function getFilteredSessions() {
+          var now = new Date();
+          var query = state.query.trim().toLowerCase();
+
+          return sessions.filter(function (s) {
+            var hay = [s.company, s.role, s.roundType, s.interviewType, s.difficulty, s.startedLabel].join(' ').toLowerCase();
+            if (query && hay.indexOf(query) === -1) return false;
+            if (state.company && s.company !== state.company) return false;
+            if (state.round && s.roundType !== state.round) return false;
+            if (state.difficulty && s.difficulty !== state.difficulty) return false;
+            if (state.scoreRange && !matchesScoreRange(s.score, state.scoreRange)) return false;
+            if (state.dateRange) {
+              var days = Number(state.dateRange);
+              var cutoff = now.getTime() - (days * 24 * 60 * 60 * 1000);
+              if (s.startedAt.getTime() < cutoff) return false;
+            }
+            return true;
+          }).sort(function (a, b) {
+            if (state.sort === 'oldest') return a.startedAt.getTime() - b.startedAt.getTime();
+            if (state.sort === 'score_desc') return b.score - a.score;
+            if (state.sort === 'score_asc') return a.score - b.score;
+            if (state.sort === 'duration_asc') return a.durationMin - b.durationMin;
+            return b.startedAt.getTime() - a.startedAt.getTime();
+          });
+        }
+
+        function groupByMonth(rows) {
+          var map = {};
+          rows.forEach(function (s) {
+            var key = s.startedAt.getFullYear() + '-' + (s.startedAt.getMonth() + 1);
+            if (!map[key]) {
+              map[key] = {
+                title: s.startedAt.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+                stamp: new Date(s.startedAt.getFullYear(), s.startedAt.getMonth(), 1).getTime(),
+                items: []
+              };
+            }
+            map[key].items.push(s);
+          });
+          return Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) { return b.stamp - a.stamp; });
+        }
+
+        function skillBarsMarkup(skills) {
+          function row(name, value) {
+            return '' +
+              '<div class="space-y-1">' +
+                '<div class="flex items-center justify-between text-[11px] text-slate-600"><span>' + name + '</span><span>' + value + '%</span></div>' +
+                '<div class="mini-skill-track"><div class="mini-skill-fill" style="--skill-width:' + value + '%"></div></div>' +
+              '</div>';
+          }
+          return [
+            row('Clarity', skills.clarity),
+            row('Structure', skills.structure),
+            row('Depth', skills.depth),
+            row('Confidence', skills.confidence),
+            row('Conciseness', skills.conciseness)
+          ].join('');
+        }
+
+        function listSessionCardMarkup(s, index) {
+          var color = scoreColor(s.score);
+          var difficultyColor = s.difficulty.toLowerCase() === 'hard' ? '#EF4444' : s.difficulty.toLowerCase() === 'easy' ? '#10B981' : '#F59E0B';
+          var roundTone = s.roundType === 'Behavioral' ? 'bg-sky-50 text-sky-700 border-sky-200' : s.roundType === 'Final' ? 'bg-violet-50 text-violet-700 border-violet-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200';
+
+          return '' +
+            '<article class="session-card space-y-3" style="--score-color:' + color + ';animation-delay:' + (index * 60) + 'ms;">' +
+              '<div class="flex flex-wrap items-start justify-between gap-3">' +
+                '<div class="flex items-start gap-2.5">' +
+                  '<span style="display:inline-flex;align-items:center;justify-content:center;">' + companyLogoMarkup(s.company, false) + '</span>' +
+                  '<div>' +
+                    '<p class="text-[15px] font-semibold">' + s.company + ' <span class="text-slate-400">-</span> <span class="text-sm text-slate-500">' + s.role + '</span></p>' +
+                    '<p class="text-[13px] text-slate-500">' + s.startedLabel + '</p>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="text-right space-y-1">' +
+                  '<p class="text-[13px] text-slate-500">' + s.startedTimeLabel + '</p>' +
+                  '<span class="duration-pill">' + s.durationMin + ' min</span>' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="grid grid-cols-[1fr_auto] gap-3 items-center">' +
+                '<div class="score-track"><div class="score-fill" style="--score-width:' + s.score + '%"></div></div>' +
+                '<p class="text-sm font-semibold" style="color:' + color + ';">' + s.score + '/100</p>' +
+              '</div>' +
+
+              '<div class="flex flex-wrap items-center justify-between gap-2">' +
+                '<div class="flex flex-wrap items-center gap-1.5">' +
+                  '<span class="badge" style="background:#fff7ed;color:#9a3412;border-color:#fed7aa;"><span class="badge-dot" style="background:' + difficultyColor + '"></span>' + s.difficulty + '</span>' +
+                  '<span class="badge ' + roundTone + '">' + s.roundType + '</span>' +
+                  '<span class="badge border-slate-200 bg-slate-50 text-slate-600">' + s.turnCount + ' questions</span>' +
+                '</div>' +
+                '<div class="flex flex-wrap items-center gap-2">' +
+                  '<a href="{% url 'feedback_dashboard' %}?session=' + s.id + '" class="btn-ghost">' +
+                    '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M2 12s3.8-6 10-6 10 6 10 6-3.8 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5" stroke-width="1.9"/></svg>' +
+                    'View Feedback' +
+                  '</a>' +
+                  '<a href="{% url 'replay_page' %}" class="btn-primary">' +
+                    '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="m8 5 11 7-11 7V5Z"/></svg>' +
+                    'Replay' +
+                  '</a>' +
+                  '<button type="button" class="expand-toggle" data-expand="panel-' + s.id + '">Details' +
+                    '<svg class="h-3.5 w-3.5 transition-transform" data-expand-icon="panel-' + s.id + '" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+
+              '<div id="panel-' + s.id + '" class="expand-panel border-t border-slate-200 pt-3">' +
+                '<div class="grid md:grid-cols-5 gap-2">' + skillBarsMarkup(s.skills) + '</div>' +
+                '<p class="mt-3 text-sm italic text-slate-500">' + s.reviewText + '</p>' +
+              '</div>' +
+            '</article>';
+        }
+
+        function gridSessionCardMarkup(s, index) {
+          var color = scoreColor(s.score);
+          return '' +
+            '<article class="grid-card" style="animation-delay:' + (index * 60) + 'ms;">' +
+              '<div class="flex items-center gap-2">' +
+                '<span style="display:inline-flex;align-items:center;justify-content:center;">' + companyLogoMarkup(s.company, false) + '</span>' +
+                '<div>' +
+                  '<p class="text-[15px] font-semibold">' + s.company + '</p>' +
+                  '<p class="text-[13px] text-slate-500">' + s.role + '</p>' +
+                '</div>' +
+              '</div>' +
+              '<div class="donut" style="--score:' + s.score + ';--donut-color:' + color + ';" data-donut="' + s.score + '">' +
+                '<div class="donut-label">' + s.score + '<br><span style="font-size:10px;font-weight:600;color:#64748b;">/100</span></div>' +
+              '</div>' +
+              '<div class="text-[13px] text-slate-600">' + s.difficulty + ' - ' + s.durationMin + ' min</div>' +
+              '<div class="text-[13px] text-slate-500">' + s.startedLabel + '</div>' +
+              '<div class="flex items-center gap-2">' +
+                '<a href="{% url 'feedback_dashboard' %}?session=' + s.id + '" class="btn-ghost" style="padding:5px 10px;font-size:12px;">Feedback</a>' +
+                '<a href="{% url 'replay_page' %}" class="btn-primary" style="padding:5px 10px;font-size:12px;">Replay</a>' +
+              '</div>' +
+            '</article>';
+        }
+
+        function renderEmptyState() {
+          return '' +
+            '<div class="empty-state">' +
+              '<div class="empty-icon">' +
+                '<svg class="h-10 w-10 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="8" y="4" width="8" height="12" rx="4" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M6 10v2a6 6 0 0 0 12 0v-2M12 18v3M8.5 21h7"/></svg>' +
+              '</div>' +
+              '<h3 class="text-xl font-semibold">No sessions found</h3>' +
+              '<p class="mt-2 text-slate-500">Try adjusting your filters, or start your first practice session.</p>' +
+              '<a href="{% url 'live_interview' %}" class="btn-primary mt-5 inline-flex px-5 py-2.5 rounded-full">Start Interview</a>' +
+            '</div>';
+        }
+
+        function bindExpandEvents() {
+          Array.prototype.slice.call(document.querySelectorAll('[data-expand]')).forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var id = btn.getAttribute('data-expand');
+              if (!id) return;
+              var panel = document.getElementById(id);
+              var icon = document.querySelector('[data-expand-icon="' + id + '"]');
+              if (!panel) return;
+              var open = panel.classList.toggle('open');
+              if (icon) {
+                icon.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+              }
+            });
+          });
+        }
+
+        function runWidthAnimations() {
+          var bars = Array.prototype.slice.call(document.querySelectorAll('.score-fill'));
+          if (!bars.length) return;
+          var observer = new IntersectionObserver(function (entries, obs) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add('animate');
+              obs.unobserve(entry.target);
+            });
+          }, { threshold: 0.35 });
+          bars.forEach(function (bar) { observer.observe(bar); });
+        }
+
+        function runMonthHeaderFade() {
+          var headers = Array.prototype.slice.call(document.querySelectorAll('.month-header'));
+          if (!headers.length) return;
+          var observer = new IntersectionObserver(function (entries, obs) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                obs.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.2 });
+          headers.forEach(function (header) { observer.observe(header); });
+        }
+
+        function runDonutAnimation() {
+          Array.prototype.slice.call(document.querySelectorAll('[data-donut]')).forEach(function (node) {
+            var score = Number(node.getAttribute('data-donut') || 0);
+            var deg = Math.max(0, Math.min(100, score)) * 3.6;
+            setTimeout(function () {
+              node.style.background = 'conic-gradient(' + getComputedStyle(node).getPropertyValue('--donut-color').trim() + ' ' + deg + 'deg, #e2e8f0 ' + deg + 'deg)';
+            }, 120);
+          });
+        }
+
+        function updateResultCount(count) {
+          var node = document.getElementById('resultCount');
+          if (node) node.textContent = 'Showing ' + count + ' sessions';
+        }
+
+        function renderHistory() {
+          var target = document.getElementById('historyContent');
+          var loadWrap = document.getElementById('loadMoreWrap');
+          if (!target || !loadWrap) return;
+
+          var filtered = getFilteredSessions();
+          var slice = filtered.slice(0, state.visibleCount);
+          updateResultCount(filtered.length);
+
+          if (!slice.length) {
+            target.innerHTML = renderEmptyState();
+            loadWrap.classList.add('hidden');
             return;
           }
 
-          var scores = visibleItems.map(function (item) { return parseNum(item.getAttribute('data-score'), 0); });
-          var completedCount = visibleItems.filter(function (item) {
-            return (item.getAttribute('data-status') || '').toLowerCase() === 'completed';
-          }).length;
-
-          var maxScore = Math.max.apply(null, scores);
-          var completionRate = Math.round((completedCount * 100) / visibleItems.length);
-
-          if (bestSessionScore) bestSessionScore.textContent = maxScore + '/100';
-          if (completionHealth) completionHealth.textContent = completionRate + '%';
-
-          var pulseTitle = 'Steady Progress';
-          var pulseBody = 'Keep doing replay + feedback loops after each interview to maintain momentum.';
-          if (maxScore >= 85) {
-            pulseTitle = 'Excellent Momentum';
-            pulseBody = 'You are hitting high-quality responses. Focus on consistency under pressure.';
-          } else if (maxScore < 65) {
-            pulseTitle = 'Build Foundations';
-            pulseBody = 'Prioritize structure and concise impact statements before adding complexity.';
+          if (state.view === 'grid') {
+            target.innerHTML = '<div class="history-grid">' + slice.map(gridSessionCardMarkup).join('') + '</div>';
+          } else {
+            var groups = groupByMonth(slice);
+            target.innerHTML = groups.map(function (group) {
+              return '' +
+                '<section class="history-month space-y-2">' +
+                  '<header class="month-header">' +
+                    '<p class="text-sm font-semibold text-slate-500">' + group.title + '</p>' +
+                    '<span class="month-pill">' + group.items.length + ' sessions</span>' +
+                  '</header>' +
+                  '<div class="space-y-2">' + group.items.map(listSessionCardMarkup).join('') + '</div>' +
+                '</section>';
+            }).join('');
           }
 
-          if (coachPulseTitle) coachPulseTitle.textContent = pulseTitle;
-          if (coachPulseBody) coachPulseBody.textContent = pulseBody;
+          var hasMore = filtered.length > state.visibleCount;
+          loadWrap.classList.toggle('hidden', !hasMore);
+
+          bindExpandEvents();
+          runWidthAnimations();
+          runMonthHeaderFade();
+          runDonutAnimation();
         }
 
-        function applySessionSearch() {
-          if (!sessionSearchInput || !sessionItems.length) return;
-          var query = (sessionSearchInput.value || '').toLowerCase().trim();
-          var visibleCount = 0;
-          var visibleItems = [];
+        function renderRecords() {
+          var target = document.getElementById('recordsStrip');
+          if (!target) return;
 
-          sessionItems.forEach(function (item) {
-            var haystack = String(item.getAttribute('data-search') || '').toLowerCase();
-            var status = String(item.getAttribute('data-status') || '').toLowerCase();
-            var matchesSearch = !query || haystack.indexOf(query) !== -1;
-            var matchesStatus = activeStatusFilter === 'all' || status === activeStatusFilter;
-            var matches = matchesSearch && matchesStatus;
-            item.classList.toggle('hidden', !matches);
+          var summary = computeSummary(sessions);
+          var best = summary.best;
+          var fastest = sessions.length ? sessions.reduce(function (a, b) { return a.durationMin <= b.durationMin ? a : b; }) : null;
+          var streak = calcBestStreakDays(sessions);
+          var improved = calcMostImprovedCompany(sessions);
 
-            if (!matches) {
-              var openPanel = item.querySelector('.session-panel.open');
-              if (openPanel) openPanel.classList.remove('open');
-              var toggleBtn = item.querySelector('[data-toggle]');
-              if (toggleBtn) toggleBtn.textContent = 'Open Analytics';
-            } else {
-              visibleCount += 1;
-              visibleItems.push(item);
+          var records = [
+            {
+              title: 'Highest Score',
+              value: best ? (best.score + '/100') : '0/100',
+              context: best ? (best.company + ' - ' + best.startedLabel) : 'No completed sessions yet',
+              icon: '<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 21h8M12 17v4M7 3h10v5a5 5 0 0 1-10 0V3Zm10 2h3a3 3 0 0 1-3 3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 5H4a3 3 0 0 0 3 3"/></svg>'
+            },
+            {
+              title: 'Fastest Session',
+              value: fastest ? (fastest.durationMin + ' min') : '0 min',
+              context: fastest ? (fastest.company + ' - ' + fastest.startedLabel) : 'No session data',
+              icon: '<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M12 7v5l3 2"/></svg>'
+            },
+            {
+              title: 'Best Streak',
+              value: streak.days + ' days',
+              context: streak.range,
+              icon: '<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m12 3 2.4 5 5.6.8-4 3.9.9 5.6L12 15.9l-4.9 2.4.9-5.6-4-3.9 5.6-.8L12 3Z"/></svg>'
+            },
+            {
+              title: 'Most Improved',
+              value: (improved.delta >= 0 ? '+' : '') + improved.delta + ' pts',
+              context: improved.company + ' - ' + improved.range,
+              icon: '<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 15l4-4 4 4 8-8"/><path stroke-linecap="round" stroke-width="1.8" d="M15 7h5v5"/></svg>'
             }
-          });
+          ];
 
-          if (sessionSearchEmpty) {
-            sessionSearchEmpty.classList.toggle('hidden', visibleCount !== 0);
-          }
-
-          updateSignals(visibleItems);
+          target.innerHTML = records.map(function (r) {
+            return '' +
+              '<article class="record-chip">' +
+                '<div class="text-amber-600">' + r.icon + '</div>' +
+                '<p class="mt-2 text-xs text-slate-500 font-semibold">' + r.title + '</p>' +
+                '<p class="mt-1 text-xl font-bold text-slate-900">' + r.value + '</p>' +
+                '<p class="mt-1 text-xs text-slate-500">' + r.context + '</p>' +
+              '</article>';
+          }).join('');
         }
 
-        for (var i = 0; i < chartData.length; i += 1) {
-          chartMap[String(chartData[i].session_id)] = chartData[i];
-        }
+        function bindControls() {
+          var search = document.getElementById('sessionSearch');
+          var company = document.getElementById('companyFilter');
+          var round = document.getElementById('roundFilter');
+          var difficulty = document.getElementById('difficultyFilter');
+          var date = document.getElementById('dateFilter');
+          var score = document.getElementById('scoreFilter');
+          var sort = document.getElementById('sortFilter');
+          var viewButtons = Array.prototype.slice.call(document.querySelectorAll('#historyViewToggle button'));
+          var loadMoreBtn = document.getElementById('loadMoreBtn');
+          var loadingSkeletons = document.getElementById('loadingSkeletons');
 
-        function renderCharts(sessionId) {
-          if (rendered[sessionId]) return;
-          if (typeof ApexCharts === 'undefined') return;
-
-          var dataset = chartMap[String(sessionId)] || { labels: [], quality: [], latency: [] };
-          var labels = dataset.labels && dataset.labels.length ? dataset.labels : ['T1'];
-          var quality = dataset.quality && dataset.quality.length ? dataset.quality : [0];
-          var latency = dataset.latency && dataset.latency.length ? dataset.latency : [0];
-
-          var qualityTarget = document.querySelector('#quality-chart-' + sessionId);
-          var latencyTarget = document.querySelector('#latency-chart-' + sessionId);
-          if (!qualityTarget || !latencyTarget) return;
-
-          var qualityChart = new ApexCharts(qualityTarget, {
-            chart: { type: 'line', height: '100%', toolbar: { show: false } },
-            series: [{ name: 'Quality', data: quality }],
-            xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: '#6b7280' } } },
-            yaxis: { min: 0, max: 100, tickAmount: 4, labels: { style: { fontSize: '10px', colors: '#9ca3af' } } },
-            stroke: { curve: 'smooth', width: 2.8, colors: ['#4f46e5'] },
-            grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
-            markers: { size: 3 },
-            tooltip: { y: { formatter: function (val) { return Math.round(val) + '/100'; } } },
-            dataLabels: { enabled: false },
-            legend: { show: false }
-          });
-
-          var latencyMax = Math.max.apply(null, latency.concat([1]));
-          var latencyChart = new ApexCharts(latencyTarget, {
-            chart: { type: 'bar', height: '100%', toolbar: { show: false } },
-            series: [{ name: 'Latency', data: latency }],
-            xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: '#6b7280' } } },
-            yaxis: { min: 0, max: latencyMax + 200, labels: { style: { fontSize: '10px', colors: '#9ca3af' } } },
-            plotOptions: { bar: { borderRadius: 4, columnWidth: '48%' } },
-            colors: ['#06b6d4'],
-            grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
-            tooltip: { y: { formatter: function (val) { return Math.round(val) + ' ms'; } } },
-            dataLabels: { enabled: false },
-            legend: { show: false }
-          });
-
-          qualityChart.render();
-          latencyChart.render();
-          rendered[sessionId] = true;
-        }
-
-        toggleButtons.forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var targetId = btn.getAttribute('data-toggle');
-            if (!targetId) return;
-            var panel = document.getElementById(targetId);
-            if (!panel) return;
-
-            var shouldOpen = !panel.classList.contains('open');
-            panel.classList.toggle('open', shouldOpen);
-            btn.textContent = shouldOpen ? 'Close Analytics' : 'Open Analytics';
-            if (shouldOpen) {
-              var sid = String(targetId).replace('session-', '');
-              renderCharts(sid);
-            }
-          });
-        });
-
-        if (sessionSearchInput) {
-          sessionSearchInput.addEventListener('input', applySessionSearch);
-        }
-
-        if (sortSelect) {
-          sortSelect.addEventListener('change', function () {
-            sortSessionItems();
-            applySessionSearch();
-          });
-        }
-
-        statusButtons.forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            activeStatusFilter = String(btn.getAttribute('data-status') || 'all').toLowerCase();
-            statusButtons.forEach(function (b) {
-              b.classList.toggle('active', b === btn);
+          if (search) {
+            search.addEventListener('input', function () {
+              state.query = search.value || '';
+              state.visibleCount = 10;
+              renderHistory();
             });
-            applySessionSearch();
+          }
+
+          [company, round, difficulty, date, score].forEach(function (el) {
+            if (!el) return;
+            el.addEventListener('change', function () {
+              state.company = company && company.value ? company.value : '';
+              state.round = round && round.value ? round.value : '';
+              state.difficulty = difficulty && difficulty.value ? difficulty.value : '';
+              state.dateRange = date && date.value ? date.value : '';
+              state.scoreRange = score && score.value ? score.value : '';
+              state.visibleCount = 10;
+              applyFilterClasses();
+              renderHistory();
+            });
           });
-        });
 
-        sortSessionItems();
+          if (sort) {
+            sort.addEventListener('change', function () {
+              state.sort = sort.value;
+              renderHistory();
+            });
+          }
 
-        if (toggleButtons.length) {
-          toggleButtons[0].click();
+          viewButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              state.view = btn.getAttribute('data-view') || 'list';
+              viewButtons.forEach(function (b) { b.classList.toggle('active', b === btn); });
+              renderHistory();
+            });
+          });
+
+          if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', function () {
+              if (state.loadingMore) return;
+              state.loadingMore = true;
+              if (loadingSkeletons) loadingSkeletons.classList.remove('hidden');
+              setTimeout(function () {
+                state.visibleCount += 10;
+                state.loadingMore = false;
+                if (loadingSkeletons) loadingSkeletons.classList.add('hidden');
+                renderHistory();
+              }, 550);
+            });
+          }
+
+          timelineButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              timelineButtons.forEach(function (b) { b.classList.toggle('active', b === btn); });
+              renderScoreChart(btn.getAttribute('data-range') || 'weekly');
+            });
+          });
         }
 
-        applySessionSearch();
+        function init() {
+          renderSummary();
+          renderScoreChart('weekly');
+          renderCompanyBars();
+          renderRadar();
+          renderRecords();
+          buildFilterOptions();
+          applyFilterClasses();
+          bindControls();
+          renderHistory();
+        }
+
+        init();
       })();
     </script>
 

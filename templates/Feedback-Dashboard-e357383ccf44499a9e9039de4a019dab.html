@@ -1,202 +1,651 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Talvo Feedback Intelligence</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --panel-border: rgb(226 232 240);
-      --panel-bg: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-      --brand: rgb(79 70 229);
-      --brand-soft: rgb(224 231 255);
+      --primary: #0B3D91;
+      --accent: #00A89C;
+      --secondary: #7C4DFF;
+      --background: #F4F6FA;
+      --surface: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #0D1117;
+      --muted: #64748B;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
     }
+
     body {
-      font-family:'Plus Jakarta Sans',sans-serif;
+      font-family: 'DM Sans', sans-serif;
       background:
-        radial-gradient(circle at 10% 5%, rgba(79, 70, 229, 0.1), transparent 30%),
-        radial-gradient(circle at 85% 12%, rgba(14, 165, 233, 0.08), transparent 24%),
-        #f8fafc;
+        radial-gradient(circle at 8% 4%, rgba(11, 61, 145, 0.14), transparent 31%),
+        radial-gradient(circle at 92% 8%, rgba(0, 168, 156, 0.09), transparent 28%),
+        var(--background);
+      color: var(--text);
+      padding-bottom: 100px;
     }
-    .ui-surface {
-      border: 1px solid var(--panel-border);
-      background: var(--panel-bg);
-      box-shadow: 0 16px 36px -28px rgba(15, 23, 42, 0.52);
+
+    .surface {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 16px 38px -34px rgba(15, 23, 42, 0.5);
     }
-    .ui-lift {
-      transition: transform 190ms ease, box-shadow 190ms ease, border-color 190ms ease;
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      padding: 28px 32px;
+      background: linear-gradient(135deg, #0B3D91 0%, #1a1050 100%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 24px 54px -36px rgba(11, 61, 145, 0.72);
     }
-    .ui-lift:hover {
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image: radial-gradient(#ffffff 0.7px, transparent 0.7px);
+      background-size: 8px 8px;
+    }
+
+    .score-donut {
+      --score: 0;
+      --score-color: #EF4444;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      position: relative;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--score-color) 0deg, rgba(255, 255, 255, 0.22) 0deg);
+      transition: background 1s ease;
+    }
+
+    .score-donut::before {
+      content: '';
+      position: absolute;
+      inset: 9px;
+      border-radius: 50%;
+      background: rgba(8, 19, 56, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .score-donut-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .next-action {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.1);
+      padding: 14px;
+    }
+
+    .ghost-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 8px 14px;
+      transition: transform 160ms ease;
+    }
+
+    .ghost-pill:hover { transform: translateY(-1px); }
+
+    .session-select-wrap {
+      position: relative;
+      min-width: 300px;
+    }
+
+    .session-select {
+      appearance: none;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 38px 10px 36px;
+    }
+
+    .session-select:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .tabs-shell {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 6px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .metric-tab {
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: #F8FAFC;
+      color: var(--muted);
+      padding: 9px 10px;
+      text-align: left;
+      transition: all 160ms ease;
+    }
+
+    .metric-tab:hover { background: #F1F5F9; }
+
+    .metric-tab.active {
+      background: #fff;
+      color: var(--primary);
+      border-color: #dbeafe;
+      box-shadow: 0 10px 20px -20px rgba(11, 61, 145, 0.7);
+      border-bottom: 3px solid var(--primary);
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .score-card {
+      position: relative;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 14px 14px 12px;
+      box-shadow: 0 14px 28px -30px rgba(15, 23, 42, 0.56);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+      overflow: visible;
+    }
+
+    .score-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 12px 0 0 12px;
+      background: var(--accent-color, var(--error));
+    }
+
+    .score-card:hover {
       transform: translateY(-2px);
-      border-color: rgb(199 210 254);
-      box-shadow: 0 18px 40px -28px rgba(79, 70, 229, 0.46);
+      box-shadow: 0 22px 36px -30px rgba(15, 23, 42, 0.62);
     }
-    .kpi-card {
+
+    .score-tooltip {
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 12px;
+      font-size: 11px;
+      color: #fff;
+      background: #0f172a;
+      padding: 5px 8px;
+      border-radius: 7px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(3px);
+      transition: all 150ms ease;
+      pointer-events: none;
+    }
+
+    .score-card:hover .score-tooltip {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .mini-track {
+      height: 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .mini-fill {
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      transition: width 700ms ease;
+      background: var(--fill-color, var(--primary));
+    }
+
+    .mini-fill.animate {
+      width: var(--bar-width, 0%);
+    }
+
+    .content-fade {
+      transition: opacity 150ms ease;
+    }
+
+    .content-fade.fading {
+      opacity: 0.25;
+    }
+
+    .left-chart-row {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .dual-track {
+      height: 10px;
+      background: #edf2f7;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .target-bar,
+    .current-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      transition: width 700ms ease;
+      border-radius: 999px;
+    }
+
+    .target-bar {
+      background: rgba(16, 185, 129, 0.28);
+      border: 1px dashed rgba(16, 185, 129, 0.7);
+    }
+
+    .current-bar {
+      background: linear-gradient(90deg, #0B3D91, #1d4ed8);
+      z-index: 2;
+    }
+
+    .gap-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0;
+      transform: translateX(6px);
+      transition: all 220ms ease;
+    }
+
+    .gap-pill.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .quote-card {
+      border-radius: 12px;
+      border: 1px solid #dbeafe;
+      background: #EEF2FF;
+      padding: 16px;
       position: relative;
       overflow: hidden;
     }
-    .kpi-card::after {
-      content: '';
+
+    .quote-card::after {
+      content: '"';
       position: absolute;
-      inset: auto -10% -40% -10%;
-      height: 55%;
-      background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.14), transparent 70%);
+      right: 14px;
+      top: -12px;
+      font-size: 88px;
+      font-weight: 800;
+      color: rgba(11, 61, 145, 0.11);
+      line-height: 1;
       pointer-events: none;
     }
-    .focus-tab {
-      border: 1px solid rgb(226 232 240);
+
+    .rec-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .rec-card {
+      border-radius: 12px;
+      border: 1px solid var(--border);
       background: #fff;
-      color: rgb(71 85 105);
-      transition: all 160ms ease;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: rec-fade 420ms ease forwards;
     }
-    .focus-tab:hover {
-      border-color: rgb(165 180 252);
-      color: rgb(67 56 202);
+
+    .rec-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 28px -24px rgba(15, 23, 42, 0.5);
     }
-    .focus-tab.active {
-      border-color: rgb(99 102 241);
-      background: var(--brand-soft);
-      color: rgb(49 46 129);
-      box-shadow: 0 10px 20px -16px rgba(79, 70, 229, 0.65);
-    }
-    .chart-shell {
-      border: 1px solid rgb(226 232 240);
-      border-radius: 0.9rem;
-      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-      padding: 0.55rem 0.65rem 0.2rem;
-    }
-    .recommendation-item {
-      transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
-    }
-    .recommendation-item.active {
-      transform: translateY(-1px);
-      border-color: rgb(129 140 248);
-      box-shadow: 0 14px 28px -22px rgba(79, 70, 229, 0.68);
-    }
-    .animate-in {
-      animation: riseIn 360ms ease both;
-    }
-    @keyframes riseIn {
-      from { opacity: 0; transform: translateY(10px); }
+
+    @keyframes rec-fade {
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight-item {
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .sticky-footer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -12px 28px -24px rgba(15, 23, 42, 0.48);
+    }
+
+    .primary-cta {
+      border-radius: 999px;
+      background: linear-gradient(90deg, #7C4DFF, #0B3D91);
+      color: #fff;
+      font-weight: 700;
+      padding: 10px 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 160ms ease;
+    }
+
+    .primary-cta:hover { transform: translateY(-1px); }
+
+    .ghost-cta {
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: #475569;
+      background: #fff;
+      font-weight: 700;
+      padding: 10px 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @media (max-width: 1280px) {
+      .score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .rec-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 1024px) {
+      .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .session-select-wrap { min-width: 100%; }
+      .left-chart-row { grid-template-columns: 104px 1fr; }
+      .left-chart-row > :last-child { grid-column: span 2; justify-self: end; }
+    }
+
+    @media (max-width: 768px) {
+      .hero { padding: 20px; }
+      .tabs-shell { grid-template-columns: 1fr 1fr; }
+      .score-grid { grid-template-columns: 1fr; }
+      .rec-grid { grid-template-columns: 1fr; }
+      .sticky-footer .footer-inner { flex-direction: column; align-items: flex-start; gap: 10px; }
     }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900 flex min-h-screen">
+<body class="flex min-h-screen bg-slate-50 text-slate-900">
   {% include 'partials/sidebar.html' %}
+
   <div class="flex-1 min-w-0 flex flex-col min-h-screen">
-    <main class="mx-auto max-w-7xl w-full p-4 sm:p-6 lg:p-8">
+    <main class="mx-auto max-w-[1460px] w-full p-4 sm:p-6 lg:p-8 space-y-6 content-fade" id="feedbackPageRoot">
       {% if has_feedback_data %}
-        <header class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 animate-in">
-          <div>
-            <p class="text-xs uppercase tracking-[0.16em] text-gray-500">AI Feedback</p>
-            <h1 class="mt-1 text-2xl sm:text-3xl font-black tracking-tight">Actionable performance intelligence</h1>
-            <p class="mt-2 text-sm text-gray-600">Session: {{ selected_session.target_company }} | {{ selected_session.target_role }} | {{ selected_session.interview_type }}</p>
+        <section class="hero text-white">
+          <div class="grid xl:grid-cols-[1.35fr_.55fr_.8fr] gap-5 items-start">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="text-[11px] uppercase tracking-[0.16em] text-teal-200/90 font-semibold">AI Feedback</p>
+                <form method="get" class="session-select-wrap">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                  <select name="session" onchange="this.form.submit()" class="session-select">
+                    {% for option in session_options %}
+                      <option value="{{ option.id }}" {% if selected_session.id == option.id %}selected{% endif %}>{{ option.label }} | {{ option.role }} | {{ option.started_at|date:'M d, Y h:i A' }}</option>
+                    {% endfor %}
+                  </select>
+                  <svg class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/80 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6"/></svg>
+                </form>
+              </div>
+              <h1 class="mt-3 text-[30px] font-bold tracking-tight">Actionable Performance Intelligence</h1>
+              <p class="mt-2 text-[13px] text-white/65">{{ selected_session.target_company }} · {{ selected_session.interview_type }} · {{ selected_session.target_role }} · {{ selected_session.started_at|date:'M d, Y' }}</p>
+            </div>
+
+            <div class="flex flex-col items-center justify-center">
+              <div class="score-donut" id="heroScoreDonut" data-score="{{ overall_score }}">
+                <div class="score-donut-content">
+                  <p class="text-4xl font-bold leading-none" id="heroScoreCount">0</p>
+                  <p class="text-[14px] text-white/70 mt-1">/ 100</p>
+                </div>
+              </div>
+              <p id="heroScoreLabel" class="mt-3 text-[13px] font-semibold text-white/90">Needs Improvement</p>
+            </div>
+
+            <div class="next-action">
+              <div class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 border border-white/30 text-white">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m13 2-7 11h5l-1 9 7-11h-5l1-9Z"/></svg>
+              </div>
+              <p class="mt-3 text-xs uppercase tracking-wide text-white/70">Next Best Action</p>
+              <p class="mt-1 text-sm text-white/85">Practice weak area:</p>
+              <p class="mt-1 text-[14px] font-bold">{{ weakest_area }}</p>
+              <a href="{% url 'interview_setup' %}" class="ghost-pill mt-3">Start Focused Practice</a>
+              <a href="{% url 'interview_setup' %}" class="mt-3 inline-flex items-center gap-1 text-xs text-white/75 hover:text-white">
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                Practice This Weakness
+              </a>
+            </div>
           </div>
-          <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-            <form method="get" class="w-full sm:w-auto">
-              <select name="session" onchange="this.form.submit()" class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm min-w-[260px] w-full sm:w-auto">
-                {% for option in session_options %}
-                  <option value="{{ option.id }}" {% if selected_session.id == option.id %}selected{% endif %}>
-                    {{ option.label }} | {{ option.role }} | {{ option.started_at|date:'M d, Y h:i A' }}
-                  </option>
-                {% endfor %}
-              </select>
-            </form>
-            <a href="{% url 'interview_setup' %}" class="rounded-xl w-full sm:w-auto text-center bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200">Practice this weakness</a>
+        </section>
+
+        <section class="tabs-shell" id="focusTabs">
+          <button type="button" class="metric-tab active" data-focus="overview">
+            <p class="text-[14px] font-semibold">Overview</p>
+            <p class="text-[12px] mt-0.5">All metrics</p>
+          </button>
+          <button type="button" class="metric-tab" data-focus="communication">
+            <p class="text-[14px] font-semibold">Communication</p>
+            <p class="text-[13px] mt-0.5 score-preview" data-score-preview="{{ communication_score }}">{{ communication_score }}/100</p>
+          </button>
+          <button type="button" class="metric-tab" data-focus="technical">
+            <p class="text-[14px] font-semibold">Technical</p>
+            <p class="text-[13px] mt-0.5 score-preview" data-score-preview="{{ technical_score }}">Depth {{ technical_score }}</p>
+          </button>
+          <button type="button" class="metric-tab" data-focus="delivery">
+            <p class="text-[14px] font-semibold">Delivery</p>
+            <p class="text-[13px] mt-0.5 score-preview" data-score-preview="{{ delivery_score }}">{{ delivery_score }}/100</p>
+          </button>
+        </section>
+
+        <section class="score-grid" id="metricsStrip">
+          <article class="score-card" data-metric-card data-score="{{ overall_score }}" data-target="80">
+            <div class="score-tooltip">Target: 80 · Gap: <span class="gap-value"></span> pts</div>
+            <p class="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Overall</p>
+            <p class="mt-2 text-[40px] font-bold leading-none"><span class="metric-count" data-target-count="{{ overall_score }}">0</span></p>
+            <p class="mt-1 text-xs text-slate-500">Session score</p>
+            <div class="mini-track mt-3"><div class="mini-fill" data-progress style="--bar-width: {{ overall_score }}%;"></div></div>
+            <p class="mt-2 text-xs font-semibold text-slate-600" id="overallContext"></p>
+          </article>
+
+          <article class="score-card" data-metric-card data-score="{{ communication_score }}" data-target="88">
+            <div class="score-tooltip">Target: 88 · Gap: <span class="gap-value"></span> pts</div>
+            <p class="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Communication</p>
+            <p class="mt-2 text-[40px] font-bold leading-none"><span class="metric-count" data-target-count="{{ communication_score }}">0</span></p>
+            <p class="mt-1 text-xs text-slate-500">Strongest: {{ strongest_area }}</p>
+            <div class="mini-track mt-3"><div class="mini-fill" data-progress style="--bar-width: {{ communication_score }}%;"></div></div>
+            <p class="mt-2 text-xs font-semibold text-slate-600">Narrative quality</p>
+          </article>
+
+          <article class="score-card" data-metric-card data-score="{{ technical_score }}" data-target="86">
+            <div class="score-tooltip">Target: 86 · Gap: <span class="gap-value"></span> pts</div>
+            <p class="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Technical</p>
+            <p class="mt-2 text-[40px] font-bold leading-none"><span class="metric-count" data-target-count="{{ technical_score }}">0</span></p>
+            <p class="mt-1 text-xs text-slate-500">Needs focus: {{ weakest_area }}</p>
+            <div class="mini-track mt-3"><div class="mini-fill" data-progress style="--bar-width: {{ technical_score }}%;"></div></div>
+            <p class="mt-2 text-xs font-semibold text-slate-600">Systems depth</p>
+          </article>
+
+          <article class="score-card" data-metric-card data-score="{{ clarity_score }}" data-target="88">
+            <div class="score-tooltip">Target: 88 · Gap: <span class="gap-value"></span> pts</div>
+            <p class="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Clarity</p>
+            <p class="mt-2 text-[40px] font-bold leading-none"><span class="metric-count" data-target-count="{{ clarity_score }}">0</span></p>
+            <p class="mt-1 text-xs text-slate-500">Evidence quality</p>
+            <div class="mini-track mt-3"><div class="mini-fill" data-progress style="--bar-width: {{ clarity_score }}%;"></div></div>
+            <p class="mt-2 text-xs font-semibold text-slate-600">Message precision</p>
+          </article>
+
+          <article class="score-card" data-metric-card data-score="{{ confidence_score }}" data-target="85">
+            <div class="score-tooltip">Target: 85 · Gap: <span class="gap-value"></span> pts</div>
+            <p class="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Confidence</p>
+            <p class="mt-2 text-[40px] font-bold leading-none"><span class="metric-count" data-target-count="{{ confidence_score }}">0</span></p>
+            <p class="mt-1 text-xs text-slate-500">Delivery stability</p>
+            <div class="mini-track mt-3"><div class="mini-fill" data-progress style="--bar-width: {{ confidence_score }}%;"></div></div>
+            <p class="mt-2 text-xs font-semibold text-slate-600">Composure under pressure</p>
+          </article>
+        </section>
+
+        <section class="grid gap-4 md:grid-cols-[1.4fr_1fr]" id="chartSection">
+          <article class="surface p-4 sm:p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h2 class="text-[17px] font-semibold">Category Scores vs Target</h2>
+              <a href="{% url 'replay_page' %}" class="inline-flex items-center gap-1 text-[13px] font-semibold text-teal-600 hover:text-teal-700">
+                Open replay evidence
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14m-6-6 6 6-6 6"/></svg>
+              </a>
+            </div>
+            <div class="mt-3 flex items-center gap-2 text-[11px]">
+              <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-blue-700"><span class="h-2 w-2 rounded-full bg-blue-600"></span>Current</span>
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700"><span class="h-2 w-2 rounded-full bg-emerald-600"></span>Target</span>
+            </div>
+            <div id="categoryVsTargetRows" class="mt-4"></div>
+
+            <div class="mt-4 rounded-[10px] border border-indigo-100 bg-[#EEF2FF] p-3.5">
+              <div class="flex items-start gap-2">
+                <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-blue-200 bg-white text-blue-700">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3a9 9 0 1 0 9 9m-9-9v9l6 3"/></svg>
+                </span>
+                <div>
+                  <p class="text-[13px] text-slate-800">{{ coach_summary }}</p>
+                  <p class="mt-1.5 text-[11px] text-slate-500">Turns: {{ selected_session_turn_count }} · Avg latency: {{ selected_avg_latency }} ms</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="surface p-4 sm:p-5">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="text-[17px] font-semibold">Moment-by-Moment Trend</h2>
+              <div class="flex items-center gap-2 text-[11px]">
+                <span class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-1 text-violet-700"><span class="h-2 w-2 rounded-full bg-violet-600"></span>Confidence</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-1 text-teal-700"><span class="h-2 w-2 rounded-full bg-teal-500"></span>Clarity</span>
+              </div>
+            </div>
+            <div id="feedbackTrendChart" class="h-64 mt-3"></div>
+            <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                <p class="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Strongest</p>
+                <p class="mt-1 text-sm font-semibold text-emerald-900" id="strongestMoment">{{ focus_payload.overview.strongest }}</p>
+                <p class="mt-1 text-xs text-emerald-700" id="strongestMomentScore">-</p>
+              </div>
+              <div class="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <p class="text-xs uppercase tracking-wide text-amber-700 font-semibold">Weakest</p>
+                <p class="mt-1 text-sm font-semibold text-amber-900" id="weakestMoment">{{ focus_payload.overview.weakest }}</p>
+                <p class="mt-1 text-xs text-amber-700" id="weakestMomentScore">-</p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="surface p-4 sm:p-5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <h2 class="text-[18px] font-semibold">Evidence-Linked Recommendations</h2>
+              <span class="rounded-full bg-violet-100 text-violet-700 px-2 py-0.5 text-[11px] font-semibold">AI Generated</span>
+            </div>
+            <p class="text-[13px] text-slate-500">{{ recommendations|length }} recommendations</p>
           </div>
-        </header>
 
-        <section id="focusTabs" class="mt-4 flex flex-wrap gap-2 animate-in" style="animation-delay: 30ms;">
-          <button type="button" data-focus="overview" class="focus-tab active rounded-full px-3 py-1.5 text-xs font-semibold">Overview</button>
-          <button type="button" data-focus="communication" class="focus-tab rounded-full px-3 py-1.5 text-xs font-semibold">Communication</button>
-          <button type="button" data-focus="technical" class="focus-tab rounded-full px-3 py-1.5 text-xs font-semibold">Technical Depth</button>
-          <button type="button" data-focus="delivery" class="focus-tab rounded-full px-3 py-1.5 text-xs font-semibold">Delivery</button>
+          <div class="rec-grid mt-4" id="recommendationGrid">
+            {% for rec in recommendations %}
+              <article class="rec-card" style="animation-delay: {{ forloop.counter0|add:1 }}00ms; border-left: 4px solid {% if rec.style == 'emerald' %}#10B981{% elif rec.style == 'amber' %}#F59E0B{% else %}#0B3D91{% endif %};" data-rec="{{ rec.key }}">
+                <div class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold {% if rec.style == 'emerald' %}bg-emerald-100 text-emerald-700{% elif rec.style == 'amber' %}bg-amber-100 text-amber-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14m-7-7 7 7-7 7"/></svg>
+                  {% if rec.style == 'emerald' %}Keep{% elif rec.style == 'amber' %}Improve{% else %}Refine{% endif %}
+                </div>
+                <p class="mt-3 text-[15px] font-semibold text-slate-900">{{ rec.title|cut:'Keep: '|cut:'Improve: '|cut:'Refine: ' }}</p>
+                <p class="mt-2 text-[13px] text-slate-700">{{ rec.detail }}</p>
+                <div class="mt-4 border-t border-slate-100 pt-3">
+                  <p class="text-[11px] text-slate-500">Evidence: Turn 1, @00:08</p>
+                  <a href="{% url 'replay_page' %}" class="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-teal-600 hover:text-teal-700">
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="m8 5 11 7-11 7V5Z"/></svg>
+                    Watch moment
+                  </a>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
         </section>
 
-        <section class="mt-6 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
-          <article class="kpi-card rounded-2xl ui-surface p-4 ui-lift animate-in" style="animation-delay: 60ms;">
-            <p class="text-xs uppercase tracking-wide text-gray-500">Overall</p>
-            <p class="mt-2 text-3xl font-black text-gray-900">{{ overall_score }}</p>
-            <p class="mt-1 text-xs font-semibold text-indigo-700">Session score</p>
-          </article>
-          <article class="kpi-card rounded-2xl ui-surface p-4 ui-lift animate-in" style="animation-delay: 80ms;">
-            <p class="text-xs uppercase tracking-wide text-gray-500">Communication</p>
-            <p class="mt-2 text-3xl font-black text-gray-900">{{ communication_score }}</p>
-            <p class="mt-1 text-xs font-semibold text-emerald-600">Strongest: {{ strongest_area }}</p>
-          </article>
-          <article class="kpi-card rounded-2xl ui-surface p-4 ui-lift animate-in" style="animation-delay: 100ms;">
-            <p class="text-xs uppercase tracking-wide text-gray-500">Technical</p>
-            <p class="mt-2 text-3xl font-black text-gray-900">{{ technical_score }}</p>
-            <p class="mt-1 text-xs font-semibold text-amber-700">Needs focus: {{ weakest_area }}</p>
-          </article>
-          <article class="kpi-card rounded-2xl ui-surface p-4 ui-lift animate-in" style="animation-delay: 120ms;">
-            <p class="text-xs uppercase tracking-wide text-gray-500">Clarity</p>
-            <p class="mt-2 text-3xl font-black text-gray-900">{{ clarity_score }}</p>
-            <p class="mt-1 text-xs font-semibold text-emerald-600">Evidence quality</p>
-          </article>
-          <article class="kpi-card rounded-2xl ui-surface p-4 ui-lift animate-in" style="animation-delay: 140ms;">
-            <p class="text-xs uppercase tracking-wide text-gray-500">Confidence</p>
-            <p class="mt-2 text-3xl font-black text-gray-900">{{ confidence_score }}</p>
-            <p class="mt-1 text-xs font-semibold text-sky-700">Delivery stability</p>
-          </article>
-        </section>
+        <section class="surface p-4 sm:p-5">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-[18px] font-semibold">AI Feedback Highlights</h2>
+            <p class="text-[13px] text-slate-500">From this session</p>
+          </div>
 
-        <section class="mt-5 grid gap-4 md:gap-5 md:grid-cols-[1.05fr_.95fr]">
-          <article class="rounded-3xl ui-surface p-4 sm:p-5 ui-lift animate-in" style="animation-delay: 150ms;">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h2 class="text-lg font-bold">Category Scores vs Target</h2>
-              <a href="{% url 'replay_page' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Open replay evidence</a>
-            </div>
-            <div class="chart-shell mt-4">
-              <div id="feedbackRadarChart" class="h-72 sm:h-80 w-full rounded-xl"></div>
-            </div>
-            <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:px-4 sm:py-3.5">
-              <p class="text-xs uppercase tracking-wide text-gray-500">Coach Summary</p>
-              <p class="mt-1 text-sm text-gray-700">{{ coach_summary }}</p>
-              <p class="mt-2 text-xs text-gray-500">Turns: {{ selected_session_turn_count }} | Avg latency: {{ selected_avg_latency }} ms</p>
-            </div>
-          </article>
+          <div class="quote-card mt-4">
+            <p class="text-[15px] italic text-slate-700">"{% if feedback_lines and feedback_lines.0 %}{{ feedback_lines.0 }}{% else %}Focus on specific technical solutions and measurable outcomes in each answer.{% endif %}"</p>
+            <p class="mt-2 text-[12px] text-slate-500">AI Coach · Turn 1</p>
+          </div>
 
-          <article class="rounded-3xl ui-surface p-4 sm:p-5 ui-lift animate-in" style="animation-delay: 170ms;">
-            <h2 class="text-lg font-bold">Moment-by-Moment Trend</h2>
-            <div class="chart-shell mt-4">
-              <div id="feedbackTrendChart" class="h-52 sm:h-48"></div>
-            </div>
-            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
-              <div class="rounded-xl bg-gray-50 border border-gray-200 p-2 sm:p-3 text-center sm:text-left">Strongest: <strong id="strongestMoment">{{ focus_payload.overview.strongest }}</strong></div>
-              <div class="rounded-xl bg-gray-50 border border-gray-200 p-2 sm:p-3 text-center sm:text-left">Weakest: <strong id="weakestMoment">{{ focus_payload.overview.weakest }}</strong></div>
-            </div>
-          </article>
-        </section>
-
-        <section class="mt-5 grid gap-4 md:gap-5 md:grid-cols-[1.1fr_.9fr]">
-          <article class="rounded-3xl ui-surface p-4 sm:p-5 ui-lift animate-in" style="animation-delay: 190ms;">
-            <h2 class="text-lg font-bold">Evidence-Linked Recommendations</h2>
-            <ul class="mt-4 space-y-3 text-sm text-gray-700">
-              {% for rec in recommendations %}
-                <li data-rec="{{ rec.key }}" class="recommendation-item rounded-xl px-3 py-3 sm:px-4 {% if rec.style == 'emerald' %}border border-emerald-200 bg-emerald-50{% elif rec.style == 'amber' %}border border-amber-200 bg-amber-50{% else %}border border-sky-200 bg-sky-50{% endif %}">
-                  <p class="font-semibold {% if rec.style == 'emerald' %}text-emerald-900{% elif rec.style == 'amber' %}text-amber-900{% else %}text-sky-900{% endif %}">{{ rec.title }}</p>
-                  <p class="mt-1 {% if rec.style == 'emerald' %}text-emerald-800{% elif rec.style == 'amber' %}text-amber-800{% else %}text-sky-800{% endif %}">{{ rec.detail }}</p>
-                </li>
-              {% endfor %}
-            </ul>
-          </article>
-
-          <article class="rounded-3xl ui-surface p-4 sm:p-5 ui-lift animate-in" style="animation-delay: 210ms;">
-            <h2 class="text-lg font-bold">AI Feedback Highlights</h2>
-            <ul class="mt-4 space-y-3 text-sm text-gray-700">
-              {% for line in feedback_lines %}
-                <li class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 sm:px-4">{{ line }}</li>
-              {% empty %}
-                <li class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 sm:px-4 text-gray-500">No explicit per-turn feedback captured for this session yet.</li>
-              {% endfor %}
-            </ul>
-            <a href="{% url 'interview_setup' %}" class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90">Start Focused Session</a>
-          </article>
+          <div class="mt-4 grid gap-2">
+            {% for line in feedback_lines %}
+              <article class="highlight-item">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg {% cycle 'bg-blue-50 text-blue-700 border border-blue-200' 'bg-emerald-50 text-emerald-700 border border-emerald-200' 'bg-amber-50 text-amber-700 border border-amber-200' %}">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v18m9-9H3"/></svg>
+                </span>
+                <p class="text-[13px] text-slate-700">{{ line }}</p>
+                <span class="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-500">@00:08</span>
+              </article>
+            {% empty %}
+              <article class="highlight-item">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4m0 4h.01M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0Z"/></svg>
+                </span>
+                <p class="text-[13px] text-slate-600">No explicit per-turn feedback captured for this session yet.</p>
+                <span class="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-500">Session</span>
+              </article>
+            {% endfor %}
+          </div>
         </section>
 
         {{ trend_labels|json_script:"feedbackTrendLabels" }}
@@ -206,9 +655,7 @@
 
         <script>
           (function () {
-            var chartTarget = document.querySelector('#feedbackRadarChart');
-            if (!chartTarget || typeof ApexCharts === 'undefined') return;
-
+            var pageRoot = document.getElementById('feedbackPageRoot');
             var labelsEl = document.getElementById('feedbackTrendLabels');
             var radarCurrentEl = document.getElementById('feedbackRadarCurrent');
             var radarTargetEl = document.getElementById('feedbackRadarTarget');
@@ -216,178 +663,339 @@
 
             var trendLabels = labelsEl ? JSON.parse(labelsEl.textContent || '[]') : ['T1'];
             var radarCurrent = radarCurrentEl ? JSON.parse(radarCurrentEl.textContent || '[]') : [0, 0, 0, 0, 0];
-            var radarTarget = radarTargetEl ? JSON.parse(radarTargetEl.textContent || '[]') : [0, 0, 0, 0, 0];
+            var radarTarget = radarTargetEl ? JSON.parse(radarTargetEl.textContent || '[]') : [80, 80, 80, 80, 80];
             var focusPayload = focusPayloadEl ? JSON.parse(focusPayloadEl.textContent || '{}') : {};
+
+            var categoryRowsTarget = document.getElementById('categoryVsTargetRows');
             var categoryLabels = ['Communication', 'Confidence', 'Technical Depth', 'Clarity', 'Delivery'];
-            var allScoreValues = (radarCurrent || []).concat(radarTarget || []).filter(function (v) {
-              return typeof v === 'number' && !isNaN(v);
-            });
-            var minScore = allScoreValues.length ? Math.min.apply(null, allScoreValues) : 0;
-            var maxScore = allScoreValues.length ? Math.max.apply(null, allScoreValues) : 100;
-            var xAxisMin = Math.max(0, Math.floor((minScore - 12) / 5) * 5);
-            var xAxisMax = Math.min(100, Math.ceil((maxScore + 8) / 5) * 5);
-            if (xAxisMax - xAxisMin < 30) {
-              xAxisMax = Math.min(100, xAxisMin + 30);
+            var trendChart = null;
+
+            function scoreColor(score) {
+              if (score >= 80) return '#10B981';
+              if (score >= 60) return '#F59E0B';
+              return '#EF4444';
             }
 
-            var feedbackRadar = new ApexCharts(chartTarget, {
-              chart: {
-                type: 'bar',
-                height: '100%',
-                toolbar: { show: false },
-                animations: { easing: 'easeinout', speed: 450 },
-                events: {
-                  dataPointSelection: function (event, chartContext, opts) {
-                    var map = ['communication', 'delivery', 'technical', 'communication', 'delivery'];
-                    var targetFocus = map[opts.dataPointIndex] || 'overview';
-                    setFocus(targetFocus);
-                  }
-                }
-              },
-              series: [
-                { name: 'Current', data: radarCurrent },
-                { name: 'Target', data: radarTarget }
-              ],
-              xaxis: {
-                categories: categoryLabels,
-                min: xAxisMin,
-                max: xAxisMax,
-                tickAmount: 5,
-                labels: {
-                  style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 },
-                  formatter: function (val) { return Math.round(val) + '%'; }
-                },
-                axisBorder: { color: '#e2e8f0' }
-              },
-              yaxis: {
-                labels: { style: { colors: '#334155', fontSize: '12px', fontWeight: 600 } }
-              },
-              colors: ['#4f46e5', '#22c55e'],
-              plotOptions: {
-                bar: {
-                  horizontal: true,
-                  borderRadius: 7,
-                  borderRadiusApplication: 'end',
-                  barHeight: '58%',
-                  dataLabels: { position: 'right' }
-                }
-              },
-              stroke: { width: 0 },
-              fill: {
-                type: 'gradient',
-                gradient: {
-                  shade: 'light',
-                  type: 'horizontal',
-                  shadeIntensity: 0.35,
-                  opacityFrom: 0.95,
-                  opacityTo: 0.78,
-                  stops: [0, 100]
-                }
-              },
-              dataLabels: {
-                enabled: true,
-                style: { colors: ['#0f172a'], fontWeight: 700, fontSize: '11px' },
-                formatter: function (val) { return Math.round(val) + '%'; }
-              },
-              tooltip: {
-                shared: true,
-                intersect: false,
-                y: {
-                  formatter: function (val) { return Math.round(val) + '%'; }
-                }
-              },
-              grid: {
-                borderColor: '#e2e8f0',
-                strokeDashArray: 4,
-                xaxis: { lines: { show: true } }
-              },
-              legend: {
-                show: true,
-                position: 'top',
-                horizontalAlign: 'right',
-                labels: { colors: '#4b5563' },
-                markers: { radius: 10 }
-              },
-              states: {
-                hover: { filter: { type: 'lighten', value: 0.05 } },
-                active: { filter: { type: 'darken', value: 0.05 } }
-              }
-            });
-            feedbackRadar.render();
+            function scoreBandLabel(score) {
+              if (score >= 80) return 'Excellent';
+              if (score >= 60) return 'Developing';
+              return 'Needs Improvement';
+            }
 
-            var trendTarget = document.querySelector('#feedbackTrendChart');
-            var feedbackTrend = null;
-            if (trendTarget) {
-              var overview = focusPayload.overview || { confidence: [0], clarity: [0] };
-              feedbackTrend = new ApexCharts(trendTarget, {
-                chart: { type: 'line', height: '100%', toolbar: { show: false } },
+            function countUp(targetNode, targetValue, duration) {
+              if (!targetNode) return;
+              var start = 0;
+              var stepMs = 20;
+              var steps = Math.max(1, Math.floor(duration / stepMs));
+              var increment = targetValue / steps;
+              var timer = setInterval(function () {
+                start += increment;
+                if (start >= targetValue) {
+                  start = targetValue;
+                  clearInterval(timer);
+                }
+                targetNode.textContent = String(Math.round(start));
+              }, stepMs);
+            }
+
+            function initHeroScore() {
+              var donut = document.getElementById('heroScoreDonut');
+              var countNode = document.getElementById('heroScoreCount');
+              var labelNode = document.getElementById('heroScoreLabel');
+              if (!donut || !countNode || !labelNode) return;
+
+              var score = Number(donut.getAttribute('data-score') || 0);
+              var color = scoreColor(score);
+              var deg = Math.max(0, Math.min(100, score)) * 3.6;
+
+              countUp(countNode, score, 800);
+              setTimeout(function () {
+                donut.style.background = 'conic-gradient(' + color + ' ' + deg + 'deg, rgba(255,255,255,0.22) ' + deg + 'deg)';
+              }, 120);
+
+              labelNode.textContent = scoreBandLabel(score);
+              labelNode.style.color = color;
+            }
+
+            function animateMetricCards() {
+              var cards = Array.prototype.slice.call(document.querySelectorAll('[data-metric-card]'));
+              cards.forEach(function (card) {
+                var score = Number(card.getAttribute('data-score') || 0);
+                var target = Number(card.getAttribute('data-target') || 80);
+                var color = scoreColor(score);
+                card.style.setProperty('--accent-color', color);
+
+                var fill = card.querySelector('[data-progress]');
+                if (fill) {
+                  fill.style.setProperty('--fill-color', color);
+                  setTimeout(function () {
+                    fill.classList.add('animate');
+                  }, 120);
+                }
+
+                var gapNode = card.querySelector('.gap-value');
+                if (gapNode) {
+                  gapNode.textContent = String(Math.max(0, target - score));
+                }
+
+                var countNode = card.querySelector('.metric-count');
+                if (countNode) {
+                  countUp(countNode, score, 800);
+                }
+              });
+
+              var overallContext = document.getElementById('overallContext');
+              if (overallContext) {
+                var overall = Number(cards[0] ? cards[0].getAttribute('data-score') : 0);
+                overallContext.textContent = overall >= 60 ? 'At or above baseline' : 'Below average';
+                overallContext.style.color = overall >= 60 ? '#0f766e' : '#b45309';
+              }
+            }
+
+            function renderCategoryRows() {
+              if (!categoryRowsTarget) return;
+              categoryRowsTarget.innerHTML = categoryLabels.map(function (label, idx) {
+                var current = Number(radarCurrent[idx] || 0);
+                var target = Number(radarTarget[idx] || 0);
+                var gap = target - current;
+                var met = gap <= 0;
+                return '' +
+                  '<div class="left-chart-row">' +
+                    '<p class="text-[13px] font-semibold text-slate-700">' + label + '</p>' +
+                    '<div class="space-y-1">' +
+                      '<div class="dual-track">' +
+                        '<div class="target-bar" data-target-width="' + target + '"></div>' +
+                        '<div class="current-bar" data-current-width="' + current + '"></div>' +
+                      '</div>' +
+                      '<div class="text-[11px] text-slate-500"><span class="text-blue-700 font-semibold">' + current + '%</span> · <span class="text-emerald-700 font-semibold">' + target + '%</span></div>' +
+                    '</div>' +
+                    '<span class="gap-pill ' + (met ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700') + '">' + (met ? 'Met' : 'Gap: -' + gap + 'pts') + '</span>' +
+                  '</div>';
+              }).join('');
+
+              var targetBars = Array.prototype.slice.call(document.querySelectorAll('.target-bar'));
+              var currentBars = Array.prototype.slice.call(document.querySelectorAll('.current-bar'));
+              var pills = Array.prototype.slice.call(document.querySelectorAll('.gap-pill'));
+
+              setTimeout(function () {
+                targetBars.forEach(function (bar) {
+                  bar.style.width = (Number(bar.getAttribute('data-target-width') || 0)) + '%';
+                });
+                currentBars.forEach(function (bar) {
+                  bar.style.width = (Number(bar.getAttribute('data-current-width') || 0)) + '%';
+                });
+              }, 120);
+
+              setTimeout(function () {
+                pills.forEach(function (pill) { pill.classList.add('show'); });
+              }, 520);
+            }
+
+            function strongestWeakestStats(payload) {
+              var confidence = payload.confidence || [0];
+              var clarity = payload.clarity || [0];
+              var idxMaxClarity = 0;
+              var idxMinConfidence = 0;
+
+              for (var i = 1; i < clarity.length; i += 1) {
+                if (clarity[i] > clarity[idxMaxClarity]) idxMaxClarity = i;
+              }
+              for (var j = 1; j < confidence.length; j += 1) {
+                if (confidence[j] < confidence[idxMinConfidence]) idxMinConfidence = j;
+              }
+
+              return {
+                strongLabel: trendLabels[idxMaxClarity] || 'T1',
+                strongScore: clarity[idxMaxClarity] || 0,
+                weakLabel: trendLabels[idxMinConfidence] || 'T1',
+                weakScore: confidence[idxMinConfidence] || 0
+              };
+            }
+
+            function renderTrend(payload) {
+              var target = document.getElementById('feedbackTrendChart');
+              if (!target || typeof ApexCharts === 'undefined') return;
+
+              var conf = payload.confidence || [0];
+              var clar = payload.clarity || [0];
+
+              if (trendChart) {
+                trendChart.updateSeries([
+                  { name: 'Confidence', data: conf },
+                  { name: 'Clarity', data: clar }
+                ], true);
+                return;
+              }
+
+              trendChart = new ApexCharts(target, {
+                chart: {
+                  type: 'area',
+                  height: '100%',
+                  toolbar: { show: false },
+                  animations: { enabled: true, easing: 'easeinout', speed: 850 }
+                },
                 series: [
-                  { name: 'Confidence', data: overview.confidence || [0] },
-                  { name: 'Clarity', data: overview.clarity || [0] }
+                  { name: 'Confidence', data: conf },
+                  { name: 'Clarity', data: clar }
                 ],
+                colors: ['#7C4DFF', '#00A89C'],
+                stroke: { width: 2, curve: 'smooth' },
+                fill: {
+                  type: 'gradient',
+                  gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.2,
+                    opacityTo: 0.05,
+                    stops: [0, 100]
+                  }
+                },
                 xaxis: {
                   categories: trendLabels,
-                  labels: { style: { colors: '#6b7280', fontSize: '11px' } }
+                  labels: { style: { colors: '#64748B', fontSize: '11px' } }
                 },
-                yaxis: { min: 35, max: 100, tickAmount: 4, labels: { style: { colors: '#9ca3af', fontSize: '11px' } } },
-                colors: ['#4f46e5', '#22c55e'],
-                stroke: { width: 3, curve: 'smooth' },
-                markers: { size: 3, strokeWidth: 2, strokeColors: '#fff' },
-                grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
-                tooltip: { y: { formatter: function (val) { return val + '%'; } } },
-                legend: { position: 'top', horizontalAlign: 'right', labels: { colors: '#4b5563' } }
+                yaxis: {
+                  min: 0,
+                  max: 100,
+                  tickAmount: 5,
+                  labels: { style: { colors: '#94A3B8', fontSize: '11px' } }
+                },
+                grid: {
+                  borderColor: '#E2E8F0',
+                  strokeDashArray: 0,
+                  xaxis: { lines: { show: false } },
+                  yaxis: { lines: { show: true } }
+                },
+                markers: {
+                  size: 4,
+                  strokeColors: '#fff',
+                  strokeWidth: 2,
+                  hover: { sizeOffset: 2 }
+                },
+                dataLabels: { enabled: false },
+                tooltip: {
+                  shared: true,
+                  intersect: false,
+                  y: {
+                    formatter: function (val, opts) {
+                      var idx = opts.seriesIndex;
+                      if (idx === 0) return 'Confidence: ' + Math.round(val);
+                      return 'Clarity: ' + Math.round(val);
+                    }
+                  },
+                  x: {
+                    formatter: function (val) {
+                      return 'Turn ' + val;
+                    }
+                  }
+                },
+                legend: { show: false }
               });
-              feedbackTrend.render();
+
+              trendChart.render();
             }
 
-            var focusButtons = Array.prototype.slice.call(document.querySelectorAll('#focusTabs [data-focus]'));
-            var recommendationItems = Array.prototype.slice.call(document.querySelectorAll('.recommendation-item'));
-            var strongestMoment = document.getElementById('strongestMoment');
-            var weakestMoment = document.getElementById('weakestMoment');
+            function updateMomentStats(payload) {
+              var strongest = document.getElementById('strongestMoment');
+              var weakest = document.getElementById('weakestMoment');
+              var strongestScore = document.getElementById('strongestMomentScore');
+              var weakestScore = document.getElementById('weakestMomentScore');
+              if (!strongest || !weakest || !strongestScore || !weakestScore) return;
+
+              var stats = strongestWeakestStats(payload);
+              strongest.textContent = stats.strongLabel + ': Clarity';
+              weakest.textContent = stats.weakLabel + ': Confidence';
+              strongestScore.textContent = stats.strongScore + '/100';
+              weakestScore.textContent = stats.weakScore + '/100';
+            }
 
             function setFocus(focus) {
               var payload = focusPayload[focus] || focusPayload.overview;
               if (!payload) return;
 
-              focusButtons.forEach(function (btn) {
-                btn.classList.toggle('active', btn.dataset.focus === focus);
+              var tabs = Array.prototype.slice.call(document.querySelectorAll('#focusTabs .metric-tab'));
+              tabs.forEach(function (tab) {
+                tab.classList.toggle('active', tab.getAttribute('data-focus') === focus);
               });
 
-              recommendationItems.forEach(function (item) {
-                var shouldHighlight = focus !== 'overview' && item.dataset.rec === focus;
-                item.classList.toggle('active', shouldHighlight);
-              });
+              if (pageRoot) {
+                pageRoot.classList.add('fading');
+                setTimeout(function () {
+                  renderTrend(payload);
+                  updateMomentStats(payload);
 
-              if (strongestMoment) strongestMoment.textContent = payload.strongest || 'T1';
-              if (weakestMoment) weakestMoment.textContent = payload.weakest || 'T1';
+                  var recs = Array.prototype.slice.call(document.querySelectorAll('[data-rec]'));
+                  recs.forEach(function (rec) {
+                    var active = focus !== 'overview' && rec.getAttribute('data-rec') === focus;
+                    rec.style.boxShadow = active ? '0 20px 34px -28px rgba(11,61,145,.55)' : '';
+                    rec.style.borderColor = active ? '#bfdbfe' : '';
+                  });
 
-              if (feedbackTrend) {
-                feedbackTrend.updateSeries([
-                  { name: 'Confidence', data: payload.confidence || [0] },
-                  { name: 'Clarity', data: payload.clarity || [0] }
-                ], true);
+                  pageRoot.classList.remove('fading');
+                }, 90);
               }
             }
 
-            focusButtons.forEach(function (btn) {
-              btn.addEventListener('click', function () {
-                setFocus(btn.dataset.focus);
+            function initTabs() {
+              var tabs = Array.prototype.slice.call(document.querySelectorAll('#focusTabs .metric-tab'));
+              tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                  setFocus(tab.getAttribute('data-focus') || 'overview');
+                });
               });
-            });
+            }
 
+            function tintScorePreviews() {
+              Array.prototype.slice.call(document.querySelectorAll('[data-score-preview]')).forEach(function (node) {
+                var score = Number(node.getAttribute('data-score-preview') || 0);
+                node.style.color = score >= 80 ? '#10B981' : score >= 60 ? '#0ea5e9' : '#f59e0b';
+                node.style.fontWeight = '700';
+              });
+            }
+
+            initHeroScore();
+            animateMetricCards();
+            renderCategoryRows();
+            tintScorePreviews();
+            initTabs();
             setFocus('overview');
           })();
         </script>
       {% else %}
-        <section class="rounded-3xl ui-surface p-8 text-center">
-          <p class="text-xs uppercase tracking-[0.16em] text-gray-500">AI Feedback</p>
-          <h1 class="mt-2 text-2xl font-black tracking-tight">No interview data yet</h1>
-          <p class="mt-3 text-sm text-gray-600">Complete at least one interview session to unlock dynamic feedback analytics and recommendations.</p>
-          <a href="{% url 'interview_setup' %}" class="mt-5 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90">Start Your First Session</a>
+        <section class="surface p-8 text-center max-w-2xl mx-auto mt-8">
+          <p class="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-semibold">AI Feedback</p>
+          <h1 class="mt-2 text-[30px] font-bold tracking-tight">No interview data yet</h1>
+          <p class="mt-3 text-sm text-slate-600">Complete at least one interview session to unlock performance intelligence and evidence-linked recommendations.</p>
+          <a href="{% url 'interview_setup' %}" class="primary-cta mt-5 inline-flex">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12 5 5 9-9"/></svg>
+            Start Your First Session
+          </a>
         </section>
       {% endif %}
     </main>
-  {% include 'partials/global_ui_enhancements.html' %}
+
+    {% if has_feedback_data %}
+      <footer class="sticky-footer">
+        <div class="footer-inner mx-auto max-w-[1460px] w-full px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2 text-[12px] text-slate-600">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1">{{ selected_session.target_company }}</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1">{{ selected_session.interview_type }}</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1">Score: {{ overall_score }}/100</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="{% url 'history_page' %}" class="ghost-cta">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 18 9 12l6-6"/></svg>
+              Back to History
+            </a>
+            <a href="{% url 'interview_setup' %}" class="primary-cta">
+              Start Focused Practice
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14m-6-6 6 6-6 6"/></svg>
+            </a>
+          </div>
+        </div>
+      </footer>
+    {% endif %}
+
+    {% include 'partials/global_ui_enhancements.html' %}
   </div>
 </body>
 </html>
