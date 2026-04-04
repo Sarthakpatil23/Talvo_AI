@@ -1597,7 +1597,7 @@
                     '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M2 12s3.8-6 10-6 10 6 10 6-3.8 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5" stroke-width="1.9"/></svg>' +
                     'View Feedback' +
                   '</a>' +
-                  '<a href="{% url 'replay_page' %}" class="btn-primary">' +
+                  '<a href="{% url 'replay_page' %}?session=' + s.id + '" class="btn-primary">' +
                     '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="m8 5 11 7-11 7V5Z"/></svg>' +
                     'Replay' +
                   '</a>' +
@@ -1632,7 +1632,7 @@
               '<div class="text-[13px] text-slate-500">' + s.startedLabel + '</div>' +
               '<div class="flex items-center gap-2">' +
                 '<a href="{% url 'feedback_dashboard' %}?session=' + s.id + '" class="btn-ghost" style="padding:5px 10px;font-size:12px;">Feedback</a>' +
-                '<a href="{% url 'replay_page' %}" class="btn-primary" style="padding:5px 10px;font-size:12px;">Replay</a>' +
+                '<a href="{% url 'replay_page' %}?session=' + s.id + '" class="btn-primary" style="padding:5px 10px;font-size:12px;">Replay</a>' +
               '</div>' +
             '</article>';
         }

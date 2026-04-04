@@ -165,6 +165,81 @@ class InterviewPipeline:
             'why did you choose that approach, and what metric improved?'
         )
 
+    def _build_final_round_intro_followup_with_llm(
+        self,
+        *,
+        target_company: str,
+        target_role: str,
+        difficulty: str,
+        candidate_name: str,
+        user_transcript: str,
+        candidate_response_count: int,
+        include_resume: bool = False,
+        resume_context: str = '',
+    ) -> Dict[str, str]:
+        fallback_question = self._build_final_round_intro_followup_question(
+            candidate_name=candidate_name,
+            user_transcript=user_transcript,
+            candidate_response_count=candidate_response_count,
+        )
+
+        fallback = {
+            'ai_question': fallback_question,
+            'ai_feedback': 'Probe intro claims with concrete role, decisions, and measurable outcomes before transitioning deeper.',
+            'retrieved_examples': [],
+        }
+
+        try:
+            self._ensure_models()
+            model_name = getattr(settings, 'GROQ_MODEL_NAME', 'llama-3.1-8b-instant')
+
+            resume_snippet = str(resume_context or '').strip()
+            if len(resume_snippet) > 1200:
+                resume_snippet = resume_snippet[:1200] + '...'
+
+            prompt = (
+                'Generate exactly one final-round intro follow-up question grounded in the candidate answer below. '\
+                'Avoid generic follow-ups. Focus on specific claims, projects, technologies, outcomes, or decisions.\n\n'
+                f'company={target_company}\n'
+                f'role={target_role}\n'
+                f'difficulty={difficulty}\n'
+                f'candidate_name={candidate_name or "Unknown"}\n'
+                f'candidate_response_count={candidate_response_count}\n'
+                f'latest_intro_answer={user_transcript or ""}\n'
+                f'include_resume={str(bool(include_resume)).lower()}\n'
+                f'resume_context={resume_snippet or "[none]"}\n\n'
+                'Output strict JSON only with keys ai_question and ai_feedback. '\
+                'ai_question <= 32 words. ai_feedback <= 20 words.'
+            )
+
+            resp = self._groq.chat.completions.create(
+                model=model_name,
+                temperature=0.25,
+                max_tokens=160,
+                messages=[
+                    {
+                        'role': 'system',
+                        'content': 'You are a senior interviewer generating targeted, context-aware follow-up questions.',
+                    },
+                    {'role': 'user', 'content': prompt},
+                ],
+            )
+
+            raw = (resp.choices[0].message.content or '').strip()
+            parsed = self._parse_llm_json(raw)
+            ai_question = str(parsed.get('ai_question', '') or '').strip()
+            ai_feedback = str(parsed.get('ai_feedback', '') or '').strip()
+            if not ai_question:
+                return fallback
+
+            return {
+                'ai_question': ai_question,
+                'ai_feedback': ai_feedback or fallback['ai_feedback'],
+                'retrieved_examples': [],
+            }
+        except Exception:
+            return fallback
+
     def transcribe(self, audio_path: str) -> Dict[str, object]:
         worker_url = self._speech_worker_url()
         if not worker_url:
@@ -416,15 +491,16 @@ class InterviewPipeline:
                 'retrieved_examples': [],
             }
         elif self._is_final_round(interview_type) and candidate_response_count <= 2:
-            llm = {
-                'ai_question': self._build_final_round_intro_followup_question(
-                    candidate_name=candidate_name,
-                    user_transcript=user_transcript,
-                    candidate_response_count=candidate_response_count,
-                ),
-                'ai_feedback': 'Probe intro claims with concrete role, decisions, and measurable outcomes before transitioning deeper.',
-                'retrieved_examples': [],
-            }
+            llm = self._build_final_round_intro_followup_with_llm(
+                target_company=target_company,
+                target_role=target_role,
+                difficulty=difficulty,
+                candidate_name=candidate_name,
+                user_transcript=user_transcript,
+                candidate_response_count=candidate_response_count,
+                include_resume=include_resume,
+                resume_context=resume_context,
+            )
         else:
             llm = self.generate_interviewer_response(
                 target_role=target_role,

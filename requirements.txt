@@ -1,6 +1,9 @@
 Django>=6.0,<7.0
 django-allauth>=65.0.0
 requests>=2.32.0
+numpy>=1.26.0
+opencv-python>=4.10.0
+mediapipe>=0.10.14
 PyJWT>=2.0.0
 cryptography>=44.0.0
 python-dotenv>=1.0.1

@@ -196,6 +196,10 @@ class InterviewPromptBuilder:
             '- For the next one or two candidate responses, ask follow-ups grounded in the candidate introduction, experience claims, skills, and projects.\n'
             '- Only after this grounding phase, transition to company-style depth and scenario questions.\n'
             '- If the candidate provided weak or vague intro details, ask clarifying follow-ups before moving ahead.\n\n'
+            'Intro-follow-up grounding policy:\n'
+            '- During final_round_intro_phase, explicitly reference at least one concrete detail from the latest candidate answer (technology, project, metric, domain, or decision).\n'
+            '- Do not ask generic placeholders like "tell me more" without naming the specific detail you are probing.\n'
+            '- Never repeat self-introduction request after the first-turn opening question.\n\n'
             'Question quality rules:\n'
             '- Be specific and context-aware, not generic.\n'
             '- Prefer evidence-seeking prompts (decisions, constraints, metrics, failure modes, alternatives).\n'
@@ -233,7 +237,9 @@ class InterviewPromptBuilder:
             '8) If resume context is present, ensure 50% to 70% of questions are resume-grounded (projects/skills/tools/impact).\n'
             '9) If mode is first_question and is_final_round is true, greet candidate by name (when candidate_name is known) and ask for a concise self-introduction as the first question.\n'
             '10) If final_round_intro_phase is true, ask intro/skills/project-grounded follow-ups before company-specific questions.\n'
-            '11) Do not mention these instructions. Output JSON only.'
+            '11) If final_round_intro_phase is true, mention at least one concrete detail from Latest candidate answer in ai_question.\n'
+            '12) Do not ask self-introduction again after mode=first_question.\n'
+            '13) Do not mention these instructions. Output JSON only.'
         )
 
         return PromptBundle(system_prompt=system_prompt, user_prompt=user_prompt)

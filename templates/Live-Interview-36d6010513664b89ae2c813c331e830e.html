@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Talvo Live Interview</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -498,6 +499,8 @@
                 <div id="userTileBody" class="relative grid h-32 place-items-center bg-gradient-to-br from-gray-100 to-gray-200">
                   <video id="userVideo" class="hidden h-full w-full object-cover" autoplay muted playsinline></video>
                   <div id="userAvatar" class="grid h-12 w-12 place-items-center rounded-full bg-gray-900 text-sm font-bold text-white">SP</div>
+                  <div id="cvTileText" class="absolute left-2 top-2 rounded-md bg-black/45 px-2 py-1 text-[10px] font-semibold text-white">Eye -- | Attn --</div>
+                  <div id="cameraOffHint" class="hidden absolute inset-0 grid place-items-center bg-black/35 px-2 text-center text-[11px] font-semibold text-amber-100">Turn on camera for better feedback</div>
                   <div class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/45 px-2 py-1 text-[11px] text-white">
                     <span>You</span>
                     <span id="cameraStateText">Camera on</span>
@@ -543,6 +546,9 @@
           <div class="hidden items-center gap-2 text-xs text-gray-500 md:flex">
             <span id="micState" class="rounded-full bg-gray-100 px-2.5 py-1">Mic on</span>
             <span id="cameraBadge" class="rounded-full bg-gray-100 px-2.5 py-1">Camera on</span>
+            <span id="cvModeBadge" class="rounded-full bg-gray-100 px-2.5 py-1">CV inactive</span>
+            <span id="eyeContactBadge" class="rounded-full bg-gray-100 px-2.5 py-1">Eye contact --</span>
+            <span id="attentionBadge" class="rounded-full bg-gray-100 px-2.5 py-1">Attention --</span>
             <span id="chatBadge" class="rounded-full bg-gray-100 px-2.5 py-1">Chat open</span>
           </div>
           <div class="mx-auto flex items-center gap-2 sm:gap-3">
@@ -659,6 +665,11 @@
       var toggleCam = document.getElementById('toggleCam');
       var cameraBadge = document.getElementById('cameraBadge');
       var cameraStateText = document.getElementById('cameraStateText');
+      var cameraOffHint = document.getElementById('cameraOffHint');
+      var cvTileText = document.getElementById('cvTileText');
+      var cvModeBadge = document.getElementById('cvModeBadge');
+      var eyeContactBadge = document.getElementById('eyeContactBadge');
+      var attentionBadge = document.getElementById('attentionBadge');
       var userTileBody = document.getElementById('userTileBody');
       var userVideo = document.getElementById('userVideo');
       var userAvatar = document.getElementById('userAvatar');
@@ -724,6 +735,16 @@
       var technicalSolved = false;
       var codingGateReminderShown = false;
       var browserTtsEnabled = true;
+      var cvAnalyzer = null;
+      var cvRunning = false;
+      var cvLoopTimer = null;
+      var cvAwaySince = 0;
+      var cvStats = { totalFrames: 0, faceFrames: 0, eyeContactFrames: 0 };
+      var cvRecentFrames = [];
+      var cvRecentWindowSize = 90;
+      var cvLastGaze = 'center';
+      var cvLastAttention = 'Not attentive';
+      var faceMeshLoadPromise = null;
 
       var startApiUrl = "{% url 'live_interview_start_api' %}";
       var turnApiUrl = "{% url 'live_interview_turn_api' %}";
@@ -894,6 +915,270 @@
         if (debugSignal) {
           debugSignal.textContent = 'Debug: ' + text;
         }
+      }
+
+      function updateCvBadges() {
+        if (!cvModeBadge || !eyeContactBadge || !attentionBadge) return;
+
+        var eyeScore = 0;
+        var attentionScore = 0;
+
+        if (cvRecentFrames.length) {
+          var recentTotal = cvRecentFrames.length;
+          var recentFace = 0;
+          var recentEye = 0;
+          for (var i = 0; i < cvRecentFrames.length; i += 1) {
+            recentFace += cvRecentFrames[i].face;
+            recentEye += cvRecentFrames[i].eye;
+          }
+          eyeScore = recentFace > 0 ? Math.round((recentEye / recentFace) * 100) : 0;
+          attentionScore = Math.round((recentFace / recentTotal) * 100);
+        } else {
+          var total = Math.max(1, cvStats.totalFrames);
+          var face = Math.max(1, cvStats.faceFrames);
+          eyeScore = Math.round((cvStats.eyeContactFrames / face) * 100);
+          attentionScore = Math.round((cvStats.faceFrames / total) * 100);
+        }
+
+        cvModeBadge.textContent = cvRunning ? 'CV active' : 'CV inactive';
+        cvModeBadge.className = cvRunning
+          ? 'rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-700'
+          : 'rounded-full bg-gray-100 px-2.5 py-1 text-gray-500';
+
+        eyeContactBadge.textContent = 'Eye contact ' + eyeScore + '%';
+        eyeContactBadge.className = eyeScore >= 65
+          ? 'rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-700'
+          : 'rounded-full bg-amber-100 px-2.5 py-1 text-amber-700';
+
+        attentionBadge.textContent = 'Attention ' + attentionScore + '%';
+        attentionBadge.className = attentionScore >= 75
+          ? 'rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-700'
+          : 'rounded-full bg-amber-100 px-2.5 py-1 text-amber-700';
+
+        if (cvTileText) {
+          var eyeLabel = cvLastGaze === 'center' ? 'Good' : (cvLastGaze === 'away' ? '--' : 'Poor');
+          var attnLabel = cvLastAttention === 'Not attentive' ? 'Off' : (cvLastAttention === 'Low attention' ? 'Low' : 'On');
+          cvTileText.textContent = 'Eye ' + eyeLabel + ' | Attn ' + attnLabel;
+        }
+      }
+
+      function loadScriptOnce(url) {
+        return new Promise(function (resolve, reject) {
+          var existing = document.querySelector('script[data-src="' + url + '"]');
+          if (existing) {
+            if (existing.getAttribute('data-loaded') === '1') {
+              resolve();
+              return;
+            }
+            existing.addEventListener('load', function () { resolve(); }, { once: true });
+            existing.addEventListener('error', function () { reject(new Error('Failed to load ' + url)); }, { once: true });
+            return;
+          }
+
+          var script = document.createElement('script');
+          script.src = url;
+          script.async = true;
+          script.defer = true;
+          script.setAttribute('data-src', url);
+          script.addEventListener('load', function () {
+            script.setAttribute('data-loaded', '1');
+            resolve();
+          }, { once: true });
+          script.addEventListener('error', function () {
+            reject(new Error('Failed to load ' + url));
+          }, { once: true });
+          document.head.appendChild(script);
+        });
+      }
+
+      async function ensureFaceMeshRuntime() {
+        if (typeof FaceMesh !== 'undefined') return true;
+        if (faceMeshLoadPromise) {
+          await faceMeshLoadPromise;
+          return typeof FaceMesh !== 'undefined';
+        }
+
+        faceMeshLoadPromise = (async function () {
+          var urls = [
+            'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js',
+            'https://unpkg.com/@mediapipe/face_mesh/face_mesh.js'
+          ];
+          for (var i = 0; i < urls.length; i += 1) {
+            try {
+              await loadScriptOnce(urls[i]);
+              if (typeof FaceMesh !== 'undefined') return;
+            } catch (_) {
+              // Try next CDN source.
+            }
+          }
+          throw new Error('FaceMesh runtime unavailable from configured CDNs.');
+        })();
+
+        try {
+          await faceMeshLoadPromise;
+          return typeof FaceMesh !== 'undefined';
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function estimateGazeFromLandmarks(landmarks) {
+        if (!landmarks || !landmarks.length) return 'away';
+
+        function ratio(value, low, high) {
+          var span = high - low;
+          if (Math.abs(span) < 1e-6) return 0.5;
+          return (value - low) / span;
+        }
+
+        var leftOuter = landmarks[33];
+        var leftInner = landmarks[133];
+        var rightOuter = landmarks[263];
+        var rightInner = landmarks[362];
+        var leftTop = landmarks[159];
+        var leftBottom = landmarks[145];
+        var rightTop = landmarks[386];
+        var rightBottom = landmarks[374];
+        var nose = landmarks[1];
+
+        if (!leftOuter || !leftInner || !rightOuter || !rightInner || !leftTop || !leftBottom || !rightTop || !rightBottom || !nose) {
+          return 'away';
+        }
+
+        var leftIris = landmarks[468] && landmarks[469] && landmarks[470] && landmarks[471] && landmarks[472]
+          ? {
+              x: (landmarks[468].x + landmarks[469].x + landmarks[470].x + landmarks[471].x + landmarks[472].x) / 5,
+              y: (landmarks[468].y + landmarks[469].y + landmarks[470].y + landmarks[471].y + landmarks[472].y) / 5
+            }
+          : { x: (leftOuter.x + leftInner.x) / 2, y: (leftTop.y + leftBottom.y) / 2 };
+
+        var rightIris = landmarks[473] && landmarks[474] && landmarks[475] && landmarks[476] && landmarks[477]
+          ? {
+              x: (landmarks[473].x + landmarks[474].x + landmarks[475].x + landmarks[476].x + landmarks[477].x) / 5,
+              y: (landmarks[473].y + landmarks[474].y + landmarks[475].y + landmarks[476].y + landmarks[477].y) / 5
+            }
+          : { x: (rightOuter.x + rightInner.x) / 2, y: (rightTop.y + rightBottom.y) / 2 };
+
+        var leftLowX = Math.min(leftOuter.x, leftInner.x);
+        var leftHighX = Math.max(leftOuter.x, leftInner.x);
+        var rightLowX = Math.min(rightOuter.x, rightInner.x);
+        var rightHighX = Math.max(rightOuter.x, rightInner.x);
+        var leftLowY = Math.min(leftTop.y, leftBottom.y);
+        var leftHighY = Math.max(leftTop.y, leftBottom.y);
+        var rightLowY = Math.min(rightTop.y, rightBottom.y);
+        var rightHighY = Math.max(rightTop.y, rightBottom.y);
+
+        var hRatio = (ratio(leftIris.x, leftLowX, leftHighX) + ratio(rightIris.x, rightLowX, rightHighX)) / 2;
+        var vRatio = (ratio(leftIris.y, leftLowY, leftHighY) + ratio(rightIris.y, rightLowY, rightHighY)) / 2;
+
+        var eyeMidX = (leftOuter.x + rightOuter.x) / 2;
+        var eyeMidY = (leftOuter.y + rightOuter.y) / 2;
+        var eyeDx = rightOuter.x - leftOuter.x;
+        var eyeDy = rightOuter.y - leftOuter.y;
+        var eyeDist = Math.sqrt(eyeDx * eyeDx + eyeDy * eyeDy) + 1e-6;
+        var yaw = (nose.x - eyeMidX) / eyeDist;
+        var pitch = (nose.y - eyeMidY) / eyeDist;
+
+        if (pitch > 0.24 || vRatio > 0.74) return 'down';
+        if (yaw < -0.22 || hRatio < 0.30) return 'left';
+        if (yaw > 0.22 || hRatio > 0.70) return 'right';
+        return 'center';
+      }
+
+      function stopCvAnalyzer() {
+        cvRunning = false;
+        if (cvLoopTimer) {
+          clearTimeout(cvLoopTimer);
+          cvLoopTimer = null;
+        }
+        updateCvBadges();
+      }
+
+      async function startCvAnalyzer() {
+        if (cvRunning || !isCameraOn || !stream || !videoTrack || !videoTrack.enabled || !userVideo) {
+          return;
+        }
+
+        var meshReady = await ensureFaceMeshRuntime();
+        if (!meshReady || typeof FaceMesh === 'undefined') {
+          setPipelineStatus('Camera is on but CV analyzer could not load. Check internet for MediaPipe CDN access.');
+          setDebugSignal('cv unavailable: face mesh runtime load failed');
+          cvRunning = false;
+          updateCvBadges();
+          return;
+        }
+
+        if (!cvAnalyzer) {
+          cvAnalyzer = new FaceMesh({
+            locateFile: function (file) {
+              return 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/' + file;
+            }
+          });
+          cvAnalyzer.setOptions({
+            maxNumFaces: 1,
+            refineLandmarks: true,
+            minDetectionConfidence: 0.55,
+            minTrackingConfidence: 0.55
+          });
+
+          cvAnalyzer.onResults(function (results) {
+            cvStats.totalFrames += 1;
+            var now = Date.now();
+
+            if (!results || !results.multiFaceLandmarks || !results.multiFaceLandmarks.length) {
+              cvRecentFrames.push({ face: 0, eye: 0 });
+              if (cvRecentFrames.length > cvRecentWindowSize) cvRecentFrames.shift();
+              cvLastAttention = 'Not attentive';
+              cvLastGaze = 'away';
+              cvAwaySince = 0;
+              updateCvBadges();
+              return;
+            }
+
+            cvStats.faceFrames += 1;
+            var faceLandmarks = results.multiFaceLandmarks[0];
+            cvLastGaze = estimateGazeFromLandmarks(faceLandmarks);
+
+            if (cvLastGaze === 'center') {
+              cvStats.eyeContactFrames += 1;
+              cvRecentFrames.push({ face: 1, eye: 1 });
+              cvAwaySince = 0;
+              cvLastAttention = 'Active';
+            } else {
+              cvRecentFrames.push({ face: 1, eye: 0 });
+              if (!cvAwaySince) cvAwaySince = now;
+              cvLastAttention = (now - cvAwaySince) >= 2000 ? 'Low attention' : 'Active';
+            }
+
+            if (cvRecentFrames.length > cvRecentWindowSize) cvRecentFrames.shift();
+
+            updateCvBadges();
+          });
+        }
+
+        cvRunning = true;
+        setDebugSignal('cv active');
+        setPipelineStatus('Camera CV feedback is active.');
+        updateCvBadges();
+
+        async function cvLoop() {
+          if (!cvRunning) return;
+
+          if (!isCameraOn || !videoTrack || !videoTrack.enabled || !userVideo || userVideo.readyState < 2) {
+            cvLoopTimer = setTimeout(cvLoop, 180);
+            return;
+          }
+
+          try {
+            await cvAnalyzer.send({ image: userVideo });
+          } catch (_) {
+            // Ignore occasional FaceMesh frame errors to keep the interview flow stable.
+          }
+
+          cvLoopTimer = setTimeout(cvLoop, 95);
+        }
+
+        cvLoop();
       }
 
       function setCodingStatus(text) {
@@ -1247,12 +1532,18 @@
         cameraBadge.textContent = isCameraOn ? 'Camera on' : 'Camera off';
         cameraStateText.textContent = isCameraOn ? 'Camera on' : 'Camera off';
         if (videoTrack) videoTrack.enabled = isCameraOn;
+        if (cameraOffHint) cameraOffHint.classList.toggle('hidden', isCameraOn);
 
         if (isCameraOn) {
           userTileBody.className = 'relative grid h-32 place-items-center bg-gradient-to-br from-gray-100 to-gray-200';
           if (stream) {
             userVideo.classList.remove('hidden');
             userAvatar.classList.add('hidden');
+            if (userVideo && userVideo.srcObject) {
+              userVideo.play().catch(function () {
+                // Playback can still be blocked until a user interaction; CV loop retries automatically.
+              });
+            }
           } else {
             userVideo.classList.add('hidden');
             userAvatar.classList.remove('hidden');
@@ -1261,7 +1552,12 @@
           userTileBody.className = 'relative grid h-32 place-items-center bg-gray-900';
           userVideo.classList.add('hidden');
           userAvatar.classList.add('hidden');
+          setPipelineStatus('Camera is off. Turn on camera for better feedback.');
+          if (cvTileText) cvTileText.textContent = 'Eye -- | Attn Off';
         }
+
+        if (isCameraOn && stream && videoTrack && videoTrack.enabled) startCvAnalyzer();
+        else stopCvAnalyzer();
       }
 
       function syncChatState() {
@@ -1383,6 +1679,13 @@
           videoTrack = stream.getVideoTracks()[0] || null;
           recorderStream = audioTrack ? new MediaStream([audioTrack.clone()]) : null;
           userVideo.srcObject = stream;
+          if (userVideo && userVideo.play) {
+            try {
+              await userVideo.play();
+            } catch (_) {
+              // Browser may defer autoplay until user interaction.
+            }
+          }
           syncMicState();
           syncCameraState();
           setDebugSignal('media ready: audio+video');
