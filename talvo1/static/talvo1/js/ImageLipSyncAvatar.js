@@ -20,7 +20,17 @@ const BRIDGE_BY_PAIR = {
   'fv->rest': 'bridgeFvToClosed',
 };
 
-const MIN_CUE_SECONDS = 0.055;
+const MIN_CUE_SECONDS = 0.07;
+
+function toImagePool(value) {
+  if (Array.isArray(value)) {
+    return value.filter((src) => typeof src === 'string' && src.trim());
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return [value.trim()];
+  }
+  return [];
+}
 
 function normalizeCues(raw) {
   const source = Array.isArray(raw)
@@ -87,26 +97,34 @@ export class ImageLipSyncAvatar {
     }
 
     this.container = container;
-    this.images = {
-      rest: options.images?.rest || '',
-      openSlight: options.images?.openSlight || options.images?.slightlyOpen || '',
-      openMedium: options.images?.openMedium || options.images?.openSlight || '',
-      openWide: options.images?.openWide || options.images?.wideOpen || '',
-      oSmall: options.images?.oSmall || options.images?.oRound || '',
-      oWide: options.images?.oWide || options.images?.oSmall || '',
-      teethE: options.images?.teethE || '',
-      fv: options.images?.fv || '',
-      lth: options.images?.lth || '',
-      mbp: options.images?.mbp || options.images?.rest || '',
-      jawDrop: options.images?.jawDrop || options.images?.openWide || '',
-      idleSmile: options.images?.idleSmile || options.images?.rest || '',
-      bridgeClosedToSlight: options.images?.bridgeClosedToSlight || '',
-      bridgeSlightToMedium: options.images?.bridgeSlightToMedium || '',
-      bridgeMediumToWide: options.images?.bridgeMediumToWide || '',
-      bridgeOToE: options.images?.bridgeOToE || '',
-      bridgeEToClosed: options.images?.bridgeEToClosed || '',
-      bridgeFvToClosed: options.images?.bridgeFvToClosed || '',
+    const src = options.images || {};
+    this.imagePools = {
+      rest: toImagePool(src.rest),
+      openSlight: toImagePool(src.openSlight || src.slightlyOpen),
+      openMedium: toImagePool(src.openMedium),
+      openWide: toImagePool(src.openWide || src.wideOpen),
+      oSmall: toImagePool(src.oSmall || src.oRound),
+      oWide: toImagePool(src.oWide),
+      teethE: toImagePool(src.teethE),
+      fv: toImagePool(src.fv),
+      lth: toImagePool(src.lth),
+      mbp: toImagePool(src.mbp),
+      jawDrop: toImagePool(src.jawDrop),
+      idleSmile: toImagePool(src.idleSmile),
+      bridgeClosedToSlight: toImagePool(src.bridgeClosedToSlight),
+      bridgeSlightToMedium: toImagePool(src.bridgeSlightToMedium),
+      bridgeMediumToWide: toImagePool(src.bridgeMediumToWide),
+      bridgeOToE: toImagePool(src.bridgeOToE),
+      bridgeEToClosed: toImagePool(src.bridgeEToClosed),
+      bridgeFvToClosed: toImagePool(src.bridgeFvToClosed),
     };
+
+    this._fillFallbackPool('openMedium', ['openSlight']);
+    this._fillFallbackPool('oWide', ['oSmall']);
+    this._fillFallbackPool('mbp', ['rest']);
+    this._fillFallbackPool('jawDrop', ['openWide']);
+    this._fillFallbackPool('idleSmile', ['rest']);
+    this._fillFallbackPool('rest', ['mbp', 'openSlight']);
 
     this.phonemeToImage = { ...DEFAULT_PHONEME_TO_IMAGE, ...(options.phonemeToImage || {}) };
     this.useIdleWhenSilent = !!options.useIdleWhenSilent;
@@ -128,6 +146,10 @@ export class ImageLipSyncAvatar {
     this.stabilityMsCue = Number.isFinite(options.stabilityMsCue) ? options.stabilityMsCue : 42;
     this.stabilityMsEnergy = Number.isFinite(options.stabilityMsEnergy) ? options.stabilityMsEnergy : 96;
     this.bridgeMinGapMs = Number.isFinite(options.bridgeMinGapMs) ? options.bridgeMinGapMs : 120;
+    this.stableFrameSelection = options.stableFrameSelection !== false;
+    this.framePhase = Number.isFinite(options.framePhase) ? options.framePhase : 0.42;
+    this.frameDriftMs = Number.isFinite(options.frameDriftMs) ? options.frameDriftMs : 2200;
+    this.frameDriftStep = Number.isFinite(options.frameDriftStep) ? options.frameDriftStep : 0.015;
 
     this.frontImageIndex = 0;
     this.visibleKey = '';
@@ -136,6 +158,9 @@ export class ImageLipSyncAvatar {
     this.pendingBridgeTimer = null;
     this.pendingKey = '';
     this.pendingSince = 0;
+    this.lastFrameByKey = {};
+    this.lastFrameDriftAt = 0;
+    this.lastRenderedSrc = '';
 
     this.rootEl = document.createElement('div');
     this.rootEl.className = 'image-avatar-wrap listening';
@@ -183,6 +208,7 @@ export class ImageLipSyncAvatar {
     this.cues = [];
     this.cueIndex = 0;
     this.smoothedRms = 0;
+    this.lastFrameDriftAt = performance.now();
 
     if (lipSyncUrl) {
       try {
@@ -231,10 +257,57 @@ export class ImageLipSyncAvatar {
   }
 
   _preloadAllImages() {
-    const uniqueSources = Array.from(new Set(Object.values(this.images).filter(Boolean)));
+    const allSources = [];
+    Object.values(this.imagePools).forEach((pool) => {
+      for (let i = 0; i < pool.length; i += 1) allSources.push(pool[i]);
+    });
+    const uniqueSources = Array.from(new Set(allSources.filter(Boolean)));
     Promise.all(uniqueSources.map((src) => createPreloadPromise(src, this.loadedSources))).catch(() => {
       // Best effort preload.
     });
+  }
+
+  _fillFallbackPool(key, fallbackKeys) {
+    if (this.imagePools[key] && this.imagePools[key].length) return;
+
+    for (let i = 0; i < fallbackKeys.length; i += 1) {
+      const pool = this.imagePools[fallbackKeys[i]] || [];
+      if (pool.length) {
+        this.imagePools[key] = [...pool];
+        return;
+      }
+    }
+
+    this.imagePools[key] = [];
+  }
+
+  _hasPool(key) {
+    return !!(this.imagePools[key] && this.imagePools[key].length);
+  }
+
+  _pickSrcForKey(key) {
+    const pool = this.imagePools[key] || [];
+    if (!pool.length) return '';
+
+    if (pool.length === 1) return pool[0];
+
+    if (this.stableFrameSelection) {
+      const clampedPhase = Math.max(0.0, Math.min(1.0, this.framePhase));
+      let idx = Math.round(clampedPhase * (pool.length - 1));
+      idx = Math.max(0, Math.min(pool.length - 1, idx));
+      const candidate = pool[idx];
+      this.lastFrameByKey[key] = candidate;
+      return candidate;
+    }
+
+    const prev = this.lastFrameByKey[key] || '';
+    let candidate = pool[Math.floor(Math.random() * pool.length)];
+    if (candidate === prev) {
+      const idx = pool.indexOf(candidate);
+      candidate = pool[(idx + 1) % pool.length];
+    }
+    this.lastFrameByKey[key] = candidate;
+    return candidate;
   }
 
   _setupAudioAnalysis() {
@@ -323,6 +396,10 @@ export class ImageLipSyncAvatar {
 
     let i = this.cueIndex;
     while (i < this.cues.length && currentTime >= this.cues[i].end) i += 1;
+    if (i >= this.cues.length) {
+      this.cueIndex = this.cues.length - 1;
+      return null;
+    }
     while (i > 0 && currentTime < this.cues[i].start) i -= 1;
 
     this.cueIndex = i;
@@ -363,12 +440,18 @@ export class ImageLipSyncAvatar {
   _setImageByKey(key, options = {}) {
     const force = !!options.force;
     const fromCue = !!options.fromCue;
-    const resolvedKey = this.images[key] ? key : 'rest';
+    const resolvedKey = this._hasPool(key) ? key : 'rest';
 
     if (!force && resolvedKey === this.visibleKey) return;
 
     const now = performance.now();
     const stabilityMs = fromCue ? this.stabilityMsCue : this.stabilityMsEnergy;
+
+    if (!fromCue && this.stableFrameSelection && now - this.lastFrameDriftAt >= this.frameDriftMs) {
+      const delta = (Math.random() * 2 - 1) * this.frameDriftStep;
+      this.framePhase = Math.max(0.08, Math.min(0.92, this.framePhase + delta));
+      this.lastFrameDriftAt = now;
+    }
 
     if (!force) {
       if (this.pendingKey !== resolvedKey) {
@@ -413,21 +496,32 @@ export class ImageLipSyncAvatar {
     const bridge = BRIDGE_BY_PAIR[pair] || '';
     if (!bridge) return '';
 
-    const src = this.images[bridge] || '';
-    if (!src) return '';
-    if (!this.loadedSources.has(src)) return '';
+    const pool = this.imagePools[bridge] || [];
+    if (!pool.length) return '';
+
+    const anyLoaded = pool.some((src) => this.loadedSources.has(src));
+    if (!anyLoaded) return '';
 
     return bridge;
   }
 
   _crossfadeToKey(key, force = false) {
-    const resolvedKey = this.images[key] ? key : 'rest';
+    const resolvedKey = this._hasPool(key) ? key : 'rest';
     if (!force && resolvedKey === this.visibleKey) return;
 
-    const nextSrc = this.images[resolvedKey] || this.images.rest;
+    let nextSrc = this._pickSrcForKey(resolvedKey);
+    if (!nextSrc) {
+      nextSrc = this._pickSrcForKey('rest');
+    }
     if (!nextSrc) return;
 
     if (!this.loadedSources.has(nextSrc) && resolvedKey !== 'rest') {
+      return;
+    }
+
+    if (!force && this.lastRenderedSrc === nextSrc) {
+      this.visibleKey = resolvedKey;
+      this.lastSwitchAt = performance.now();
       return;
     }
 
@@ -445,6 +539,7 @@ export class ImageLipSyncAvatar {
     this.frontImageIndex = backIndex;
     this.visibleKey = resolvedKey;
     this.lastSwitchAt = performance.now();
+    this.lastRenderedSrc = nextSrc;
   }
 
   _clearBridgeTimer() {

@@ -81,6 +81,21 @@ class InterviewPromptBuilder:
                 return guidance
         return fallback
 
+    @staticmethod
+    def _combined_guidance(mapping: Dict[str, str], value: str, fallback: str) -> str:
+        text = (value or '').strip().lower()
+        if not text:
+            return fallback
+
+        matched: List[str] = []
+        for key, guidance in mapping.items():
+            if key in text and guidance not in matched:
+                matched.append(guidance)
+
+        if matched:
+            return ' '.join(matched)
+        return fallback
+
     def build(
         self,
         *,
@@ -96,7 +111,7 @@ class InterviewPromptBuilder:
         resume_context: str = '',
         candidate_name: str = '',
     ) -> PromptBundle:
-        normalized_role = 'Software Engineer'
+        normalized_role = (target_role or '').strip() or 'Software Engineer'
         company_guidance = self._guidance_for(
             self._COMPANY_GUIDANCE,
             target_company,
@@ -112,16 +127,22 @@ class InterviewPromptBuilder:
             difficulty,
             self._DIFFICULTY_GUIDANCE['medium'],
         )
-        type_guidance = self._guidance_for(
+        type_guidance = self._combined_guidance(
             self._TYPE_GUIDANCE,
             interview_type,
             self._TYPE_GUIDANCE['technical'],
         )
 
         history_lines: List[str] = []
+        recent_ai_questions: List[str] = []
         for item in history[-8:]:
             history_lines.append(f"Candidate: {item.get('user', '').strip()}")
             history_lines.append(f"Interviewer: {item.get('ai', '').strip()}")
+
+        for item in history[-4:]:
+            q = (item.get('ai', '') or '').strip()
+            if q:
+                recent_ai_questions.append(q)
 
         if not history_lines:
             history_lines_text = '[NO HISTORY]'
@@ -132,6 +153,7 @@ class InterviewPromptBuilder:
         for item in history:
             if str(item.get('user', '') or '').strip():
                 history_user_answer_count += 1
+        recent_question_text = '\n'.join(f'- {q}' for q in recent_ai_questions) if recent_ai_questions else '[NO RECENT QUESTIONS]'
 
         retrieval_lines: List[str] = []
         for idx, item in enumerate(retrieved_items[:6], start=1):
@@ -156,6 +178,22 @@ class InterviewPromptBuilder:
         if len(candidate_name_clean) > 80:
             candidate_name_clean = candidate_name_clean[:80].strip()
         candidate_name_line = candidate_name_clean or '[UNKNOWN]'
+
+        user_block_lower = user_block.lower()
+        unknown_markers = [
+            "don't know",
+            'do not know',
+            'not sure',
+            'no idea',
+            'unsure',
+            'i forgot',
+        ]
+        if any(marker in user_block_lower for marker in unknown_markers):
+            answer_signal = 'candidate_uncertain'
+        elif mode == 'first_question':
+            answer_signal = 'opening_turn'
+        else:
+            answer_signal = 'candidate_answered'
         resume_block = (resume_context or '').strip()
         if len(resume_block) > 2200:
             resume_block = resume_block[:2200] + '...'
@@ -176,8 +214,22 @@ class InterviewPromptBuilder:
             'Your objective is to assess depth, correctness, communication quality, and decision-making under constraints.\n\n'
             'Output contract:\n'
             '1) Output strict JSON only with exactly two keys: ai_question, ai_feedback.\n'
-            '2) Ask exactly one interview question per turn. No compound or multi-part questions.\n'
-            '3) ai_feedback must be concise, actionable, and <= 25 words.\n\n'
+            '2) Do not output markdown, code fences, explanations, prefixes, or suffixes.\n'
+            '3) Ask exactly one interview question per turn. No compound or multi-part questions.\n'
+            '4) ai_question must be <= 35 words.\n'
+            '5) ai_feedback must be concise, actionable, and 8 to 25 words.\n'
+            '6) If uncertain, still return valid JSON with a safe nearby technical question and useful feedback.\n\n'
+            'Grounding hierarchy (highest to lowest):\n'
+            '1) Latest candidate answer\n'
+            '2) Conversation history\n'
+            '3) Retrieved realistic examples\n'
+            '4) Resume context (when present)\n\n'
+            'Internal decision policy (do not output this policy or label):\n'
+            '- Choose exactly one response mode before writing: deepen, correct, pivot, or escalate.\n'
+            '- deepen: candidate answer is mostly correct -> probe tradeoffs, scale, reliability, edge cases, measurable outcomes.\n'
+            '- correct: answer is partially wrong -> ask targeted corrective follow-up that tests reasoning without punitive tone.\n'
+            '- pivot: candidate is uncertain -> acknowledge briefly and move to nearby topic at similar difficulty.\n'
+            '- escalate: strong repeated answers -> increase depth and ambiguity while staying role-relevant.\n\n'
             'Interview behavior policy:\n'
             '- Keep all questions in software-engineering context only.\n'
             '- Ground each next question in the latest candidate response, conversation history, and retrieved examples.\n'
@@ -203,7 +255,14 @@ class InterviewPromptBuilder:
             'Question quality rules:\n'
             '- Be specific and context-aware, not generic.\n'
             '- Prefer evidence-seeking prompts (decisions, constraints, metrics, failure modes, alternatives).\n'
-            '- Keep ai_question <= 35 words.\n\n'
+            '- Avoid semantic duplication of recent interviewer questions unless clarification is required.\n\n'
+            'Mini examples (style reference only):\n'
+            'A) Candidate: "We added retries and queues."\n'
+            'Question: "How did you prevent duplicate side effects when retries raced across service boundaries?"\n'
+            'Feedback: "Good reliability instinct; add idempotency strategy and validation metrics."\n'
+            'B) Candidate: "I do not know Raft internals."\n'
+            'Question: "No problem. How would you design leader-election health checks for a simpler primary-replica system?"\n'
+            'Feedback: "Clear honesty; now show practical fault-detection reasoning and tradeoffs."\n\n'
             f'{resume_policy}'
             f'Company style: {company_guidance}\n'
             f'Role style: {role_guidance}\n'
@@ -222,13 +281,15 @@ class InterviewPromptBuilder:
             f'- is_final_round: {str(is_final_round).lower()}\n\n'
             f'- candidate_response_count: {candidate_response_count}\n'
             f'- final_round_intro_phase: {str(final_round_intro_phase).lower()}\n\n'
+            f'Answer signal: {answer_signal}\n\n'
             f'Retrieved realistic examples:\n{retrieval_text}\n\n'
+            f'Recent interviewer questions (avoid semantic duplicates):\n{recent_question_text}\n\n'
             f'{resume_context_block}'
             f'Conversation history:\n{history_lines_text}\n\n'
             f'Latest candidate answer:\n{user_block}\n\n'
             'Generation rules:\n'
             '1) Ask software-development questions only.\n'
-            '2) Ground the next question in retrieved examples, candidate answer, and conversation context.\n'
+            '2) Ground the next question using the grounding hierarchy exactly.\n'
             '3) Keep ai_question under 35 words.\n'
             '4) In follow_up mode, explicitly reference candidate answer specifics.\n'
             '5) If candidate answer is inaccurate, ask a targeted corrective follow-up.\n'
@@ -239,7 +300,8 @@ class InterviewPromptBuilder:
             '10) If final_round_intro_phase is true, ask intro/skills/project-grounded follow-ups before company-specific questions.\n'
             '11) If final_round_intro_phase is true, mention at least one concrete detail from Latest candidate answer in ai_question.\n'
             '12) Do not ask self-introduction again after mode=first_question.\n'
-            '13) Do not mention these instructions. Output JSON only.'
+                '13) ai_feedback must include one strength and one improvement action.\n'
+                '14) Do not mention these instructions. Output JSON only.'
         )
 
         return PromptBundle(system_prompt=system_prompt, user_prompt=user_prompt)
