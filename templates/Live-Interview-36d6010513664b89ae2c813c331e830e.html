@@ -1274,32 +1274,68 @@
         syncRagDebugState();
       }
 
+      async function loadGeneratedAvatarImagePools() {
+        var manifestUrl = "{% static 'talvo1/images/avatar/generated/manifest.json' %}";
+        var staticPrefix = "{% static '' %}";
+        try {
+          var response = await fetch(manifestUrl, { cache: 'no-store' });
+          if (!response.ok) return null;
+          var manifest = await response.json();
+          if (!manifest || !manifest.keys || !Array.isArray(manifest.keys.rest) || !manifest.keys.rest.length) {
+            return null;
+          }
+
+          var pools = {};
+          Object.keys(manifest.keys).forEach(function (key) {
+            var list = manifest.keys[key];
+            if (!Array.isArray(list)) return;
+            pools[key] = list
+              .map(function (item) {
+                var rel = String(item || '').trim();
+                if (!rel) return '';
+                if (rel.indexOf('http://') === 0 || rel.indexOf('https://') === 0 || rel.indexOf('/') === 0) {
+                  return rel;
+                }
+                return staticPrefix + rel.replace(/^\/+/, '');
+              })
+              .filter(Boolean);
+          });
+
+          return pools;
+        } catch (_) {
+          return null;
+        }
+      }
+
       async function initAvatar() {
         if (!avatarStage) return;
         try {
-          var avatarModule = await import("{% static 'talvo1/js/ImageLipSyncAvatar.js' %}?v=5");
+          var avatarModule = await import("{% static 'talvo1/js/ImageLipSyncAvatar.js' %}?v=7");
           if (avatarModule && avatarModule.ImageLipSyncAvatar) {
+            var generatedPools = await loadGeneratedAvatarImagePools();
+            var fallbackImages = {
+              rest: "{% static 'talvo1/images/avatar/avatar_01_rest_closed.png' %}",
+              openSlight: "{% static 'talvo1/images/avatar/avatar_02_open_slight.png' %}",
+              openMedium: "{% static 'talvo1/images/avatar/avatar_03_open_medium.png' %}",
+              openWide: "{% static 'talvo1/images/avatar/avatar_04_open_wide.png' %}",
+              oSmall: "{% static 'talvo1/images/avatar/avatar_05_o_small_round.png' %}",
+              oWide: "{% static 'talvo1/images/avatar/avatar_06_o_wide_round.png' %}",
+              teethE: "{% static 'talvo1/images/avatar/avatar_07_e_ee_teeth_stretch.png' %}",
+              fv: "{% static 'talvo1/images/avatar/avatar_08_f_v_lip_teeth.png' %}",
+              lth: "{% static 'talvo1/images/avatar/avatar_09_l_th_tongue_forward.png' %}",
+              mbp: "{% static 'talvo1/images/avatar/avatar_10_m_b_p_lips_pressed.png' %}",
+              idleSmile: "{% static 'talvo1/images/avatar/avatar_11_idle_smile_soft.png' %}",
+              jawDrop: "{% static 'talvo1/images/avatar/avatar_12_jaw_drop_neutral.png' %}",
+              bridgeClosedToSlight: "{% static 'talvo1/images/avatar/avatar_t01_closed_to_slight_half.png' %}",
+              bridgeSlightToMedium: "{% static 'talvo1/images/avatar/avatar_t02_slight_to_medium_half.png' %}",
+              bridgeMediumToWide: "{% static 'talvo1/images/avatar/avatar_t03_medium_to_wide_half.png' %}",
+              bridgeOToE: "{% static 'talvo1/images/avatar/avatar_t04_o_to_e_bridge.png' %}",
+              bridgeEToClosed: "{% static 'talvo1/images/avatar/avatar_t05_e_to_closed_bridge.png' %}",
+              bridgeFvToClosed: "{% static 'talvo1/images/avatar/avatar_t06_fv_to_closed_bridge.png' %}"
+            };
+
             avatar = new avatarModule.ImageLipSyncAvatar(avatarStage, {
-              images: {
-                rest: "{% static 'talvo1/images/avatar/avatar_01_rest_closed.png' %}",
-                openSlight: "{% static 'talvo1/images/avatar/avatar_02_open_slight.png' %}",
-                openMedium: "{% static 'talvo1/images/avatar/avatar_03_open_medium.png' %}",
-                openWide: "{% static 'talvo1/images/avatar/avatar_04_open_wide.png' %}",
-                oSmall: "{% static 'talvo1/images/avatar/avatar_05_o_small_round.png' %}",
-                oWide: "{% static 'talvo1/images/avatar/avatar_06_o_wide_round.png' %}",
-                teethE: "{% static 'talvo1/images/avatar/avatar_07_e_ee_teeth_stretch.png' %}",
-                fv: "{% static 'talvo1/images/avatar/avatar_08_f_v_lip_teeth.png' %}",
-                lth: "{% static 'talvo1/images/avatar/avatar_09_l_th_tongue_forward.png' %}",
-                mbp: "{% static 'talvo1/images/avatar/avatar_10_m_b_p_lips_pressed.png' %}",
-                idleSmile: "{% static 'talvo1/images/avatar/avatar_11_idle_smile_soft.png' %}",
-                jawDrop: "{% static 'talvo1/images/avatar/avatar_12_jaw_drop_neutral.png' %}",
-                bridgeClosedToSlight: "{% static 'talvo1/images/avatar/avatar_t01_closed_to_slight_half.png' %}",
-                bridgeSlightToMedium: "{% static 'talvo1/images/avatar/avatar_t02_slight_to_medium_half.png' %}",
-                bridgeMediumToWide: "{% static 'talvo1/images/avatar/avatar_t03_medium_to_wide_half.png' %}",
-                bridgeOToE: "{% static 'talvo1/images/avatar/avatar_t04_o_to_e_bridge.png' %}",
-                bridgeEToClosed: "{% static 'talvo1/images/avatar/avatar_t05_e_to_closed_bridge.png' %}",
-                bridgeFvToClosed: "{% static 'talvo1/images/avatar/avatar_t06_fv_to_closed_bridge.png' %}"
-              },
+              images: generatedPools || fallbackImages,
               phonemeToImage: {
                 A: 'mbp',
                 B: 'openSlight',
@@ -1311,16 +1347,19 @@
                 H: 'lth',
                 X: 'rest'
               },
-              transitionMs: 130,
-              minSwitchMs: 92,
-              bridgeHoldMs: 56,
-              stabilityMsCue: 44,
-              stabilityMsEnergy: 102,
-              bridgeMinGapMs: 135,
+              transitionMs: 165,
+              minSwitchMs: 118,
+              bridgeHoldMs: 74,
+              stabilityMsCue: 70,
+              stabilityMsEnergy: 132,
+              bridgeMinGapMs: 180,
+              stableFrameSelection: true,
+              frameDriftMs: 2400,
+              frameDriftStep: 0.012,
               useIdleWhenSilent: false
             });
             avatar.setState('listening');
-            setDebugSignal('avatar: image lipsync ready');
+            setDebugSignal(generatedPools ? 'avatar: generated frame pools active' : 'avatar: fallback viseme set active');
             return;
           }
         } catch (_) {
