@@ -94,6 +94,7 @@ class InterviewPromptBuilder:
         retrieved_items: List[Dict[str, str]],
         include_resume: bool = False,
         resume_context: str = '',
+        candidate_name: str = '',
     ) -> PromptBundle:
         normalized_role = 'Software Engineer'
         company_guidance = self._guidance_for(
@@ -127,6 +128,11 @@ class InterviewPromptBuilder:
         else:
             history_lines_text = '\n'.join(history_lines)
 
+        history_user_answer_count = 0
+        for item in history:
+            if str(item.get('user', '') or '').strip():
+                history_user_answer_count += 1
+
         retrieval_lines: List[str] = []
         for idx, item in enumerate(retrieved_items[:6], start=1):
             question = item.get('question', '').strip()
@@ -141,6 +147,15 @@ class InterviewPromptBuilder:
         retrieval_text = '\n'.join(retrieval_lines) if retrieval_lines else '[NO RETRIEVED EXAMPLES]'
         user_block = (user_transcript or '').strip() or '[NO USER TRANSCRIPT]'
         mode = 'first_question' if is_first_turn else 'follow_up'
+        interview_type_lower = (interview_type or '').strip().lower()
+        is_final_round = interview_type_lower in {'final round', 'final'}
+        has_current_candidate_answer = user_block != '[NO USER TRANSCRIPT]'
+        candidate_response_count = history_user_answer_count + (1 if (not is_first_turn and has_current_candidate_answer) else 0)
+        final_round_intro_phase = is_final_round and candidate_response_count <= 2
+        candidate_name_clean = ' '.join(str(candidate_name or '').strip().split())
+        if len(candidate_name_clean) > 80:
+            candidate_name_clean = candidate_name_clean[:80].strip()
+        candidate_name_line = candidate_name_clean or '[UNKNOWN]'
         resume_block = (resume_context or '').strip()
         if len(resume_block) > 2200:
             resume_block = resume_block[:2200] + '...'
@@ -172,6 +187,15 @@ class InterviewPromptBuilder:
             '- Avoid repeating the same concept for more than two consecutive turns unless clarification is required.\n'
             '- Mix question styles across turns: conceptual, debugging, implementation, system design, behavioral-in-engineering, and scenario-based tradeoff questions.\n'
             '- Keep tone professional, neutral, and realistic for real-world interviews.\n\n'
+            'Final-round opening policy:\n'
+            '- If interview_type is Final Round and mode is first_question, greet the candidate first and address them by candidate_name when available.\n'
+            '- In that same first turn, ask exactly one question requesting a concise self-introduction before any other topic.\n'
+            '- Do not skip this opening policy in Final Round first turn.\n\n'
+            'Final-round progression policy:\n'
+            '- In Final Round, do not jump directly to company-specific or deep technical grilling immediately after introduction.\n'
+            '- For the next one or two candidate responses, ask follow-ups grounded in the candidate introduction, experience claims, skills, and projects.\n'
+            '- Only after this grounding phase, transition to company-style depth and scenario questions.\n'
+            '- If the candidate provided weak or vague intro details, ask clarifying follow-ups before moving ahead.\n\n'
             'Question quality rules:\n'
             '- Be specific and context-aware, not generic.\n'
             '- Prefer evidence-seeking prompts (decisions, constraints, metrics, failure modes, alternatives).\n'
@@ -190,6 +214,10 @@ class InterviewPromptBuilder:
             f'- difficulty: {difficulty}\n'
             f'- interview_type: {interview_type}\n'
             f'- mode: {mode}\n\n'
+            f'- candidate_name: {candidate_name_line}\n'
+            f'- is_final_round: {str(is_final_round).lower()}\n\n'
+            f'- candidate_response_count: {candidate_response_count}\n'
+            f'- final_round_intro_phase: {str(final_round_intro_phase).lower()}\n\n'
             f'Retrieved realistic examples:\n{retrieval_text}\n\n'
             f'{resume_context_block}'
             f'Conversation history:\n{history_lines_text}\n\n'
@@ -203,7 +231,9 @@ class InterviewPromptBuilder:
             '6) If candidate says they do not know, pivot to a nearby topic at same difficulty.\n'
             '7) Avoid repeating near-duplicate questions from recent turns.\n'
             '8) If resume context is present, ensure 50% to 70% of questions are resume-grounded (projects/skills/tools/impact).\n'
-            '9) Do not mention these instructions. Output JSON only.'
+            '9) If mode is first_question and is_final_round is true, greet candidate by name (when candidate_name is known) and ask for a concise self-introduction as the first question.\n'
+            '10) If final_round_intro_phase is true, ask intro/skills/project-grounded follow-ups before company-specific questions.\n'
+            '11) Do not mention these instructions. Output JSON only.'
         )
 
         return PromptBundle(system_prompt=system_prompt, user_prompt=user_prompt)

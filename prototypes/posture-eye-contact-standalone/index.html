@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Standalone Posture and Eye Contact Monitor</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --good: #0f766e;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --brand: #0c4a6e;
+      --track: #e5e7eb;
+      --shadow: 0 14px 38px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 20% 10%, #dff8ff 0%, var(--bg) 44%);
+      min-height: 100vh;
+    }
+
+    .layout {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid #edf0f4;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #edf0f4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 4px 0 0;
+    }
+
+    .video-wrap {
+      position: relative;
+      background: #0b1220;
+      aspect-ratio: 16 / 10;
+    }
+
+    video, canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    canvas {
+      pointer-events: none;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 16px 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #dbeafe;
+      color: #1e3a8a;
+    }
+
+    button.primary {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .metrics {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .metric-card {
+      border: 1px solid #ecf1f6;
+      border-radius: 14px;
+      padding: 12px;
+      background: #fbfcff;
+    }
+
+    .metric-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .metric-label {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .metric-score {
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .bar {
+      height: 9px;
+      width: 100%;
+      border-radius: 999px;
+      background: var(--track);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 140ms linear, background-color 140ms linear;
+      background: var(--good);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      font-size: 12px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-weight: 600;
+    }
+
+    .chip.good {
+      color: #065f46;
+      background: #d1fae5;
+      border-color: #a7f3d0;
+    }
+
+    .chip.warn {
+      color: #7c2d12;
+      background: #ffedd5;
+      border-color: #fdba74;
+    }
+
+    .chip.bad {
+      color: #7f1d1d;
+      background: #fee2e2;
+      border-color: #fca5a5;
+    }
+
+    .meta-grid {
+      padding: 0 16px 16px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .meta-item {
+      border: 1px solid #ecf1f6;
+      border-radius: 10px;
+      background: #fbfcff;
+      padding: 10px;
+    }
+
+    .meta-key {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .meta-value {
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status {
+      padding: 0 16px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 24px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Camera Preview</h1>
+          <p class="subtle">Standalone reference implementation. No project integration.</p>
+        </div>
+      </div>
+      <div class="video-wrap">
+        <video id="video" playsinline muted></video>
+        <canvas id="overlay"></canvas>
+      </div>
+      <div class="controls">
+        <button id="startBtn" class="primary">Start Camera</button>
+        <button id="stopBtn" disabled>Stop Camera</button>
+        <button id="exportBtn" disabled>Export Metrics JSON</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Behavior Signals</h2>
+          <p class="subtle">Pretrained landmarks + heuristic scoring (no dataset training).</p>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-head">
+            <p class="metric-label">Eye Contact</p>
+            <span id="eyeScore" class="metric-score">0</span>
+          </div>
+          <div class="bar"><div id="eyeBar" class="bar-fill"></div></div>
+          <div class="chip-row">
+            <span id="eyeChip" class="chip warn">Initializing</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-head">
+            <p class="metric-label">Posture</p>
+            <span id="postureScore" class="metric-score">0</span>
+          </div>
+          <div class="bar"><div id="postureBar" class="bar-fill"></div></div>
+          <div class="chip-row">
+            <span id="postureChip" class="chip warn">Initializing</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="meta-grid">
+        <div class="meta-item">
+          <div class="meta-key">Head Yaw</div>
+          <div id="yawVal" class="meta-value">0 deg</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-key">Head Pitch</div>
+          <div id="pitchVal" class="meta-value">0 deg</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-key">Head Roll</div>
+          <div id="rollVal" class="meta-value">0 deg</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-key">Shoulder Tilt</div>
+          <div id="shoulderVal" class="meta-value">0 deg</div>
+        </div>
+      </div>
+
+      <div id="statusText" class="status">Load complete. Click Start Camera.</div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { FaceLandmarker, PoseLandmarker, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const overlayCtx = overlay.getContext('2d');
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const exportBtn = document.getElementById('exportBtn');
+
+    const eyeScoreEl = document.getElementById('eyeScore');
+    const postureScoreEl = document.getElementById('postureScore');
+    const eyeBar = document.getElementById('eyeBar');
+    const postureBar = document.getElementById('postureBar');
+    const eyeChip = document.getElementById('eyeChip');
+    const postureChip = document.getElementById('postureChip');
+
+    const yawVal = document.getElementById('yawVal');
+    const pitchVal = document.getElementById('pitchVal');
+    const rollVal = document.getElementById('rollVal');
+    const shoulderVal = document.getElementById('shoulderVal');
+    const statusText = document.getElementById('statusText');
+
+    let stream = null;
+    let rafId = null;
+    let running = false;
+
+    let faceLandmarker = null;
+    let poseLandmarker = null;
+
+    let lastInferAt = 0;
+    const targetFps = 8;
+    const inferIntervalMs = Math.round(1000 / targetFps);
+    const emaAlpha = 0.2;
+
+    const history = [];
+    const state = {
+      eyeScore: 0,
+      postureScore: 0,
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function ema(prev, current, alpha) {
+      return prev === null || Number.isNaN(prev)
+        ? current
+        : (alpha * current) + ((1 - alpha) * prev);
+    }
+
+    function toDeg(rad) {
+      return rad * (180 / Math.PI);
+    }
+
+    function getStatus(score) {
+      if (score >= 75) return { label: 'Good', level: 'good' };
+      if (score >= 50) return { label: 'Improve', level: 'warn' };
+      return { label: 'Needs Attention', level: 'bad' };
+    }
+
+    function updateChip(chip, score, prefix) {
+      const status = getStatus(score);
+      chip.className = 'chip ' + status.level;
+      chip.textContent = prefix + ': ' + status.label;
+    }
+
+    function barColor(score) {
+      if (score >= 75) return 'var(--good)';
+      if (score >= 50) return 'var(--warn)';
+      return 'var(--bad)';
+    }
+
+    function renderScores(eyeScore, postureScore, diagnostics) {
+      const eyeRounded = Math.round(eyeScore);
+      const postureRounded = Math.round(postureScore);
+
+      eyeScoreEl.textContent = String(eyeRounded);
+      postureScoreEl.textContent = String(postureRounded);
+
+      eyeBar.style.width = eyeRounded + '%';
+      postureBar.style.width = postureRounded + '%';
+      eyeBar.style.background = barColor(eyeRounded);
+      postureBar.style.background = barColor(postureRounded);
+
+      updateChip(eyeChip, eyeRounded, 'Eye Contact');
+      updateChip(postureChip, postureRounded, 'Posture');
+
+      yawVal.textContent = diagnostics.headYaw.toFixed(1) + ' deg';
+      pitchVal.textContent = diagnostics.headPitch.toFixed(1) + ' deg';
+      rollVal.textContent = diagnostics.headRoll.toFixed(1) + ' deg';
+      shoulderVal.textContent = diagnostics.shoulderTilt.toFixed(1) + ' deg';
+    }
+
+    function estimateHeadDiagnostics(faceLandmarks) {
+      const nose = faceLandmarks[1];
+      const leftEyeOuter = faceLandmarks[33];
+      const rightEyeOuter = faceLandmarks[263];
+
+      if (!nose || !leftEyeOuter || !rightEyeOuter) {
+        return null;
+      }
+
+      const eyeMidX = (leftEyeOuter.x + rightEyeOuter.x) / 2;
+      const eyeMidY = (leftEyeOuter.y + rightEyeOuter.y) / 2;
+      const eyeDx = rightEyeOuter.x - leftEyeOuter.x;
+      const eyeDy = rightEyeOuter.y - leftEyeOuter.y;
+      const eyeDist = Math.hypot(eyeDx, eyeDy) || 0.0001;
+
+      const yaw = ((nose.x - eyeMidX) / eyeDist) * 52;
+      const pitch = ((nose.y - eyeMidY) / eyeDist) * 44;
+      const roll = toDeg(Math.atan2(eyeDy, eyeDx));
+
+      return {
+        headYaw: yaw,
+        headPitch: pitch,
+        headRoll: roll,
+      };
+    }
+
+    function estimatePostureDiagnostics(poseLandmarks) {
+      const nose = poseLandmarks[0];
+      const leftShoulder = poseLandmarks[11];
+      const rightShoulder = poseLandmarks[12];
+
+      if (!nose || !leftShoulder || !rightShoulder) {
+        return null;
+      }
+
+      const shoulderDx = rightShoulder.x - leftShoulder.x;
+      const shoulderDy = rightShoulder.y - leftShoulder.y;
+      const shoulderWidth = Math.hypot(shoulderDx, shoulderDy) || 0.0001;
+      const shoulderTilt = toDeg(Math.atan2(shoulderDy, shoulderDx));
+
+      const shoulderMidX = (leftShoulder.x + rightShoulder.x) / 2;
+      const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
+      const lateralLean = ((nose.x - shoulderMidX) / shoulderWidth) * 40;
+      const forwardDrop = ((nose.y - shoulderMidY) / shoulderWidth) * 100;
+
+      return {
+        shoulderTilt,
+        lateralLean,
+        forwardDrop,
+      };
+    }
+
+    function computeEyeContactScore(head) {
+      const yawPenalty = 2.2 * Math.abs(head.headYaw);
+      const pitchPenalty = 1.4 * Math.abs(head.headPitch);
+      const rollPenalty = 0.7 * Math.abs(head.headRoll);
+      return clamp(100 - yawPenalty - pitchPenalty - rollPenalty, 0, 100);
+    }
+
+    function computePostureScore(head, posture) {
+      const shoulderPenalty = 1.5 * Math.abs(posture.shoulderTilt);
+      const leanPenalty = 1.8 * Math.abs(posture.lateralLean);
+      const dropPenalty = Math.max(0, posture.forwardDrop - 18) * 2.2;
+      const neckPenalty = 0.6 * Math.abs(head.headRoll);
+      return clamp(100 - shoulderPenalty - leanPenalty - dropPenalty - neckPenalty, 0, 100);
+    }
+
+    function drawLandmarks(faceLandmarks, poseLandmarks) {
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+      if (faceLandmarks) {
+        overlayCtx.fillStyle = 'rgba(56, 189, 248, 0.9)';
+        for (let i = 0; i < faceLandmarks.length; i += 8) {
+          const p = faceLandmarks[i];
+          overlayCtx.beginPath();
+          overlayCtx.arc(p.x * overlay.width, p.y * overlay.height, 2, 0, Math.PI * 2);
+          overlayCtx.fill();
+        }
+      }
+
+      if (poseLandmarks) {
+        overlayCtx.fillStyle = 'rgba(34, 197, 94, 0.95)';
+        [0, 11, 12].forEach((idx) => {
+          const p = poseLandmarks[idx];
+          if (!p) return;
+          overlayCtx.beginPath();
+          overlayCtx.arc(p.x * overlay.width, p.y * overlay.height, 5, 0, Math.PI * 2);
+          overlayCtx.fill();
+        });
+      }
+    }
+
+    function recordSnapshot(snapshot) {
+      history.push(snapshot);
+      if (history.length > 1200) {
+        history.shift();
+      }
+    }
+
+    function tick(ts) {
+      if (!running) return;
+
+      rafId = requestAnimationFrame(tick);
+      if ((ts - lastInferAt) < inferIntervalMs) return;
+      lastInferAt = ts;
+
+      if (!video.videoWidth || !video.videoHeight) return;
+
+      const nowMs = Date.now();
+      const faceResult = faceLandmarker.detectForVideo(video, nowMs);
+      const poseResult = poseLandmarker.detectForVideo(video, nowMs);
+
+      const faceLandmarks = faceResult.faceLandmarks?.[0] || null;
+      const poseLandmarks = poseResult.landmarks?.[0] || null;
+
+      drawLandmarks(faceLandmarks, poseLandmarks);
+
+      if (!faceLandmarks || !poseLandmarks) {
+        statusText.textContent = 'Face or upper-body landmarks not stable. Adjust framing and lighting.';
+        return;
+      }
+
+      const head = estimateHeadDiagnostics(faceLandmarks);
+      const posture = estimatePostureDiagnostics(poseLandmarks);
+      if (!head || !posture) {
+        return;
+      }
+
+      const rawEye = computeEyeContactScore(head);
+      const rawPosture = computePostureScore(head, posture);
+
+      state.eyeScore = ema(state.eyeScore, rawEye, emaAlpha);
+      state.postureScore = ema(state.postureScore, rawPosture, emaAlpha);
+
+      const diagnostics = {
+        headYaw: head.headYaw,
+        headPitch: head.headPitch,
+        headRoll: head.headRoll,
+        shoulderTilt: posture.shoulderTilt,
+      };
+
+      renderScores(state.eyeScore, state.postureScore, diagnostics);
+
+      statusText.textContent = 'Live analysis running at ~' + targetFps + ' FPS (inference); video is not uploaded.';
+
+      recordSnapshot({
+        t: new Date().toISOString(),
+        eyeContactScore: Number(state.eyeScore.toFixed(2)),
+        postureScore: Number(state.postureScore.toFixed(2)),
+        diagnostics: {
+          headYaw: Number(head.headYaw.toFixed(2)),
+          headPitch: Number(head.headPitch.toFixed(2)),
+          headRoll: Number(head.headRoll.toFixed(2)),
+          shoulderTilt: Number(posture.shoulderTilt.toFixed(2)),
+          lateralLean: Number(posture.lateralLean.toFixed(2)),
+          forwardDrop: Number(posture.forwardDrop.toFixed(2)),
+        }
+      });
+    }
+
+    async function initModels() {
+      statusText.textContent = 'Loading MediaPipe models...';
+      const filesetResolver = await FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+      );
+
+      faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
+        },
+        runningMode: 'VIDEO',
+        numFaces: 1,
+        minFaceDetectionConfidence: 0.5,
+        minFacePresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
+      poseLandmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'
+        },
+        runningMode: 'VIDEO',
+        numPoses: 1,
+        minPoseDetectionConfidence: 0.5,
+        minPosePresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
+      statusText.textContent = 'Models ready. Click Start Camera.';
+    }
+
+    async function startCamera() {
+      if (running) return;
+      try {
+        statusText.textContent = 'Requesting camera permission...';
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 540 } },
+          audio: false,
+        });
+
+        video.srcObject = stream;
+        await video.play();
+
+        overlay.width = video.videoWidth;
+        overlay.height = video.videoHeight;
+
+        running = true;
+        lastInferAt = 0;
+        rafId = requestAnimationFrame(tick);
+
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        exportBtn.disabled = false;
+
+        statusText.textContent = 'Camera started. Running local analysis.';
+      } catch (error) {
+        statusText.textContent = 'Could not access camera: ' + (error?.message || String(error));
+      }
+    }
+
+    function stopCamera() {
+      running = false;
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+      }
+
+      video.srcObject = null;
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      statusText.textContent = 'Camera stopped.';
+    }
+
+    function exportHistory() {
+      if (!history.length) {
+        statusText.textContent = 'No metric samples to export yet.';
+        return;
+      }
+
+      const payload = {
+        generatedAt: new Date().toISOString(),
+        sampleCount: history.length,
+        notes: 'Standalone prototype output. Not connected to project backend.',
+        samples: history,
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'posture_eye_contact_metrics.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      statusText.textContent = 'Exported ' + history.length + ' samples to JSON.';
+    }
+
+    startBtn.addEventListener('click', startCamera);
+    stopBtn.addEventListener('click', stopCamera);
+    exportBtn.addEventListener('click', exportHistory);
+
+    initModels().catch((error) => {
+      statusText.textContent = 'Model initialization failed: ' + (error?.message || String(error));
+    });
+  </script>
+</body>
+</html>

@@ -63,6 +63,11 @@
       Interview Setup
     </a>
 
+    <a href="{% url 'placement_hub' %}" class="tsb-nav-item {% if current == 'placement_hub' or current == 'placement_company' or current == 'aptitude_round' or current == 'company_resources' %}active{% endif %}">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h16" stroke-width="1.8" stroke-linecap="round"/><path d="M6 20v-7m6 7V9m6 11v-4" stroke-width="1.8" stroke-linecap="round"/><path d="M6 9l6-4 6 4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Placement Hub
+    </a>
+
     <a href="{% url 'history_page' %}" class="tsb-nav-item {% if current == 'history_page' or current == 'replay_page' or current == 'feedback_dashboard' or current == 'results_page' %}active{% endif %}">
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h12" stroke-width="1.8" stroke-linecap="round"/><path d="M7 20v-8M12 20V9M17 20v-5" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="7" r="3" stroke-width="1.8"/></svg>
       Performance and History

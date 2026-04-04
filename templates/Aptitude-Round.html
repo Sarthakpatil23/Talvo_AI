@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Talvo Aptitude Round</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(180deg, #f8faff 0%, #f4f6fa 100%);
+      color: #0D1117;
+    }
+
+    .question-card {
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+      background: #fff;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .question-card:hover {
+      border-color: rgba(11, 61, 145, 0.38);
+      box-shadow: 0 14px 24px -24px rgba(11, 61, 145, 0.7);
+    }
+
+    .inline-coach-shell {
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%);
+      box-shadow: 0 14px 28px -26px rgba(15, 23, 42, 0.72);
+      overflow: hidden;
+    }
+
+    .inline-coach-chat {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .inline-coach-msg {
+      max-width: 92%;
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 12px;
+      line-height: 1.42;
+      white-space: pre-wrap;
+    }
+
+    .inline-coach-msg.user {
+      align-self: flex-end;
+      background: #dbeafe;
+      color: #1e3a8a;
+    }
+
+    .inline-coach-msg.ai {
+      align-self: flex-start;
+      background: #eef2ff;
+      color: #312e81;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex">
+  {% include 'partials/sidebar.html' %}
+
+  <main class="flex-1 min-w-0 px-6 py-7 md:px-8 md:py-8">
+    <div class="mx-auto max-w-5xl space-y-6">
+      <header class="rounded-2xl border border-white/30 bg-gradient-to-br from-[#0B3D91] via-[#27499f] to-[#1a1050] px-7 py-7 text-white shadow-[0_24px_48px_-34px_rgba(11,61,145,0.85)]">
+        <p class="text-xs uppercase tracking-[0.16em] text-white/75">Placement Hub</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight">Aptitude Round</h1>
+        <p class="mt-2 text-sm text-white/85">Company context: <span class="font-semibold">{{ selected_company }}</span> | Questions: {{ question_count }}</p>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <a href="{% url 'placement_company' %}?company={{ selected_company|urlencode }}" class="rounded-full border border-white/35 bg-white/10 px-4 py-2 text-xs font-semibold text-white">Back to Company Workspace</a>
+        </div>
+      </header>
+
+      {% if result %}
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="grid gap-4 md:grid-cols-3">
+          <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Score</p>
+            <p class="mt-2 text-3xl font-bold text-[#0B3D91]">{{ result.score }}/{{ result.total_questions }}</p>
+          </article>
+          <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Percentage</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-600">{{ result.percentage }}%</p>
+          </article>
+          <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Attempt Time</p>
+            <p class="mt-2 text-3xl font-bold text-violet-700">{{ result.duration_seconds }}s</p>
+          </article>
+        </div>
+
+        <div class="mt-5 flex flex-wrap items-center gap-3">
+          <a href="{% url 'aptitude_round' %}?company={{ selected_company|urlencode }}" class="rounded-full bg-[#0B3D91] px-5 py-2 text-sm font-semibold text-white">Retake Aptitude</a>
+          <a href="{% url 'company_resources' %}?company={{ selected_company|urlencode }}" class="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700">Go to Resources</a>
+          <a href="{% url 'placement_company' %}?company={{ selected_company|urlencode }}" class="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700">Back to Company Workspace</a>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        {% for item in result.review %}
+        <article class="question-card p-5" data-review-id="{{ item.id }}">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ item.category }}</p>
+            <div class="flex flex-col items-end gap-2">
+              {% if item.is_correct %}
+              <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Correct</span>
+              {% else %}
+              <span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">Needs Review</span>
+              {% endif %}
+              <button type="button" class="ask-coach-btn rounded-full border border-[#0B3D91]/35 bg-[#EEF2FF] px-3 py-1.5 text-xs font-semibold text-[#0B3D91] transition-all hover:bg-[#E0E7FF]" data-review-id="{{ item.id }}">Ask AI about this question</button>
+            </div>
+          </div>
+
+          <div class="mt-2 hidden inline-coach-shell" data-coach-shell="{{ item.id }}"></div>
+
+          <p class="mt-2 text-base font-semibold text-slate-900">{{ forloop.counter }}. {{ item.question }}</p>
+          <div class="mt-3 grid gap-2 text-sm">
+            <p class="text-slate-700">Your answer: {% if item.selected_index >= 0 %}<span class="font-medium">{{ item.selected_option }}</span>{% else %}<span class="font-medium text-rose-600">Not attempted</span>{% endif %}</p>
+            <p class="text-slate-700">Correct answer: <span class="font-medium text-emerald-700">{{ item.answer_option }}</span></p>
+          </div>
+        </article>
+        {% endfor %}
+      </section>
+
+      {{ result.review|json_script:"aptitudeReviewData" }}
+      {% else %}
+      <form method="post" class="space-y-4" id="aptitudeForm">
+        {% csrf_token %}
+        <input type="hidden" name="company" value="{{ selected_company }}"/>
+        <input type="hidden" name="question_ids" value="{{ question_ids_csv }}"/>
+        <input type="hidden" name="duration_seconds" id="durationSeconds" value="0"/>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p class="text-sm text-slate-600">Timer starts now. Submit once all answers are selected.</p>
+            <p class="text-xs text-slate-500">If you leave before submitting, this session and score will not be counted.</p>
+          </div>
+          <div class="rounded-full bg-[#EEF2FF] px-4 py-2 text-sm font-semibold text-[#0B3D91]">Elapsed: <span id="timerLabel">00:00</span></div>
+        </div>
+
+        {% for question in questions %}
+        <article class="question-card p-5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ question.category }}</p>
+            <span class="text-xs text-slate-500">Question {{ forloop.counter }}</span>
+          </div>
+          <p class="mt-2 text-base font-semibold text-slate-900">{{ question.text }}</p>
+
+          <div class="mt-4 space-y-2">
+            {% for option in question.options %}
+            <label class="flex items-start gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 hover:border-[#0B3D91] hover:bg-[#F8FAFF]">
+              <input type="radio" name="q_{{ question.id }}" value="{{ forloop.counter0 }}" class="mt-0.5 h-4 w-4 border-slate-300 text-[#0B3D91] focus:ring-[#0B3D91]" required/>
+              <span>{{ option }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+
+        <div class="sticky bottom-4 z-20 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-slate-500">Submit to get score and detailed review for {{ selected_company }} preparation.</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <a id="backToCompanyBtn" href="{% url 'placement_company' %}?company={{ selected_company|urlencode }}" class="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700">Back</a>
+              <button type="button" id="exitAttemptBtn" class="rounded-full border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700">Exit Attempt</button>
+              <button type="submit" class="rounded-full bg-gradient-to-r from-[#7C4DFF] to-[#0B3D91] px-6 py-2.5 text-sm font-semibold text-white">Submit Aptitude Round</button>
+            </div>
+          </div>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var form = document.getElementById('aptitudeForm');
+      var timerLabel = document.getElementById('timerLabel');
+      var durationInput = document.getElementById('durationSeconds');
+      if (!form || !timerLabel || !durationInput) return;
+
+      var isSubmitting = false;
+      var hasInteracted = false;
+      var exitMessage = 'Exit aptitude attempt? Your current session is not submitted, so this attempt and score will not be counted.';
+
+      var seconds = 0;
+      function formatTime(totalSeconds) {
+        var mins = Math.floor(totalSeconds / 60);
+        var secs = totalSeconds % 60;
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      }
+
+      form.addEventListener('submit', function () {
+        isSubmitting = true;
+      });
+
+      form.querySelectorAll('input[type="radio"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          hasInteracted = true;
+        });
+      });
+
+      window.addEventListener('beforeunload', function (event) {
+        if (!isSubmitting && hasInteracted) {
+          event.preventDefault();
+          event.returnValue = '';
+        }
+      });
+
+      function confirmAndExit(targetUrl) {
+        if (!hasInteracted) {
+          isSubmitting = true;
+          window.location.href = targetUrl;
+          return;
+        }
+        if (window.confirm(exitMessage)) {
+          isSubmitting = true;
+          window.location.href = targetUrl;
+        }
+      }
+
+      var backBtn = document.getElementById('backToCompanyBtn');
+      if (backBtn) {
+        backBtn.addEventListener('click', function (event) {
+          event.preventDefault();
+          confirmAndExit(backBtn.getAttribute('href'));
+        });
+      }
+
+      var exitBtn = document.getElementById('exitAttemptBtn');
+      if (exitBtn) {
+        exitBtn.addEventListener('click', function () {
+          var targetUrl = "{% url 'placement_company' %}?company={{ selected_company|urlencode }}";
+          confirmAndExit(targetUrl);
+        });
+      }
+
+      setInterval(function () {
+        seconds += 1;
+        timerLabel.textContent = formatTime(seconds);
+        durationInput.value = String(seconds);
+      }, 1000);
+    })();
+  </script>
+
+  {% if result %}
+  <script>
+    (function () {
+      var reviewNode = document.getElementById('aptitudeReviewData');
+      if (!reviewNode) return;
+
+      var reviewItems = [];
+      try {
+        reviewItems = JSON.parse(reviewNode.textContent || '[]');
+      } catch (error) {
+        reviewItems = [];
+      }
+      if (!Array.isArray(reviewItems) || !reviewItems.length) return;
+
+      var sessions = {};
+      var reviewById = {};
+      reviewItems.forEach(function (item) {
+        reviewById[String(item.id)] = item;
+      });
+
+      function getCsrfToken() {
+        var name = 'csrftoken=';
+        var parts = document.cookie.split(';');
+        for (var i = 0; i < parts.length; i += 1) {
+          var cookie = parts[i].trim();
+          if (cookie.indexOf(name) === 0) return decodeURIComponent(cookie.slice(name.length));
+        }
+        return '';
+      }
+
+      function createMessage(chatEl, role, content) {
+        var box = document.createElement('div');
+        box.className = 'inline-coach-msg ' + role;
+        box.textContent = String(content || '');
+        chatEl.appendChild(box);
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
+
+      function ensureSession(questionId) {
+        var qid = String(questionId || '');
+        if (!qid) return null;
+        if (sessions[qid]) return sessions[qid];
+
+        var shell = document.querySelector('[data-coach-shell="' + qid + '"]');
+        if (!shell) return null;
+
+        shell.innerHTML =
+          '<div class="px-3 py-2 border-b border-slate-200 bg-white">'
+          + '<p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">AI Review Assistant</p>'
+          + '<p class="text-xs text-slate-600">Ask why this answer was wrong and how to improve.</p>'
+          + '</div>'
+          + '<div class="inline-coach-chat" data-chat></div>'
+          + '<form class="border-t border-slate-200 p-2.5 space-y-2" data-form>'
+          + '<textarea rows="2" class="w-full rounded-lg border-slate-300 text-sm focus:border-[#0B3D91] focus:ring-[#0B3D91]" data-prompt placeholder="Ask for step-by-step fix or a shortcut method..."></textarea>'
+          + '<div class="flex items-center justify-between gap-2">'
+          + '<p class="text-[11px] text-slate-500" data-status>Ready</p>'
+          + '<button type="submit" class="rounded-full bg-[#0B3D91] px-3.5 py-1.5 text-xs font-semibold text-white" data-send>Ask</button>'
+          + '</div>'
+          + '</form>';
+
+        var chatEl = shell.querySelector('[data-chat]');
+        var formEl = shell.querySelector('[data-form]');
+        var promptEl = shell.querySelector('[data-prompt]');
+        var statusEl = shell.querySelector('[data-status]');
+        var sendEl = shell.querySelector('[data-send]');
+
+        var session = {
+          questionId: qid,
+          shell: shell,
+          chat: chatEl,
+          form: formEl,
+          prompt: promptEl,
+          status: statusEl,
+          send: sendEl,
+          history: []
+        };
+
+        formEl.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          var item = reviewById[qid];
+          if (!item) return;
+
+          var prompt = String(promptEl.value || '').trim() || 'What went wrong in this question?';
+          createMessage(chatEl, 'user', prompt);
+          session.history.push({ role: 'user', content: prompt });
+          promptEl.value = '';
+          statusEl.textContent = 'Thinking...';
+          sendEl.disabled = true;
+
+          try {
+            var response = await fetch("{% url 'aptitude_coach_api' %}", {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+              },
+              body: JSON.stringify({
+                company: "{{ selected_company|escapejs }}",
+                question: {
+                  id: item.id,
+                  question: item.question,
+                  category: item.category,
+                  selected_option: item.selected_option,
+                  answer_option: item.answer_option,
+                  is_correct: item.is_correct
+                },
+                prompt: prompt,
+                history: session.history.slice(-6)
+              })
+            });
+
+            var payload = await response.json();
+            if (!response.ok || !payload.ok) {
+              throw new Error((payload && payload.error) || 'Coach failed to respond.');
+            }
+
+            var answer = String(payload.answer || 'Try asking in a different way.');
+            createMessage(chatEl, 'ai', answer);
+            session.history.push({ role: 'assistant', content: answer });
+            statusEl.textContent = 'Ask a follow-up for deeper analysis.';
+          } catch (error) {
+            createMessage(chatEl, 'ai', 'I could not process that right now. Please try again in a moment.');
+            statusEl.textContent = String(error && error.message ? error.message : 'Request failed.');
+          } finally {
+            sendEl.disabled = false;
+          }
+        });
+
+        sessions[qid] = session;
+        return session;
+      }
+
+      function showCoachForQuestion(questionId, triggerBtn) {
+        var qid = String(questionId || '');
+        var item = reviewById[qid];
+        var session = ensureSession(qid);
+        if (!item || !session) return;
+
+        var isHidden = session.shell.classList.contains('hidden');
+        if (!isHidden) {
+          session.shell.classList.add('hidden');
+          if (triggerBtn) triggerBtn.textContent = 'Ask AI about this question';
+          return;
+        }
+
+        session.shell.classList.remove('hidden');
+        if (!session.history.length) {
+          createMessage(
+            session.chat,
+            'ai',
+            item.is_correct
+              ? 'Good attempt. Ask me for a quicker method or alternate solving strategy for this question.'
+              : 'I can explain exactly what went wrong here. Ask for step-by-step correction, shortcut method, or mistake pattern.'
+          );
+        }
+
+        if (triggerBtn) triggerBtn.textContent = 'Hide AI Response';
+        session.prompt.focus();
+      }
+
+      document.querySelectorAll('.ask-coach-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var qid = btn.getAttribute('data-review-id') || '';
+          if (!qid) return;
+          showCoachForQuestion(qid, btn);
+        });
+      });
+    })();
+  </script>
+  {% endif %}
+
+  {% include 'partials/global_ui_enhancements.html' %}
+</body>
+</html>

@@ -1527,9 +1527,16 @@
           var blob = new Blob(chunks, { type: preferredMime || chunks[0].type || 'audio/webm' });
           await sendTurn(blob);
         };
-        mediaRecorder.start();
+        mediaRecorder.start(250);
         recordTimer = setTimeout(function () {
-          if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            try {
+              mediaRecorder.requestData();
+            } catch (err) {
+              // Ignore requestData errors from older browser implementations.
+            }
+            mediaRecorder.stop();
+          }
         }, 15000);
       }
 
@@ -1544,6 +1551,11 @@
           // Give the recorder a short grace window to avoid clipping trailing words.
           releaseGraceTimer = setTimeout(function () {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
+              try {
+                mediaRecorder.requestData();
+              } catch (err) {
+                // Ignore requestData errors from older browser implementations.
+              }
               mediaRecorder.stop();
             }
             releaseGraceTimer = null;
@@ -1837,19 +1849,35 @@
         });
       }
 
-      holdToTalk.addEventListener('mousedown', beginPushToTalk);
-      holdToTalk.addEventListener('touchstart', function (e) {
-        e.preventDefault();
-        beginPushToTalk();
-      }, { passive: false });
-      holdToTalk.addEventListener('mouseup', endPushToTalk);
+      if (window.PointerEvent) {
+        holdToTalk.addEventListener('pointerdown', function (e) {
+          e.preventDefault();
+          beginPushToTalk();
+        });
+        holdToTalk.addEventListener('pointerup', function (e) {
+          e.preventDefault();
+          endPushToTalk();
+        });
+        holdToTalk.addEventListener('pointercancel', endPushToTalk);
+        holdToTalk.addEventListener('lostpointercapture', endPushToTalk);
+      } else {
+        holdToTalk.addEventListener('mousedown', beginPushToTalk);
+        holdToTalk.addEventListener('touchstart', function (e) {
+          e.preventDefault();
+          beginPushToTalk();
+        }, { passive: false });
+        holdToTalk.addEventListener('mouseup', endPushToTalk);
+        holdToTalk.addEventListener('touchend', function (e) {
+          e.preventDefault();
+          endPushToTalk();
+        });
+        holdToTalk.addEventListener('touchcancel', endPushToTalk);
+      }
+
       holdToTalk.addEventListener('mouseleave', endPushToTalk);
       window.addEventListener('mouseup', endPushToTalk);
-      holdToTalk.addEventListener('touchend', function (e) {
-        e.preventDefault();
-        endPushToTalk();
-      });
-      holdToTalk.addEventListener('touchcancel', endPushToTalk);
+      window.addEventListener('touchend', endPushToTalk, { passive: true });
+      window.addEventListener('blur', endPushToTalk);
 
       setTurnState(true);
       syncMicState();

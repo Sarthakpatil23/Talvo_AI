@@ -96,6 +96,75 @@ class InterviewPipeline:
         except Exception:
             return 0.45
 
+    @staticmethod
+    def _is_final_round(interview_type: str) -> bool:
+        normalized = (interview_type or '').strip().lower()
+        return normalized in {'final round', 'final'}
+
+    @staticmethod
+    def _build_final_round_opening_question(candidate_name: str) -> str:
+        cleaned_name = ' '.join(str(candidate_name or '').strip().split())
+        if cleaned_name:
+            return f"Hi {cleaned_name}, welcome to the final round. Could you briefly introduce yourself and highlight your most relevant experience?"
+        return 'Hi, welcome to the final round. Could you briefly introduce yourself and highlight your most relevant experience?'
+
+    @staticmethod
+    def _extract_intro_skill_keywords(user_transcript: str) -> List[str]:
+        text = str(user_transcript or '').strip().lower()
+        if not text:
+            return []
+
+        known = [
+            'python', 'java', 'javascript', 'typescript', 'django', 'flask', 'fastapi',
+            'react', 'node', 'aws', 'azure', 'gcp', 'docker', 'kubernetes',
+            'sql', 'postgresql', 'mysql', 'mongodb', 'redis', 'machine learning',
+            'deep learning', 'nlp', 'system design', 'api', 'microservices',
+        ]
+
+        found: List[str] = []
+        for skill in known:
+            if skill in text:
+                label = 'API' if skill == 'api' else skill.title()
+                found.append(label)
+            if len(found) >= 2:
+                break
+        return found
+
+    @staticmethod
+    def _count_candidate_responses(history: List[Dict[str, str]], current_user_transcript: str) -> int:
+        total = 0
+        for item in history:
+            if str(item.get('user', '') or '').strip():
+                total += 1
+        if str(current_user_transcript or '').strip():
+            total += 1
+        return total
+
+    def _build_final_round_intro_followup_question(
+        self,
+        *,
+        candidate_name: str,
+        user_transcript: str,
+        candidate_response_count: int,
+    ) -> str:
+        cleaned_name = ' '.join(str(candidate_name or '').strip().split())
+        prefix = f"Thanks {cleaned_name}," if cleaned_name else 'Thanks,'
+
+        if candidate_response_count <= 1:
+            keywords = self._extract_intro_skill_keywords(user_transcript)
+            if keywords:
+                skill_text = ' and '.join(keywords[:2])
+                return (
+                    f"{prefix} you mentioned {skill_text}. Could you describe one project where you used it, your role, "
+                    'and measurable impact?'
+                )
+            return f"{prefix} could you describe one recent project, your core responsibilities, and the measurable outcome?"
+
+        return (
+            'Great context. Before company-specific questions, what was the hardest tradeoff in that work, '
+            'why did you choose that approach, and what metric improved?'
+        )
+
     def transcribe(self, audio_path: str) -> Dict[str, object]:
         worker_url = self._speech_worker_url()
         if not worker_url:
@@ -147,10 +216,15 @@ class InterviewPipeline:
         is_first_turn: bool,
         include_resume: bool = False,
         resume_context: str = '',
+        candidate_name: str = '',
     ) -> Dict[str, str]:
         self._ensure_models()
         model_name = getattr(settings, 'GROQ_MODEL_NAME', 'llama-3.1-8b-instant')
-        rag_top_k = int(getattr(settings, 'INTERVIEW_RAG_TOP_K', 4))
+        rag_top_k_setting = int(getattr(settings, 'INTERVIEW_RAG_TOP_K', 4))
+        if self._is_final_round(interview_type) and (is_first_turn or len(history) <= 1):
+            rag_top_k = max(1, min(rag_top_k_setting, 2))
+        else:
+            rag_top_k = max(2, min(rag_top_k_setting, 3))
 
         retrieved = self._retriever.retrieve(
             company=target_company,
@@ -173,13 +247,14 @@ class InterviewPipeline:
             retrieved_items=retrieved,
             include_resume=include_resume,
             resume_context=resume_context,
+            candidate_name=candidate_name,
         )
 
         try:
             result = self._groq.chat.completions.create(
                 model=model_name,
-                temperature=0.5,
-                max_tokens=220,
+                temperature=0.35,
+                max_tokens=170,
                 messages=[
                     {'role': 'system', 'content': prompt_bundle.system_prompt},
                     {'role': 'user', 'content': prompt_bundle.user_prompt},
@@ -295,6 +370,7 @@ class InterviewPipeline:
         user_transcript_override: str = '',
         include_resume: bool = False,
         resume_context: str = '',
+        candidate_name: str = '',
     ) -> PipelineOutput:
         if self._software_only_enabled():
             target_role = 'Software Engineer'
@@ -314,9 +390,16 @@ class InterviewPipeline:
                 user_transcript = str(stt_result.get('transcript', '') or '').strip()
         stt_confidence = float(stt_result.get('confidence', 0.0) or 0.0)
         whisper_ms = int((time.perf_counter() - whisper_start) * 1000)
+        candidate_response_count = self._count_candidate_responses(history, user_transcript)
 
         llm_start = time.perf_counter()
-        if not is_first_turn and not user_transcript.strip():
+        if is_first_turn and self._is_final_round(interview_type):
+            llm = {
+                'ai_question': self._build_final_round_opening_question(candidate_name),
+                'ai_feedback': 'Begin warm and professional; evaluate intro clarity, relevance, and communication structure.',
+                'retrieved_examples': [],
+            }
+        elif not is_first_turn and not user_transcript.strip():
             llm = {
                 'ai_question': 'Why did you not answer? I could not catch your response. Please hold the speak button and answer again.',
                 'ai_feedback': 'Speak a bit louder and keep holding the button until you finish.',
@@ -332,6 +415,16 @@ class InterviewPipeline:
                 ),
                 'retrieved_examples': [],
             }
+        elif self._is_final_round(interview_type) and candidate_response_count <= 2:
+            llm = {
+                'ai_question': self._build_final_round_intro_followup_question(
+                    candidate_name=candidate_name,
+                    user_transcript=user_transcript,
+                    candidate_response_count=candidate_response_count,
+                ),
+                'ai_feedback': 'Probe intro claims with concrete role, decisions, and measurable outcomes before transitioning deeper.',
+                'retrieved_examples': [],
+            }
         else:
             llm = self.generate_interviewer_response(
                 target_role=target_role,
@@ -343,6 +436,7 @@ class InterviewPipeline:
                 is_first_turn=is_first_turn,
                 include_resume=include_resume,
                 resume_context=resume_context,
+                candidate_name=candidate_name,
             )
         llm_ms = int((time.perf_counter() - llm_start) * 1000)
 

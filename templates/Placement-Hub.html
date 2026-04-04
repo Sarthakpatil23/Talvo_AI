@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Talvo Placement Hub</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #0B3D91;
+      --accent: #00A89C;
+      --secondary: #7C4DFF;
+      --bg: #F4F6FA;
+      --border: #E2E8F0;
+      --muted: #64748B;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background:
+        radial-gradient(circle at 8% 6%, rgba(11, 61, 145, 0.16), transparent 34%),
+        radial-gradient(circle at 90% 12%, rgba(0, 168, 156, 0.12), transparent 32%),
+        linear-gradient(180deg, #F8FAFF 0%, var(--bg) 100%);
+    }
+
+    .company-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-height: 84px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      transition: all 180ms ease;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .company-card:hover {
+      border-color: rgba(11, 61, 145, 0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 24px -22px rgba(11, 61, 145, 0.65);
+    }
+
+    .company-card.active {
+      border-width: 2px;
+      border-color: #0B3D91;
+      background: #EEF2FF;
+      box-shadow: 0 14px 28px -20px rgba(11, 61, 145, 0.72);
+    }
+
+    .selected-badge {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: #0B3D91;
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .company-card.active .selected-badge {
+      display: inline-flex;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex">
+  {% include 'partials/sidebar.html' %}
+
+  <main class="flex-1 min-w-0 px-6 py-7 md:px-8 md:py-8">
+    <div class="mx-auto max-w-6xl space-y-6">
+      <header class="rounded-2xl border border-white/35 bg-gradient-to-br from-[#0B3D91] via-[#1f2f82] to-[#101c48] px-7 py-7 text-white shadow-[0_24px_48px_-30px_rgba(11,61,145,0.82)]">
+        <p class="text-xs uppercase tracking-[0.16em] text-white/70">Placement Journey</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight">Placement Hub</h1>
+        <p class="mt-2 max-w-3xl text-sm text-white/80">Choose your target company first. After that, you will enter a dedicated company workspace with aptitude test, resources, attempt history, and candidate analysis.</p>
+      </header>
+
+      <section class="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Total Attempts</p>
+          <p class="mt-2 text-3xl font-bold text-[#0B3D91]">{{ total_aptitude_attempts }}</p>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Overall Avg Score</p>
+          <p class="mt-2 text-3xl font-bold text-[#7C4DFF]">{{ overall_avg_score }}</p>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Latest Attempt</p>
+          {% if latest_attempt %}
+          <p class="mt-2 text-lg font-semibold">{{ latest_attempt.company }}</p>
+          <p class="text-sm text-slate-600">{{ latest_attempt.score }}/{{ latest_attempt.total_questions }}</p>
+          {% else %}
+          <p class="mt-2 text-sm text-slate-500">No attempts yet</p>
+          {% endif %}
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Best Attempt</p>
+          {% if best_attempt %}
+          <p class="mt-2 text-lg font-semibold">{{ best_attempt.company }}</p>
+          <p class="text-sm text-emerald-600">{{ best_attempt.score }}/{{ best_attempt.total_questions }}</p>
+          {% else %}
+          <p class="mt-2 text-sm text-slate-500">No attempts yet</p>
+          {% endif %}
+        </article>
+      </section>
+
+      <form method="post" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" id="companySelectForm">
+        {% csrf_token %}
+        <input type="hidden" name="selected_company" id="selectedCompanyInput" value="{{ selected_company }}"/>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-[18px] font-semibold text-slate-900">Select Company</h2>
+            <p class="text-sm text-slate-600">Choose one company to continue to its dedicated placement dashboard.</p>
+          </div>
+          <p class="rounded-full bg-[#EEF2FF] px-3 py-1 text-xs font-semibold text-[#0B3D91]">Step 1 of 2</p>
+        </div>
+
+        <div class="mt-4 grid gap-3 md:grid-cols-3 lg:grid-cols-4" id="companyCards">
+          {% for company in company_cards %}
+          <button type="button" class="company-card {% if selected_company and selected_company|lower == company.name|lower %}active{% endif %}" data-company="{{ company.name }}">
+            <span class="selected-badge">✓</span>
+            {% if company.logo_url %}
+            <img src="{{ company.logo_url }}" alt="{{ company.name }} logo" class="h-8 w-8 object-contain" loading="lazy"/>
+            {% else %}
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 text-xs font-bold">{{ company.name|slice:':2'|upper }}</span>
+            {% endif %}
+            <span>
+              <span class="block text-sm font-semibold text-slate-900">{{ company.name }}</span>
+              <span class="block text-xs text-slate-500">{{ company.focus }}</span>
+            </span>
+          </button>
+          {% endfor %}
+        </div>
+
+        <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+          <label for="targetCompany" class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Or Enter Custom Company</label>
+          <input id="targetCompany" list="companyOptions" class="mt-2 h-10 w-full rounded-xl border-slate-300 text-sm focus:border-[#0B3D91] focus:ring-[#0B3D91]" placeholder="Type custom company name"/>
+          <datalist id="companyOptions">
+            {% for company in company_options %}
+            <option value="{{ company }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+
+        <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+          <p class="text-xs text-slate-500">After proceeding, you will get a dedicated company page with aptitude, resources, history, and analysis.</p>
+          <button id="proceedBtn" type="submit" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7C4DFF] to-[#0B3D91] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_14px_24px_-18px_rgba(124,77,255,0.9)] disabled:cursor-not-allowed disabled:opacity-50" {% if not selected_company %}disabled{% endif %}>
+            Proceed Further
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var cards = Array.prototype.slice.call(document.querySelectorAll('#companyCards .company-card'));
+      var selectedInput = document.getElementById('selectedCompanyInput');
+      var proceedBtn = document.getElementById('proceedBtn');
+      var targetCompany = document.getElementById('targetCompany');
+
+      function applySelection(companyName) {
+        var normalized = (companyName || '').trim();
+        selectedInput.value = normalized;
+        cards.forEach(function (card) {
+          card.classList.toggle('active', (card.getAttribute('data-company') || '') === normalized);
+        });
+        proceedBtn.disabled = !normalized;
+      }
+
+      cards.forEach(function (card) {
+        card.addEventListener('click', function () {
+          applySelection(card.getAttribute('data-company') || '');
+          if (targetCompany) targetCompany.value = '';
+        });
+      });
+
+      if (targetCompany) {
+        targetCompany.addEventListener('input', function () {
+          var typed = (targetCompany.value || '').trim();
+          if (typed) {
+            applySelection(typed);
+          }
+        });
+      }
+
+      applySelection(selectedInput.value || '');
+    })();
+  </script>
+
+  {% include 'partials/global_ui_enhancements.html' %}
+</body>
+</html>

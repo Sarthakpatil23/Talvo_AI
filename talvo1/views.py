@@ -19,18 +19,703 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 import requests
 
 from .forms import RegistrationOnboardingForm
 from .interview_pipeline import InterviewPipeline, PipelineUnavailableError
-from .models import InterviewSession, InterviewTurn, UserProfile
+from .models import AptitudeAttempt, InterviewSession, InterviewTurn, UserProfile
 
 
 _CODING_SESSION_PACKS = {}
 _CODING_COMPANY_CACHE = {'names': [], 'loaded': False}
 _CODING_FOLLOWUP_STATE = {}
+
+_PLACEMENT_COMPANIES = [
+	'Google',
+	'Microsoft',
+	'Amazon',
+	'Tech Mahindra',
+	'TCS',
+	'Infosys',
+	'Wipro',
+	'Accenture',
+	'Cognizant',
+	'Capgemini',
+	'Deloitte',
+	'Flipkart',
+	'Zoho',
+]
+
+_PLACEMENT_COMPANY_KEYS = [item.lower() for item in _PLACEMENT_COMPANIES]
+
+_PLACEMENT_COMPANY_META = {
+	'google': {
+		'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
+		'tagline': 'Algorithms, depth, and structured communication',
+		'focus': 'Problem solving and scalable thinking',
+		'accent': '#0B3D91',
+		'accent_secondary': '#1f2f82',
+	},
+	'microsoft': {
+		'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg',
+		'tagline': 'Practical architecture and implementation clarity',
+		'focus': 'System reasoning and execution quality',
+		'accent': '#0B3D91',
+		'accent_secondary': '#2c5aa0',
+	},
+	'amazon': {
+		'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg',
+		'tagline': 'Ownership and leadership-principle rigor',
+		'focus': 'Behavioral depth with measurable outcomes',
+		'accent': '#92400e',
+		'accent_secondary': '#b45309',
+	},
+	'tcs': {
+		'logo_static': 'talvo1/images/companies/tcs.svg',
+		'tagline': 'Enterprise-grade delivery and reliability',
+		'focus': 'Implementation detail and communication clarity',
+		'accent': '#0B3D91',
+		'accent_secondary': '#1e40af',
+	},
+	'wipro': {
+		'logo_static': 'talvo1/images/companies/wipro.svg',
+		'tagline': 'Execution quality in service-led environments',
+		'focus': 'Operational ownership and clear delivery',
+		'accent': '#0f766e',
+		'accent_secondary': '#0d9488',
+	},
+	'tech mahindra': {
+		'logo_static': 'talvo1/images/companies/tech_mahindra.svg',
+		'tagline': 'Architecture and operational trade-off thinking',
+		'focus': 'Reliability, scale, and solutioning',
+		'accent': '#7C4DFF',
+		'accent_secondary': '#5b21b6',
+	},
+	'infosys': {
+		'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/9/95/Infosys_logo.svg',
+		'tagline': 'Digital transformation and enterprise engineering',
+		'focus': 'Aptitude speed with delivery-oriented problem solving',
+		'accent': '#0B3D91',
+		'accent_secondary': '#2563eb',
+	},
+	'accenture': {
+		'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/c/cd/Accenture.svg',
+		'tagline': 'Consulting-first execution and business impact',
+		'focus': 'Structured thinking and communication clarity',
+		'accent': '#4c1d95',
+		'accent_secondary': '#6d28d9',
+	},
+	'cognizant': {
+		'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/4/43/Cognizant_logo_2022.svg',
+		'tagline': 'Engineering and service delivery consistency',
+		'focus': 'Problem framing with practical implementation',
+		'accent': '#0f766e',
+		'accent_secondary': '#0891b2',
+	},
+	'capgemini': {
+		'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Capgemini_201x_logo.svg',
+		'tagline': 'Technology consulting and solution reliability',
+		'focus': 'Analytical aptitude and systems mindset',
+		'accent': '#2563eb',
+		'accent_secondary': '#0ea5e9',
+	},
+	'deloitte': {
+		'logo_url': 'https://cdn.worldvectorlogo.com/logos/deloitte-2.svg',
+		'tagline': 'Business insight with technical execution',
+		'focus': 'Reasoning strength and case-based communication',
+		'accent': '#166534',
+		'accent_secondary': '#15803d',
+	},
+	'flipkart': {
+		'logo_url': 'https://cdn.worldvectorlogo.com/logos/flipkart.svg',
+		'tagline': 'Scale-ready e-commerce engineering',
+		'focus': 'Data-driven decisions and speed under constraints',
+		'accent': '#1d4ed8',
+		'accent_secondary': '#2563eb',
+	},
+	'zoho': {
+		'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/3/30/ZOHO_logo_2023.svg',
+		'tagline': 'Product craftsmanship and practical innovation',
+		'focus': 'Fundamental depth with clean implementation',
+		'accent': '#b45309',
+		'accent_secondary': '#ea580c',
+	},
+}
+
+_APTITUDE_QUESTIONS_PER_TEST = 10
+
+_APTITUDE_QUESTION_BANK = [
+	{
+		'id': 'q1',
+		'category': 'Quantitative Aptitude',
+		'text': 'A number is increased by 20% and then decreased by 20%. What is the net percentage change?',
+		'options': ['0%', '4% decrease', '4% increase', '2% decrease'],
+		'answer_index': 1,
+	},
+	{
+		'id': 'q2',
+		'category': 'Logical Reasoning',
+		'text': 'If all coders are problem solvers and some problem solvers are designers, which statement is definitely true?',
+		'options': [
+			'Some coders are designers',
+			'No designers are coders',
+			'Some problem solvers may be coders',
+			'All designers are coders',
+		],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q3',
+		'category': 'Data Interpretation',
+		'text': 'Team A solved 120 questions in 3 hours. Team B solved 150 questions in 5 hours. Which team has a better per-hour rate?',
+		'options': ['Team A', 'Team B', 'Both equal', 'Cannot determine'],
+		'answer_index': 0,
+	},
+	{
+		'id': 'q4',
+		'category': 'Verbal Ability',
+		'text': 'Choose the correctly written sentence.',
+		'options': [
+			'Each of the candidates have submitted their resume.',
+			'Each of the candidates has submitted his or her resume.',
+			'Each candidate have submitted their resumes.',
+			'Each candidate has submitted there resume.',
+		],
+		'answer_index': 1,
+	},
+	{
+		'id': 'q5',
+		'category': 'Quantitative Aptitude',
+		'text': 'A train running at 60 km/h crosses a pole in 9 seconds. What is the length of the train?',
+		'options': ['120 m', '150 m', '180 m', '200 m'],
+		'answer_index': 1,
+	},
+	{
+		'id': 'q6',
+		'category': 'Logical Reasoning',
+		'text': 'Find the next term: 2, 6, 12, 20, 30, ?',
+		'options': ['36', '40', '42', '44'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q7',
+		'category': 'Data Interpretation',
+		'text': 'A candidate answered 45 out of 60 questions correctly. What is the accuracy percentage?',
+		'options': ['70%', '72%', '75%', '80%'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q8',
+		'category': 'Verbal Ability',
+		'text': 'Pick the best synonym for "meticulous".',
+		'options': ['Careless', 'Detailed', 'Rapid', 'Silent'],
+		'answer_index': 1,
+	},
+	{
+		'id': 'q9',
+		'category': 'Quantitative Aptitude',
+		'text': 'What is the simple interest on Rs. 5,000 at 8% per annum for 2 years?',
+		'options': ['Rs. 600', 'Rs. 700', 'Rs. 800', 'Rs. 900'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q10',
+		'category': 'Logical Reasoning',
+		'text': 'If A=1, B=2, C=3, then the code for "CAB" is:',
+		'options': ['213', '312', '321', '132'],
+		'answer_index': 1,
+	},
+	{
+		'id': 'q11',
+		'category': 'Data Interpretation',
+		'text': 'Monthly ticket closures are Jan=120, Feb=150, Mar=180, Apr=210. What is the percentage increase from Jan to Apr?',
+		'options': ['60%', '70%', '75%', '80%'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q12',
+		'category': 'Verbal Ability',
+		'text': 'Choose the antonym of "abundant".',
+		'options': ['Plentiful', 'Scarce', 'Ample', 'Lavish'],
+		'answer_index': 1,
+	},
+	{
+		'id': 'q13',
+		'category': 'Quantitative Aptitude',
+		'text': 'A mixture has milk and water in the ratio 5:3. If 16 liters are added in total preserving ratio, how much water is added?',
+		'options': ['4 liters', '5 liters', '6 liters', '8 liters'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q14',
+		'category': 'Logical Reasoning',
+		'text': 'In a row of 8 people, Maya is 3rd from left and Riya is 2nd from right. If they swap places, Maya becomes:',
+		'options': ['2nd from right', '3rd from right', '4th from right', '5th from left'],
+		'answer_index': 0,
+	},
+	{
+		'id': 'q15',
+		'category': 'Data Interpretation',
+		'text': 'Out of 500 applicants, 340 qualified Round 1. What is the qualification percentage?',
+		'options': ['62%', '64%', '66%', '68%'],
+		'answer_index': 3,
+	},
+	{
+		'id': 'q16',
+		'category': 'Verbal Ability',
+		'text': 'Identify the grammatically correct sentence.',
+		'options': [
+			'Neither of the two candidates were selected.',
+			'Neither of the two candidates was selected.',
+			'Neither of two candidates have been selected.',
+			'Neither candidates was selected.',
+		],
+		'answer_index': 1,
+	},
+	{
+		'id': 'q17',
+		'category': 'Quantitative Aptitude',
+		'text': 'A task can be completed by 6 people in 10 days. In how many days can 12 people complete it at the same rate?',
+		'options': ['3 days', '4 days', '5 days', '6 days'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q18',
+		'category': 'Logical Reasoning',
+		'text': 'Find the odd one out.',
+		'options': ['Triangle', 'Square', 'Circle', 'Cube'],
+		'answer_index': 3,
+	},
+	{
+		'id': 'q19',
+		'category': 'Data Interpretation',
+		'text': 'A pie chart shows category shares: A=30%, B=25%, C=20%, D=25%. If total is 800, what is count for category C?',
+		'options': ['120', '140', '160', '180'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q20',
+		'category': 'Verbal Ability',
+		'text': 'Fill in the blank: The manager asked the team to submit the report ____ Monday.',
+		'options': ['at', 'for', 'by', 'with'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q21',
+		'category': 'Quantitative Aptitude',
+		'text': 'The average of 18, 22, 26, and x is 24. Find x.',
+		'options': ['28', '30', '32', '34'],
+		'answer_index': 1,
+	},
+	{
+		'id': 'q22',
+		'category': 'Logical Reasoning',
+		'text': 'Statements: All testers are analysts. Some analysts are developers. Conclusion: Some testers are developers.',
+		'options': ['Definitely true', 'Definitely false', 'Cannot be concluded', 'Both true and false'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q23',
+		'category': 'Data Interpretation',
+		'text': 'A batch has 240 candidates with ratio of selected to rejected as 3:5. How many were selected?',
+		'options': ['75', '80', '90', '95'],
+		'answer_index': 2,
+	},
+	{
+		'id': 'q24',
+		'category': 'Verbal Ability',
+		'text': 'Choose the one-word substitute: "A person who can use both hands equally well".',
+		'options': ['Amphibian', 'Ambidextrous', 'Ambiguous', 'Anonymous'],
+		'answer_index': 1,
+	},
+]
+
+_DEFAULT_COMPANY_RESOURCES = {
+	'placement_path': [
+		'Round 1: Aptitude and communication screening',
+		'Round 2: Technical problem solving with coding basics',
+		'Round 3: Hiring manager and HR fit evaluation',
+	],
+	'aptitude_topics': ['Percentages and ratios', 'Time-speed-distance', 'Logical puzzles', 'Data interpretation sets'],
+	'recommended_tracks': [
+		'4-week aptitude drill with daily timed sets',
+		'Company-specific interview process analysis',
+		'Mock interview and final HR answers refinement',
+	],
+	'resource_links': [
+		{'label': 'Aptitude practice set (sample)', 'url': 'https://www.indiabix.com/'},
+		{'label': 'DSA quick revision sheet', 'url': 'https://takeuforward.org/interviews/strivers-sde-sheet-top-coding-interview-problems/'},
+		{'label': 'Behavioral interview prep', 'url': 'https://www.themuse.com/advice/star-interview-method'},
+	],
+}
+
+_COMPANY_RESOURCE_OVERRIDES = {
+	'google': {
+		'placement_path': [
+			'Online assessment with problem solving focus',
+			'Technical interviews emphasizing data structures and system reasoning',
+			'Team fit and leadership conversation',
+		],
+		'aptitude_topics': ['Quant speed drills', 'Data interpretation', 'Analytical logic', 'Probability basics'],
+	},
+	'microsoft': {
+		'placement_path': [
+			'Online coding + aptitude screen',
+			'Technical rounds with implementation depth',
+			'Behavioral round with collaboration scenarios',
+		],
+		'aptitude_topics': ['Ratios and averages', 'Reasoning patterns', 'Word problems', 'Case-style logic'],
+	},
+	'amazon': {
+		'placement_path': [
+			'Aptitude and coding assessment',
+			'Data structures + debugging interview rounds',
+			'Leadership principles focused behavioral interview',
+		],
+		'aptitude_topics': ['Percentages and profit-loss', 'Permutation-combination', 'Logical sequences', 'Interpretive graphs'],
+	},
+	'tcs': {
+		'placement_path': [
+			'TCS NQT style aptitude and verbal sections',
+			'Basic coding and technical fundamentals interview',
+			'HR + communication assessment',
+		],
+		'aptitude_topics': ['Number systems', 'Time and work', 'Grammar and sentence correction', 'Reasoning grids'],
+	},
+}
+
+
+def _normalize_company_name(value: str) -> str:
+	text = ' '.join(str(value or '').strip().split())
+	if not text:
+		return ''
+	return text[:140]
+
+
+def _company_key(company: str) -> str:
+	return _normalize_company_name(company).lower()
+
+
+def _is_combined_company_value(company: str) -> bool:
+	text = _normalize_company_name(company).lower()
+	if not text:
+		return False
+
+	mentions = 0
+	for name in _PLACEMENT_COMPANY_KEYS:
+		if re.search(rf'\b{re.escape(name)}\b', text):
+			mentions += 1
+
+	if mentions >= 2:
+		return True
+
+	if 'combined' in text and mentions >= 1:
+		return True
+
+	return False
+
+
+def _placement_company_profile(company: str) -> dict:
+	name = _normalize_company_name(company) or 'General'
+	key = _company_key(name)
+	meta = _PLACEMENT_COMPANY_META.get(key, {})
+
+	logo_url = str(meta.get('logo_url') or '').strip()
+	logo_static = str(meta.get('logo_static') or '').strip()
+	if not logo_url and logo_static:
+		prefix = str(getattr(settings, 'STATIC_URL', '/static/') or '/static/')
+		if not prefix.endswith('/'):
+			prefix += '/'
+		logo_url = f"{prefix}{logo_static.lstrip('/')}"
+
+	return {
+		'name': name,
+		'key': key,
+		'logo_url': logo_url,
+		'tagline': str(meta.get('tagline') or 'Placement-focused preparation track'),
+		'focus': str(meta.get('focus') or 'Aptitude, resources, and interview readiness'),
+		'accent': str(meta.get('accent') or '#0B3D91'),
+		'accent_secondary': str(meta.get('accent_secondary') or '#1f2f82'),
+	}
+
+
+def _placement_company_cards(target_company: str = '') -> list:
+	cards = []
+	for company in _placement_company_options(target_company):
+		cards.append(_placement_company_profile(company))
+	return cards
+
+
+def _placement_company_options(target_company: str = '') -> list:
+	seen = set()
+	ordered = []
+
+	for name in [target_company] + _PLACEMENT_COMPANIES:
+		clean = _normalize_company_name(name)
+		if not clean:
+			continue
+		if _is_combined_company_value(clean):
+			continue
+		key = clean.lower()
+		if key in seen:
+			continue
+		seen.add(key)
+		ordered.append(clean)
+
+	return ordered
+
+
+def _safe_int(value, default=0):
+	try:
+		return int(value)
+	except Exception:
+		return default
+
+
+def _attempt_percentage(score: int, total_questions: int) -> int:
+	total = max(1, int(total_questions or 0))
+	if int(total_questions or 0) <= 0:
+		return 0
+	return int(round((int(score or 0) / total) * 100))
+
+
+def _build_attempt_rows(attempts: list) -> list:
+	rows = []
+	for attempt in attempts:
+		rows.append(
+			{
+				'id': attempt.id,
+				'company': attempt.company,
+				'score': attempt.score,
+				'total_questions': attempt.total_questions,
+				'percentage': _attempt_percentage(attempt.score, attempt.total_questions),
+				'duration_seconds': int(attempt.duration_seconds or 0),
+				'created_at': attempt.created_at,
+			}
+		)
+	return rows
+
+
+def _candidate_analysis(company_attempts: list) -> dict:
+	if not company_attempts:
+		return {
+			'readiness_label': 'Not Started',
+			'readiness_note': 'Attempt your first aptitude round to unlock personalized analysis.',
+			'trend_label': 'No trend yet',
+			'trend_note': 'Complete at least two attempts to measure progress.',
+			'recommendations': [
+				'Attempt one full timed round first.',
+				'Review explanations for every incorrect answer.',
+				'Use resources section to target weak topics.',
+			],
+		}
+
+	percentages = [_attempt_percentage(item.score, item.total_questions) for item in company_attempts]
+	avg_pct = int(round(sum(percentages) / len(percentages))) if percentages else 0
+	best_pct = max(percentages) if percentages else 0
+	latest_pct = percentages[0] if percentages else 0
+	earliest_pct = percentages[-1] if percentages else 0
+	trend_delta = latest_pct - earliest_pct
+
+	if avg_pct >= 80:
+		readiness_label = 'High Readiness'
+		readiness_note = 'Strong consistency. Focus on speed and test pressure handling.'
+	elif avg_pct >= 65:
+		readiness_label = 'Medium Readiness'
+		readiness_note = 'Good base. Improve accuracy in weak topics and reduce unattempted questions.'
+	else:
+		readiness_label = 'Building Readiness'
+		readiness_note = 'Strengthen fundamentals first, then increase timed practice volume.'
+
+	if trend_delta >= 5:
+		trend_label = f'+{trend_delta}% improving trend'
+		trend_note = 'Recent performance is moving up. Keep the same revision rhythm.'
+	elif trend_delta <= -5:
+		trend_label = f'{trend_delta}% declining trend'
+		trend_note = 'Recent attempts dropped. Revisit basics and reduce speed errors.'
+	else:
+		trend_label = 'Stable trend'
+		trend_note = 'Performance is stable. Push targeted topic improvement for next jump.'
+
+	recommendations = [
+		f'Average score: {avg_pct}% | Best score: {best_pct}%.',
+		'Aim for 2 timed attempts per week and track mistake patterns.',
+		'Prioritize Data Interpretation and Logical Reasoning when accuracy falls below 70%.',
+	]
+
+	return {
+		'readiness_label': readiness_label,
+		'readiness_note': readiness_note,
+		'trend_label': trend_label,
+		'trend_note': trend_note,
+		'recommendations': recommendations,
+	}
+
+
+def _get_company_resources(company: str) -> dict:
+	key = _normalize_company_name(company).lower()
+	merged = {
+		'placement_path': list(_DEFAULT_COMPANY_RESOURCES['placement_path']),
+		'aptitude_topics': list(_DEFAULT_COMPANY_RESOURCES['aptitude_topics']),
+		'recommended_tracks': list(_DEFAULT_COMPANY_RESOURCES['recommended_tracks']),
+		'resource_links': list(_DEFAULT_COMPANY_RESOURCES['resource_links']),
+	}
+	override = _COMPANY_RESOURCE_OVERRIDES.get(key, {})
+	for item_key, value in override.items():
+		merged[item_key] = value
+	return merged
+
+
+def _parse_question_ids(raw_value: str) -> list:
+	ids = []
+	seen = set()
+	for part in str(raw_value or '').split(','):
+		qid = part.strip()
+		if not qid or qid in seen:
+			continue
+		seen.add(qid)
+		ids.append(qid)
+	return ids
+
+
+def _pick_random_question_ids() -> list:
+	category_map = {}
+	for question in _APTITUDE_QUESTION_BANK:
+		category_map.setdefault(question['category'], []).append(question['id'])
+
+	rng = random.SystemRandom()
+	selected = []
+	for ids in category_map.values():
+		pick_count = min(2, len(ids))
+		selected.extend(rng.sample(ids, pick_count))
+
+	remaining = [q['id'] for q in _APTITUDE_QUESTION_BANK if q['id'] not in selected]
+	needed = max(0, _APTITUDE_QUESTIONS_PER_TEST - len(selected))
+	if needed and remaining:
+		selected.extend(rng.sample(remaining, min(needed, len(remaining))))
+
+	rng.shuffle(selected)
+	return selected[:_APTITUDE_QUESTIONS_PER_TEST]
+
+
+def _get_aptitude_questions(company: str, question_ids: list = None) -> tuple[list, list]:
+	company_name = _normalize_company_name(company) or 'your target company'
+	bank_by_id = {item['id']: item for item in _APTITUDE_QUESTION_BANK}
+
+	resolved_ids = []
+	for qid in list(question_ids or []):
+		if qid in bank_by_id and qid not in resolved_ids:
+			resolved_ids.append(qid)
+
+	if not resolved_ids:
+		resolved_ids = _pick_random_question_ids()
+
+	questions = []
+	for qid in resolved_ids:
+		raw = dict(bank_by_id[qid])
+		raw['text'] = str(raw.get('text', '')).replace('{company}', company_name)
+		questions.append(raw)
+
+	return questions, resolved_ids
+
+
+def _aptitude_coach_fallback(question_payload: dict, user_prompt: str) -> str:
+	question_text = str(question_payload.get('question') or '').strip()
+	selected_option = str(question_payload.get('selected_option') or '').strip()
+	answer_option = str(question_payload.get('answer_option') or '').strip()
+	category = str(question_payload.get('category') or 'Aptitude').strip()
+	is_correct = bool(question_payload.get('is_correct'))
+	user_prompt = str(user_prompt or '').strip()
+
+	if is_correct:
+		return (
+			"You got this one correct. To make it interview-ready, explain your approach in 2-3 steps: "
+			"1) identify the concept, 2) apply the formula or elimination logic, 3) verify quickly with a sanity check. "
+			f"If needed, I can give a faster method for this {category.lower()} question."
+		)
+
+	parts = [
+		f"Let's break this down for {category}.",
+	]
+	if selected_option:
+		parts.append(f"You selected: {selected_option}.")
+	if answer_option:
+		parts.append(f"Correct answer: {answer_option}.")
+
+	parts.append(
+		"What likely went wrong: either a calculation slip, missing key condition, or rushing option elimination. "
+		"Try this method next time: read the exact ask, estimate rough range first, then compute only once."
+	)
+
+	if user_prompt:
+		parts.append(
+			f"Your question was: '{user_prompt}'. Based on that, focus on the exact step where your approach diverged from the condition in the question."
+		)
+
+	if question_text:
+		parts.append("If you want, ask me 'solve this step by step' and I will walk through this exact question.")
+
+	return ' '.join(parts)
+
+
+def _aptitude_coach_answer(selected_company: str, question_payload: dict, user_prompt: str, chat_history: list | None = None) -> str:
+	question_text = str(question_payload.get('question') or '').strip()
+	selected_option = str(question_payload.get('selected_option') or '').strip()
+	answer_option = str(question_payload.get('answer_option') or '').strip()
+	category = str(question_payload.get('category') or 'Aptitude').strip()
+	is_correct = bool(question_payload.get('is_correct'))
+	user_prompt = str(user_prompt or '').strip()[:600]
+
+	if not question_text:
+		return 'Please select a question first so I can explain what went wrong and how to improve.'
+
+	try:
+		pipeline = InterviewPipeline.instance()
+		pipeline._ensure_models()
+		model_name = getattr(settings, 'GROQ_MODEL_NAME', 'llama-3.1-8b-instant')
+
+		history_lines = []
+		for turn in list(chat_history or [])[-6:]:
+			role = str(turn.get('role') or '').strip().lower()
+			content = str(turn.get('content') or '').strip()
+			if role not in {'user', 'assistant'} or not content:
+				continue
+			history_lines.append(f"{role}: {content}")
+
+		prompt = (
+			"You are Talvo Aptitude AI Coach. Be concise, practical, and beginner-friendly. "
+			"For wrong answers: explain where mistake usually happens, then give a corrected approach and one quick tip. "
+			"Do not invent facts outside the question details.\n\n"
+			f"Company context: {selected_company}\n"
+			f"Category: {category}\n"
+			f"Question: {question_text}\n"
+			f"User selected option: {selected_option or 'Not attempted'}\n"
+			f"Correct option: {answer_option or 'Unavailable'}\n"
+			f"Is user correct: {is_correct}\n"
+			f"Prior chat (optional): {' | '.join(history_lines) if history_lines else 'None'}\n"
+			f"User asks: {user_prompt or 'What went wrong in this question?'}\n\n"
+			"Return plain text in under 180 words."
+		)
+
+		resp = pipeline._groq.chat.completions.create(
+			model=model_name,
+			temperature=0.2,
+			max_tokens=260,
+			messages=[
+				{'role': 'system', 'content': 'You are an aptitude correction coach.'},
+				{'role': 'user', 'content': prompt},
+			],
+		)
+		content = str(resp.choices[0].message.content or '').strip()
+		if content:
+			return content
+	except Exception:
+		pass
+
+	return _aptitude_coach_fallback(question_payload, user_prompt)
 
 
 def landing(request):
@@ -85,6 +770,204 @@ def talvo_ai_interview_prep(request):
 @login_required
 def dashboard(request):
 	return render(request, 'Dashboard-5405ed6ef83247c3bd20866b24684c91.html')
+
+
+@login_required
+def placement_hub(request):
+	profile, _ = UserProfile.objects.get_or_create(user=request.user)
+	profile_company = _normalize_company_name(profile.target_company or '')
+	if _is_combined_company_value(profile_company):
+		profile_company = ''
+
+	company_options = _placement_company_options(profile_company)
+	company_cards = _placement_company_cards(profile_company)
+	selected_company = _normalize_company_name(request.GET.get('company') or profile_company or '')
+	if _is_combined_company_value(selected_company):
+		selected_company = ''
+
+	if request.method == 'POST':
+		selected_company = _normalize_company_name(request.POST.get('selected_company') or request.POST.get('target_company') or profile_company or '')
+		if _is_combined_company_value(selected_company):
+			selected_company = ''
+
+		if not selected_company:
+			selected_company = profile_company or 'General'
+
+		return redirect(f"{reverse('placement_company')}?company={quote(selected_company)}")
+
+	attempts_qs = AptitudeAttempt.objects.filter(user=request.user)
+	latest_attempt = attempts_qs.order_by('-created_at').first()
+	best_attempt = attempts_qs.order_by('-score', '-created_at').first()
+	overall_avg = attempts_qs.aggregate(avg_score=Avg('score')).get('avg_score')
+
+	context = {
+		'company_options': company_options,
+		'company_cards': company_cards,
+		'selected_company': selected_company,
+		'total_aptitude_attempts': attempts_qs.count(),
+		'latest_attempt': latest_attempt,
+		'best_attempt': best_attempt,
+		'overall_avg_score': int(round(overall_avg or 0)),
+	}
+	return render(request, 'Placement-Hub.html', context)
+
+
+@login_required
+def placement_company(request):
+	profile, _ = UserProfile.objects.get_or_create(user=request.user)
+	profile_company = _normalize_company_name(profile.target_company or '')
+	if _is_combined_company_value(profile_company):
+		profile_company = ''
+
+	selected_company = _normalize_company_name(request.GET.get('company') or profile_company or '')
+	if _is_combined_company_value(selected_company):
+		selected_company = ''
+	if not selected_company:
+		selected_company = 'General'
+
+	company_profile = _placement_company_profile(selected_company)
+	company_attempts_qs = AptitudeAttempt.objects.filter(user=request.user, company__iexact=selected_company).order_by('-created_at')
+	company_attempts = list(company_attempts_qs[:10])
+	company_rows = _build_attempt_rows(company_attempts)
+
+	overall_attempts = list(AptitudeAttempt.objects.filter(user=request.user).order_by('-created_at')[:8])
+	overall_rows = _build_attempt_rows(overall_attempts)
+
+	latest_company = company_attempts[0] if company_attempts else None
+	best_company = company_attempts_qs.order_by('-score', '-created_at').first()
+	company_avg = company_attempts_qs.aggregate(avg_score=Avg('score')).get('avg_score')
+
+	resources = _get_company_resources(selected_company)
+	analysis = _candidate_analysis(company_attempts)
+
+	context = {
+		'selected_company': selected_company,
+		'company_profile': company_profile,
+		'company_attempt_rows': company_rows,
+		'overall_attempt_rows': overall_rows,
+		'company_attempt_count': company_attempts_qs.count(),
+		'latest_company_attempt': latest_company,
+		'latest_company_percentage': _attempt_percentage(latest_company.score, latest_company.total_questions) if latest_company else 0,
+		'best_company_attempt': best_company,
+		'best_company_percentage': _attempt_percentage(best_company.score, best_company.total_questions) if best_company else 0,
+		'company_avg_score': int(round(company_avg or 0)),
+		'analysis': analysis,
+		'resource_preview': resources,
+	}
+	return render(request, 'Placement-Company.html', context)
+
+
+@login_required
+def aptitude_round(request):
+	profile, _ = UserProfile.objects.get_or_create(user=request.user)
+	selected_company = _normalize_company_name(
+		request.GET.get('company') if request.method != 'POST' else request.POST.get('company')
+	)
+	if not selected_company:
+		selected_company = _normalize_company_name(profile.target_company) or 'General'
+
+	posted_question_ids = _parse_question_ids(request.POST.get('question_ids')) if request.method == 'POST' else []
+	questions, question_ids = _get_aptitude_questions(
+		selected_company,
+		posted_question_ids if request.method == 'POST' else None,
+	)
+	result = None
+	selected_answers = {}
+
+	if request.method == 'POST':
+		duration_seconds = max(0, _safe_int(request.POST.get('duration_seconds'), 0))
+		review = []
+		score = 0
+
+		for question in questions:
+			field_name = f"q_{question['id']}"
+			selected_index = _safe_int(request.POST.get(field_name), -1)
+			selected_answers[question['id']] = selected_index
+			is_correct = selected_index == int(question['answer_index'])
+			if is_correct:
+				score += 1
+			answer_index = int(question['answer_index'])
+			options = list(question['options'])
+			selected_option = options[selected_index] if 0 <= selected_index < len(options) else ''
+			answer_option = options[answer_index] if 0 <= answer_index < len(options) else ''
+			review.append(
+				{
+					'id': question['id'],
+					'question': question['text'],
+					'category': question['category'],
+					'options': options,
+					'selected_index': selected_index,
+					'answer_index': answer_index,
+					'selected_option': selected_option,
+					'answer_option': answer_option,
+					'is_correct': is_correct,
+				}
+			)
+
+		total_questions = len(questions)
+		attempt = AptitudeAttempt.objects.create(
+			user=request.user,
+			company=selected_company,
+			score=score,
+			total_questions=total_questions,
+			duration_seconds=duration_seconds,
+			responses=selected_answers,
+		)
+		percentage = int(round((score / total_questions) * 100)) if total_questions else 0
+		result = {
+			'attempt_id': attempt.id,
+			'score': score,
+			'total_questions': total_questions,
+			'percentage': percentage,
+			'duration_seconds': duration_seconds,
+			'review': review,
+		}
+
+	context = {
+		'selected_company': selected_company,
+		'company_profile': _placement_company_profile(selected_company),
+		'questions': questions,
+		'question_ids_csv': ','.join(question_ids),
+		'question_count': len(questions),
+		'result': result,
+		'selected_answers': selected_answers,
+	}
+	return render(request, 'Aptitude-Round.html', context)
+
+
+@login_required
+@require_POST
+def aptitude_coach_api(request):
+	try:
+		payload = json.loads(request.body.decode('utf-8') or '{}')
+	except json.JSONDecodeError:
+		return JsonResponse({'ok': False, 'error': 'Invalid JSON payload'}, status=400)
+
+	selected_company = _normalize_company_name(payload.get('company') or '') or 'General'
+	question_payload = payload.get('question') if isinstance(payload.get('question'), dict) else {}
+	user_prompt = str(payload.get('prompt') or '').strip()
+	chat_history = payload.get('history') if isinstance(payload.get('history'), list) else []
+
+	if not isinstance(question_payload, dict) or not str(question_payload.get('question') or '').strip():
+		return JsonResponse({'ok': False, 'error': 'Question context is required'}, status=400)
+
+	answer = _aptitude_coach_answer(selected_company, question_payload, user_prompt, chat_history)
+	return JsonResponse({'ok': True, 'answer': answer})
+
+
+@login_required
+def company_resources(request):
+	profile, _ = UserProfile.objects.get_or_create(user=request.user)
+	selected_company = _normalize_company_name(request.GET.get('company') or profile.target_company or '')
+	if not selected_company:
+		selected_company = 'General'
+
+	context = {
+		'selected_company': selected_company,
+		'company_profile': _placement_company_profile(selected_company),
+		'company_resources': _get_company_resources(selected_company),
+	}
+	return render(request, 'Company-Resources.html', context)
 
 
 @login_required
@@ -438,6 +1321,60 @@ def _build_resume_context_blob(resume_text: str) -> str:
 		'Resume text excerpt:\n'
 		f'{short_text}'
 	)
+
+
+def _extract_candidate_name_from_resume_text(resume_text: str) -> str:
+	text = str(resume_text or '').strip()
+	if not text:
+		return ''
+
+	lines = [ln.strip(' \t-•*') for ln in text.splitlines() if ln.strip()]
+	if not lines:
+		return ''
+
+	for line in lines[:20]:
+		match = re.match(r'^(?:name|candidate|full\s*name)\s*[:\-]\s*(.+)$', line, flags=re.IGNORECASE)
+		if not match:
+			continue
+		value = ' '.join(match.group(1).strip().split())
+		if re.match(r'^[A-Za-z][A-Za-z\'\-\.]+(?:\s+[A-Za-z][A-Za-z\'\-\.]*){0,3}$', value):
+			return value[:80]
+
+	for line in lines[:6]:
+		candidate = ' '.join(line.split())
+		if len(candidate) < 2 or len(candidate) > 80:
+			continue
+		if '@' in candidate or any(ch.isdigit() for ch in candidate):
+			continue
+		if re.search(r'\b(resume|curriculum vitae|cv|phone|email|linkedin|github|address|experience|education|skills)\b', candidate, flags=re.IGNORECASE):
+			continue
+		if re.match(r'^[A-Za-z][A-Za-z\'\-\.]+(?:\s+[A-Za-z][A-Za-z\'\-\.]*){0,3}$', candidate):
+			return candidate[:80]
+
+	return ''
+
+
+def _resolve_candidate_name(*, user, include_resume: bool, resume_text: str) -> str:
+	if include_resume:
+		name_from_resume = _extract_candidate_name_from_resume_text(resume_text)
+		if name_from_resume:
+			return name_from_resume
+
+	first = str(getattr(user, 'first_name', '') or '').strip()
+	last = str(getattr(user, 'last_name', '') or '').strip()
+	full = ' '.join(part for part in [first, last] if part).strip()
+	if full:
+		return full[:80]
+
+	username = str(getattr(user, 'username', '') or '').strip()
+	if username:
+		return username[:80]
+
+	email = str(getattr(user, 'email', '') or '').strip()
+	if email and '@' in email:
+		return email.split('@', 1)[0][:80]
+
+	return ''
 
 
 def _refresh_resume_text_from_saved_file(profile: UserProfile) -> str:
@@ -1748,6 +2685,7 @@ def live_interview_start_api(request):
 	resume_context = _build_resume_context_blob(resume_text) if include_resume else ''
 	if not include_resume:
 		resume_context = ''
+	candidate_name = _resolve_candidate_name(user=request.user, include_resume=include_resume, resume_text=resume_text)
 
 	session = InterviewSession.objects.create(
 		user=request.user,
@@ -1774,6 +2712,7 @@ def live_interview_start_api(request):
 			is_first_turn=True,
 			include_resume=session.include_resume,
 			resume_context=session.resume_context,
+			candidate_name=candidate_name,
 		)
 	except PipelineUnavailableError as exc:
 		session.status = InterviewSession.STATUS_ABORTED
@@ -1841,6 +2780,12 @@ def live_interview_turn_api(request):
 
 	history = _session_history(session)
 	pipeline = InterviewPipeline.instance()
+	profile, _ = UserProfile.objects.get_or_create(user=request.user)
+	candidate_name = _resolve_candidate_name(
+		user=request.user,
+		include_resume=session.include_resume,
+		resume_text=session.resume_context or profile.resume_text,
+	)
 	followup_state = _CODING_FOLLOWUP_STATE.get(str(session.id))
 	if isinstance(followup_state, dict) and followup_state.get('active'):
 		questions = followup_state.get('questions') or []
@@ -1920,6 +2865,7 @@ def live_interview_turn_api(request):
 			user_transcript_override=user_text,
 			include_resume=session.include_resume,
 			resume_context=session.resume_context,
+			candidate_name=candidate_name,
 		)
 	except PipelineUnavailableError as exc:
 		return JsonResponse({'ok': False, 'error': str(exc)}, status=503)

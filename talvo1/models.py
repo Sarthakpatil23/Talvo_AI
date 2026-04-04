@@ -73,3 +73,19 @@ class InterviewTurn(models.Model):
 
 	def __str__(self):
 		return f"session={self.session_id} turn={self.turn_index}"
+
+
+class AptitudeAttempt(models.Model):
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='aptitude_attempts')
+	company = models.CharField(max_length=140)
+	score = models.PositiveSmallIntegerField(default=0)
+	total_questions = models.PositiveSmallIntegerField(default=0)
+	duration_seconds = models.PositiveIntegerField(default=0)
+	responses = models.JSONField(default=dict, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['-created_at', '-id']
+
+	def __str__(self):
+		return f"{self.user_id} aptitude {self.company} {self.score}/{self.total_questions}"
