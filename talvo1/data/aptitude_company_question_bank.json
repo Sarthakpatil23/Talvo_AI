@@ -1,0 +1,79 @@
+{
+  "google": {
+    "source": "Starter set. Replace with licensed company-wise questions.",
+    "questions": [
+      {
+        "id": "gq_1",
+        "category": "Quantitative Aptitude",
+        "text": "In a coding round, 48 out of 60 candidates cleared the first screen. What percentage cleared?",
+        "options": ["70%", "75%", "80%", "85%"],
+        "answer_index": 2,
+        "source_url": "https://www.indiabix.com/aptitude/percentage/"
+      },
+      {
+        "id": "gq_2",
+        "category": "Logical Reasoning",
+        "text": "If every backend engineer is a programmer and some programmers are interview panelists, which conclusion is always valid?",
+        "options": [
+          "Some backend engineers are interview panelists",
+          "Some programmers may be backend engineers",
+          "No programmers are panelists",
+          "All panelists are backend engineers"
+        ],
+        "answer_index": 1,
+        "source_url": "https://www.indiabix.com/logical-reasoning/"
+      }
+    ]
+  },
+  "amazon": {
+    "source": "Starter set. Replace with licensed company-wise questions.",
+    "questions": [
+      {
+        "id": "aq_1",
+        "category": "Data Interpretation",
+        "text": "A warehouse dashboard shows package counts for four slots: 120, 150, 180, and 210. What is the average count?",
+        "options": ["155", "160", "165", "170"],
+        "answer_index": 2,
+        "source_url": "https://www.indiabix.com/data-interpretation/"
+      },
+      {
+        "id": "aq_2",
+        "category": "Quantitative Aptitude",
+        "text": "A process takes 12 hours with 4 workers. At the same rate, how many hours with 6 workers?",
+        "options": ["6", "7", "8", "9"],
+        "answer_index": 2,
+        "source_url": "https://www.indiabix.com/aptitude/time-and-work/"
+      }
+    ]
+  },
+  "tcs": {
+    "source": "Starter set. Replace with licensed company-wise questions.",
+    "questions": [
+      {
+        "id": "tq_1",
+        "category": "Verbal Ability",
+        "text": "Choose the sentence with correct grammar.",
+        "options": [
+          "Each of the modules have an owner.",
+          "Each of the modules has an owner.",
+          "Each module have owners.",
+          "Each module has owner."
+        ],
+        "answer_index": 1,
+        "source_url": "https://www.indiabix.com/verbal-ability/"
+      },
+      {
+        "id": "tq_2",
+        "category": "Quantitative Aptitude",
+        "text": "The ratio of solved to unsolved questions is 3:2 in a mock test of 100 questions. How many were solved?",
+        "options": ["50", "55", "60", "65"],
+        "answer_index": 2,
+        "source_url": "https://www.indiabix.com/aptitude/ratio-and-proportion/"
+      }
+    ]
+  },
+  "general": {
+    "source": "Optional default questions for companies not explicitly listed.",
+    "questions": []
+  }
+}

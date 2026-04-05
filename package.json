@@ -1,0 +1,17 @@
+{
+  "name": "talvo-frontend-bundles",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build:aptitude-results": "esbuild ui-redesign/aptitude-results/django-mount.tsx --bundle --platform=browser --format=iife --target=es2019 --outfile=talvo1/static/talvo1/js/aptitude_results_react.js --minify"
+  },
+  "dependencies": {
+    "framer-motion": "^12.12.1",
+    "lucide-react": "^0.469.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.2"
+  }
+}

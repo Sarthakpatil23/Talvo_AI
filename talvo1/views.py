@@ -32,6 +32,7 @@ from .models import AptitudeAttempt, InterviewSession, InterviewTurn, UserProfil
 _CODING_SESSION_PACKS = {}
 _CODING_COMPANY_CACHE = {'names': [], 'loaded': False}
 _CODING_FOLLOWUP_STATE = {}
+_APTITUDE_EXTERNAL_BANK_CACHE = {'path': '', 'mtime': None, 'data': {}}
 
 _PLACEMENT_COMPANIES = [
 	'Google',
@@ -333,6 +334,8 @@ _APTITUDE_QUESTION_BANK = [
 	},
 ]
 
+_APTITUDE_COMPANY_BANK_PATH = Path(__file__).resolve().parent / 'data' / 'aptitude_company_question_bank.json'
+
 _DEFAULT_COMPANY_RESOURCES = {
 	'placement_path': [
 		'Round 1: Aptitude and communication screening',
@@ -581,9 +584,137 @@ def _parse_question_ids(raw_value: str) -> list:
 	return ids
 
 
-def _pick_random_question_ids() -> list:
+def _clean_question_text(value: str, max_len: int = 360) -> str:
+	text = ' '.join(str(value or '').strip().split())
+	return text[:max_len]
+
+
+def _sanitize_external_question(raw_question, company_key: str, index: int) -> dict | None:
+	if not isinstance(raw_question, dict):
+		return None
+
+	text = _clean_question_text(raw_question.get('text'), 360)
+	category = _clean_question_text(raw_question.get('category') or 'Aptitude', 80)
+	if not text:
+		return None
+
+	options_raw = raw_question.get('options')
+	if not isinstance(options_raw, list):
+		return None
+
+	options = [_clean_question_text(item, 160) for item in options_raw if _clean_question_text(item, 160)]
+	if len(options) < 2:
+		return None
+
+	answer_index = _safe_int(raw_question.get('answer_index'), -1)
+	if answer_index < 0 or answer_index >= len(options):
+		return None
+
+	fallback_id = f"ext_{company_key}_{index}"
+	qid = _clean_question_text(raw_question.get('id') or fallback_id, 80)
+	if not qid:
+		qid = fallback_id
+
+	question = {
+		'id': qid,
+		'category': category,
+		'text': text,
+		'options': options,
+		'answer_index': answer_index,
+	}
+
+	source_url = _clean_question_text(raw_question.get('source_url') or '', 300)
+	if source_url:
+		question['source_url'] = source_url
+
+	return question
+
+
+def _load_external_company_questions() -> dict:
+	configured_path = str(getattr(settings, 'APTITUDE_COMPANY_QUESTION_BANK_PATH', '') or '').strip()
+	bank_path = Path(configured_path) if configured_path else _APTITUDE_COMPANY_BANK_PATH
+	cache_key = str(bank_path)
+
+	if not bank_path.exists() or not bank_path.is_file():
+		_APTITUDE_EXTERNAL_BANK_CACHE.update({'path': cache_key, 'mtime': None, 'data': {}})
+		return {}
+
+	try:
+		mtime = bank_path.stat().st_mtime
+	except OSError:
+		return {}
+
+	if (
+		_APTITUDE_EXTERNAL_BANK_CACHE.get('path') == cache_key
+		and _APTITUDE_EXTERNAL_BANK_CACHE.get('mtime') == mtime
+	):
+		return dict(_APTITUDE_EXTERNAL_BANK_CACHE.get('data') or {})
+
+	try:
+		with bank_path.open('r', encoding='utf-8') as handle:
+			payload = json.load(handle)
+	except (OSError, json.JSONDecodeError):
+		_APTITUDE_EXTERNAL_BANK_CACHE.update({'path': cache_key, 'mtime': mtime, 'data': {}})
+		return {}
+
+	if not isinstance(payload, dict):
+		_APTITUDE_EXTERNAL_BANK_CACHE.update({'path': cache_key, 'mtime': mtime, 'data': {}})
+		return {}
+
+	parsed = {}
+	for company_name, raw_section in payload.items():
+		company_key = _company_key(company_name)
+		if not company_key:
+			continue
+
+		raw_questions = []
+		if isinstance(raw_section, list):
+			raw_questions = raw_section
+		elif isinstance(raw_section, dict):
+			raw_questions = raw_section.get('questions') if isinstance(raw_section.get('questions'), list) else []
+
+		questions = []
+		seen_ids = set()
+		for idx, raw_question in enumerate(raw_questions, start=1):
+			sanitized = _sanitize_external_question(raw_question, company_key, idx)
+			if not sanitized:
+				continue
+			qid = sanitized['id']
+			if qid in seen_ids:
+				continue
+			seen_ids.add(qid)
+			questions.append(sanitized)
+
+		if questions:
+			parsed[company_key] = questions
+
+	_APTITUDE_EXTERNAL_BANK_CACHE.update({'path': cache_key, 'mtime': mtime, 'data': parsed})
+	return dict(parsed)
+
+
+def _company_aptitude_question_bank(company: str) -> list:
+	key = _company_key(company)
+	external_map = _load_external_company_questions()
+	external_questions = list(external_map.get(key) or external_map.get('general') or [])
+
+	if not external_questions:
+		return list(_APTITUDE_QUESTION_BANK)
+
+	merged = []
+	seen_ids = set()
+	for question in external_questions + list(_APTITUDE_QUESTION_BANK):
+		qid = str(question.get('id') or '').strip()
+		if not qid or qid in seen_ids:
+			continue
+		seen_ids.add(qid)
+		merged.append(question)
+
+	return merged
+
+
+def _pick_random_question_ids(question_bank: list) -> list:
 	category_map = {}
-	for question in _APTITUDE_QUESTION_BANK:
+	for question in question_bank:
 		category_map.setdefault(question['category'], []).append(question['id'])
 
 	rng = random.SystemRandom()
@@ -592,7 +723,7 @@ def _pick_random_question_ids() -> list:
 		pick_count = min(2, len(ids))
 		selected.extend(rng.sample(ids, pick_count))
 
-	remaining = [q['id'] for q in _APTITUDE_QUESTION_BANK if q['id'] not in selected]
+	remaining = [q['id'] for q in question_bank if q['id'] not in selected]
 	needed = max(0, _APTITUDE_QUESTIONS_PER_TEST - len(selected))
 	if needed and remaining:
 		selected.extend(rng.sample(remaining, min(needed, len(remaining))))
@@ -603,7 +734,8 @@ def _pick_random_question_ids() -> list:
 
 def _get_aptitude_questions(company: str, question_ids: list = None) -> tuple[list, list]:
 	company_name = _normalize_company_name(company) or 'your target company'
-	bank_by_id = {item['id']: item for item in _APTITUDE_QUESTION_BANK}
+	company_bank = _company_aptitude_question_bank(company_name)
+	bank_by_id = {item['id']: item for item in company_bank}
 
 	resolved_ids = []
 	for qid in list(question_ids or []):
@@ -611,13 +743,24 @@ def _get_aptitude_questions(company: str, question_ids: list = None) -> tuple[li
 			resolved_ids.append(qid)
 
 	if not resolved_ids:
-		resolved_ids = _pick_random_question_ids()
+		resolved_ids = _pick_random_question_ids(company_bank)
 
 	questions = []
 	for qid in resolved_ids:
+		if qid not in bank_by_id:
+			continue
 		raw = dict(bank_by_id[qid])
 		raw['text'] = str(raw.get('text', '')).replace('{company}', company_name)
 		questions.append(raw)
+
+	if not questions:
+		fallback_bank_by_id = {item['id']: item for item in _APTITUDE_QUESTION_BANK}
+		fallback_ids = _pick_random_question_ids(list(_APTITUDE_QUESTION_BANK))
+		resolved_ids = fallback_ids
+		for qid in fallback_ids:
+			raw = dict(fallback_bank_by_id[qid])
+			raw['text'] = str(raw.get('text', '')).replace('{company}', company_name)
+			questions.append(raw)
 
 	return questions, resolved_ids
 
@@ -865,6 +1008,7 @@ def aptitude_round(request):
 	)
 	if not selected_company:
 		selected_company = _normalize_company_name(profile.target_company) or 'General'
+	company_profile = _placement_company_profile(selected_company)
 
 	posted_question_ids = _parse_question_ids(request.POST.get('question_ids')) if request.method == 'POST' else []
 	questions, question_ids = _get_aptitude_questions(
@@ -872,6 +1016,7 @@ def aptitude_round(request):
 		posted_question_ids if request.method == 'POST' else None,
 	)
 	result = None
+	aptitude_results_payload = None
 	selected_answers = {}
 
 	if request.method == 'POST':
@@ -923,13 +1068,33 @@ def aptitude_round(request):
 			'review': review,
 		}
 
+	if result:
+		aptitude_results_payload = {
+			'company_name': selected_company,
+			'company_logo_url': company_profile.get('logo_url') or '',
+			'summary': {
+				'score': int(result.get('score') or 0),
+				'total_questions': int(result.get('total_questions') or 0),
+				'percentage': int(result.get('percentage') or 0),
+				'duration_seconds': int(result.get('duration_seconds') or 0),
+			},
+			'review': list(result.get('review') or []),
+			'urls': {
+				'retake': f"{reverse('aptitude_round')}?company={quote(selected_company)}",
+				'resources': f"{reverse('company_resources')}?company={quote(selected_company)}",
+				'workspace': f"{reverse('placement_company')}?company={quote(selected_company)}",
+				'coach_api': reverse('aptitude_coach_api'),
+			},
+		}
+
 	context = {
 		'selected_company': selected_company,
-		'company_profile': _placement_company_profile(selected_company),
+		'company_profile': company_profile,
 		'questions': questions,
 		'question_ids_csv': ','.join(question_ids),
 		'question_count': len(questions),
 		'result': result,
+		'aptitude_results_payload': aptitude_results_payload,
 		'selected_answers': selected_answers,
 	}
 	return render(request, 'Aptitude-Round.html', context)

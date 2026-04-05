@@ -7,41 +7,108 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: linear-gradient(180deg, #f8faff 0%, #f4f6fa 100%);
-      color: #0D1117;
+    :root {
+      --pc-brand: #0B3D91;
+      --pc-brand-2: #1a5bd8;
+      --pc-ink: #0f172a;
+      --pc-muted: #64748b;
+      --pc-line: #dbe4ef;
+      --pc-surface: #ffffff;
+      --pc-soft: #f8fbff;
     }
 
-    .surface-card {
-      background: #fff;
-      border: 1px solid #E2E8F0;
-      border-radius: 14px;
-      box-shadow: 0 16px 30px -28px rgba(15, 23, 42, 0.55);
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background:
+        radial-gradient(circle at 8% 0%, #e9f2ff 0, transparent 28%),
+        radial-gradient(circle at 96% 8%, #eef2ff 0, transparent 30%),
+        linear-gradient(180deg, #f8faff 0%, #f2f6fb 100%);
+      color: var(--pc-ink);
+    }
+
+    .panel {
+      background: var(--pc-surface);
+      border: 1px solid var(--pc-line);
+      border-radius: 16px;
+      box-shadow: 0 18px 34px -30px rgba(15, 23, 42, 0.6);
     }
 
     .action-card {
-      border: 1px solid #E2E8F0;
+      border: 1px solid var(--pc-line);
       border-radius: 14px;
-      background: #fff;
-      transition: all 180ms ease;
+      background: var(--pc-surface);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      outline: none;
     }
 
     .action-card:hover {
-      border-color: rgba(11, 61, 145, 0.35);
+      border-color: rgba(11, 61, 145, 0.42);
       transform: translateY(-2px);
       box-shadow: 0 16px 28px -24px rgba(11, 61, 145, 0.66);
     }
 
+    .action-card:focus-visible {
+      box-shadow: 0 0 0 3px #fff, 0 0 0 5px rgba(124, 77, 255, 0.72);
+    }
+
     .action-card-primary {
-      border-color: rgba(11, 61, 145, 0.45);
-      background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+      border-color: rgba(11, 61, 145, 0.5);
+      background: linear-gradient(180deg, #f7faff 0%, #eaf2ff 100%);
       box-shadow: 0 18px 34px -24px rgba(11, 61, 145, 0.72);
     }
 
-    .action-card-primary .cta-label {
-      font-weight: 800;
-      letter-spacing: 0.01em;
+    .stat-card {
+      border: 1px solid var(--pc-line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: 1px solid var(--pc-line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.75rem;
+      color: var(--pc-muted);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .history-row {
+      border-top: 1px solid #edf2f7;
+    }
+
+    .history-row:first-of-type {
+      border-top: 0;
+    }
+
+    .analysis-block {
+      border: 1px solid var(--pc-line);
+      border-radius: 12px;
+      background: #f8fbff;
+      padding: 0.8rem 0.9rem;
+    }
+
+    details summary {
+      cursor: pointer;
+      list-style: none;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .action-card {
+        transition: none;
+      }
+
+      .action-card:hover {
+        transform: none;
+      }
     }
   </style>
 </head>
@@ -49,45 +116,97 @@
   {% include 'partials/sidebar.html' %}
 
   <main class="flex-1 min-w-0 px-6 py-7 md:px-8 md:py-8">
-    <div class="mx-auto max-w-7xl space-y-6">
-      <header class="rounded-2xl border border-white/30 bg-gradient-to-br from-[#0B3D91] via-[#27499f] to-[#1a1050] px-7 py-7 text-white shadow-[0_26px_50px_-36px_rgba(15,23,42,0.85)]">
+    <a href="#company-main" class="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#0B3D91]">Skip to main content</a>
+
+    <div id="company-main" class="mx-auto max-w-7xl space-y-5">
+      <header class="panel overflow-hidden bg-gradient-to-br from-[#0b3d91] via-[#1d4cb3] to-[#162251] px-6 py-6 text-white md:px-7 md:py-7">
         <div class="flex flex-wrap items-start justify-between gap-4">
-          <div class="min-w-[260px]">
-            <p class="text-xs uppercase tracking-[0.16em] text-white/70">Dedicated Company Workspace</p>
-            <div class="mt-2 flex items-center gap-3">
+          <div class="min-w-[240px] space-y-2">
+            <p class="text-[11px] uppercase tracking-[0.16em] text-white/75">Company Workspace</p>
+            <div class="flex items-center gap-3">
               {% if company_profile.logo_url %}
               <img src="{{ company_profile.logo_url }}" alt="{{ selected_company }} logo" class="h-10 w-10 rounded-lg bg-white p-1.5 object-contain"/>
               {% endif %}
-              <h1 class="text-3xl font-bold tracking-tight">{{ selected_company }}</h1>
+              <h1 class="text-2xl font-bold tracking-tight md:text-3xl">{{ selected_company }}</h1>
             </div>
-            <p class="mt-2 text-sm text-white/85">{{ company_profile.tagline }}</p>
+            <p class="max-w-3xl text-sm text-white/85">{{ company_profile.tagline }}</p>
+            <div class="pt-1 flex flex-wrap gap-2" aria-label="Company quick stats">
+              <span class="meta-chip">Attempts: {{ company_attempt_count }}</span>
+              <span class="meta-chip">Avg Score: {{ company_avg_score }}</span>
+              {% if best_company_attempt %}
+              <span class="meta-chip">Best: {{ best_company_percentage }}%</span>
+              {% endif %}
+            </div>
           </div>
-          <a href="{% url 'placement_hub' %}" class="rounded-full border border-white/40 bg-white/10 px-4 py-2 text-sm font-semibold text-white">Back to Placement Hub</a>
+
+          <a href="{% url 'placement_hub' %}" class="inline-flex items-center gap-1 rounded-full border border-white/35 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <span>Back to Placement Hub</span>
+          </a>
         </div>
       </header>
 
-      <section class="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <article class="surface-card p-4">
-          <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Company Attempts</p>
+      <section class="panel p-5 md:p-6" aria-labelledby="start-here-title">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="start-here-title" class="text-lg font-bold text-slate-900">Start Here</h2>
+            <p class="mt-1 text-sm text-slate-600">Use this order for less confusion: attempt test first, then review resources, then inspect detailed history.</p>
+          </div>
+          {% if latest_company_attempt %}
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Latest: {{ latest_company_attempt.score }}/{{ latest_company_attempt.total_questions }} ({{ latest_company_percentage }}%)</span>
+          {% endif %}
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <a href="{% url 'aptitude_round' %}?company={{ selected_company|urlencode }}" class="action-card action-card-primary p-5" aria-label="Start aptitude attempt for {{ selected_company }}">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-base font-bold text-slate-900">1. Attempt Aptitude Test</p>
+                <p class="mt-1 text-sm text-slate-700">Take a timed MCQ round and get instant score breakdown.</p>
+              </div>
+              <span class="rounded-full bg-[#0B3D91] px-2.5 py-1 text-xs font-bold text-white">Timed</span>
+            </div>
+            <span class="mt-4 inline-flex items-center gap-1 text-sm font-extrabold text-[#0B3D91]">Start attempt
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </a>
+
+          <a href="{% url 'company_resources' %}?company={{ selected_company|urlencode }}" class="action-card p-5" aria-label="Open learning resources for {{ selected_company }}">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-base font-bold text-slate-900">2. Open Resource Plan</p>
+                <p class="mt-1 text-sm text-slate-700">Company-specific topics, preparation path, and curated links.</p>
+              </div>
+              <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Guided</span>
+            </div>
+            <span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#0B3D91]">View resources
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </a>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Performance Snapshot">
+        <article class="stat-card p-4">
+          <p class="text-[11px] uppercase tracking-[0.14em] text-slate-500">Company Attempts</p>
           <p class="mt-2 text-3xl font-bold text-[#0B3D91]">{{ company_attempt_count }}</p>
         </article>
-        <article class="surface-card p-4">
-          <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Company Avg Score</p>
+        <article class="stat-card p-4">
+          <p class="text-[11px] uppercase tracking-[0.14em] text-slate-500">Company Avg Score</p>
           <p class="mt-2 text-3xl font-bold text-violet-700">{{ company_avg_score }}</p>
         </article>
-        <article class="surface-card p-4">
-          <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Latest Attempt</p>
+        <article class="stat-card p-4">
+          <p class="text-[11px] uppercase tracking-[0.14em] text-slate-500">Latest Attempt</p>
           {% if latest_company_attempt %}
-          <p class="mt-2 text-lg font-semibold">{{ latest_company_attempt.score }}/{{ latest_company_attempt.total_questions }}</p>
+          <p class="mt-2 text-lg font-semibold text-slate-900">{{ latest_company_attempt.score }}/{{ latest_company_attempt.total_questions }}</p>
           <p class="text-sm text-slate-600">{{ latest_company_percentage }}%</p>
           {% else %}
           <p class="mt-2 text-sm text-slate-500">No attempt yet</p>
           {% endif %}
         </article>
-        <article class="surface-card p-4">
-          <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Best Attempt</p>
+        <article class="stat-card p-4">
+          <p class="text-[11px] uppercase tracking-[0.14em] text-slate-500">Best Attempt</p>
           {% if best_company_attempt %}
-          <p class="mt-2 text-lg font-semibold">{{ best_company_attempt.score }}/{{ best_company_attempt.total_questions }}</p>
+          <p class="mt-2 text-lg font-semibold text-slate-900">{{ best_company_attempt.score }}/{{ best_company_attempt.total_questions }}</p>
           <p class="text-sm text-emerald-600">{{ best_company_percentage }}%</p>
           {% else %}
           <p class="mt-2 text-sm text-slate-500">No attempt yet</p>
@@ -95,39 +214,11 @@
         </article>
       </section>
 
-      <section class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <a href="{% url 'aptitude_round' %}?company={{ selected_company|urlencode }}" class="action-card action-card-primary p-5">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-base font-bold text-slate-900">Attempt Aptitude Test</p>
-              <p class="mt-1 text-sm text-slate-600">Take a timed MCQ round for {{ selected_company }} and get instant score with review.</p>
-            </div>
-            <span class="rounded-full bg-[#0B3D91] px-2.5 py-1 text-xs font-bold text-white">Timed</span>
-          </div>
-          <span class="cta-label mt-4 inline-flex items-center gap-1 text-sm text-[#0B3D91]">Start attempt
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-        </a>
-
-        <a href="{% url 'company_resources' %}?company={{ selected_company|urlencode }}" class="action-card p-5">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-base font-semibold text-slate-900">Training and Placement Resources</p>
-              <p class="mt-1 text-sm text-slate-600">Open company-specific preparation tracks, process map, and curated links.</p>
-            </div>
-            <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Guided</span>
-          </div>
-          <span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#0B3D91]">View resources
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-        </a>
-      </section>
-
-      <section class="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_.85fr]">
-        <article class="surface-card p-5">
+      <section class="grid grid-cols-1 gap-5 xl:grid-cols-[1.22fr_.78fr]">
+        <article class="panel p-5" aria-labelledby="attempt-history-title">
           <div class="flex items-center justify-between gap-3">
-            <h2 class="text-lg font-semibold">{{ selected_company }} Attempt History</h2>
-            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Last {{ company_attempt_rows|length }} attempts</span>
+            <h2 id="attempt-history-title" class="text-lg font-bold text-slate-900">{{ selected_company }} Attempt History</h2>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{{ company_attempt_rows|length }} records</span>
           </div>
 
           {% if company_attempt_rows %}
@@ -138,67 +229,92 @@
               <span>Duration</span>
               <span>Date</span>
             </div>
+
             {% for row in company_attempt_rows %}
-            <div class="grid grid-cols-4 gap-2 border-t border-slate-200 px-3 py-3 text-sm">
+            {% if forloop.counter <= 5 %}
+            <div class="history-row grid grid-cols-4 gap-2 px-3 py-3 text-sm">
               <span class="font-semibold text-slate-900">{{ row.score }}/{{ row.total_questions }}</span>
               <span class="{% if row.percentage >= 75 %}text-emerald-600{% elif row.percentage >= 55 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ row.percentage }}%</span>
               <span class="text-slate-600">{{ row.duration_seconds }}s</span>
               <span class="text-slate-500">{{ row.created_at|date:'d M, H:i' }}</span>
             </div>
+            {% endif %}
             {% endfor %}
           </div>
+
+          {% if company_attempt_rows|length > 5 %}
+          <details class="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+            <summary class="text-sm font-semibold text-[#0B3D91]">Show older attempts</summary>
+            <div class="mt-3 space-y-2">
+              {% for row in company_attempt_rows %}
+              {% if forloop.counter > 5 %}
+              <div class="grid grid-cols-4 gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
+                <span class="font-semibold text-slate-900">{{ row.score }}/{{ row.total_questions }}</span>
+                <span class="{% if row.percentage >= 75 %}text-emerald-600{% elif row.percentage >= 55 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ row.percentage }}%</span>
+                <span class="text-slate-600">{{ row.duration_seconds }}s</span>
+                <span class="text-slate-500">{{ row.created_at|date:'d M, H:i' }}</span>
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </details>
+          {% endif %}
           {% else %}
-          <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-600">No attempts yet for {{ selected_company }}. Start an aptitude attempt to build history and analysis.</div>
+          <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-600">No attempts yet for {{ selected_company }}. Start one attempt to unlock progress insights.</div>
           {% endif %}
 
-          <h3 class="mt-6 text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Overall History Snapshot</h3>
-          {% if overall_attempt_rows %}
-          <div class="mt-3 grid gap-2 md:grid-cols-2">
-            {% for row in overall_attempt_rows %}
-            <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-              <p class="font-semibold">{{ row.company }} · {{ row.percentage }}%</p>
-              <p class="text-slate-500">{{ row.score }}/{{ row.total_questions }} in {{ row.duration_seconds }}s</p>
+          <details class="mt-4 rounded-xl border border-slate-200 bg-white px-3 py-3">
+            <summary class="text-sm font-semibold text-slate-700">Cross-company snapshot (optional)</summary>
+            {% if overall_attempt_rows %}
+            <div class="mt-3 grid gap-2 md:grid-cols-2">
+              {% for row in overall_attempt_rows %}
+              <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                <p class="font-semibold">{{ row.company }} · {{ row.percentage }}%</p>
+                <p class="text-slate-500">{{ row.score }}/{{ row.total_questions }} in {{ row.duration_seconds }}s</p>
+              </div>
+              {% endfor %}
             </div>
-            {% endfor %}
-          </div>
-          {% else %}
-          <p class="mt-3 text-sm text-slate-500">No overall attempt history yet.</p>
-          {% endif %}
+            {% else %}
+            <p class="mt-3 text-sm text-slate-500">No overall attempt history yet.</p>
+            {% endif %}
+          </details>
         </article>
 
-        <article class="surface-card p-5">
-          <h2 class="text-lg font-semibold">Candidate Analysis</h2>
-          <p class="mt-1 text-sm text-slate-600">Auto-generated from your aptitude attempts for {{ selected_company }}.</p>
+        <aside class="space-y-4" aria-label="AI Guidance">
+          <article class="panel p-5">
+            <h2 class="text-lg font-bold text-slate-900">Candidate Analysis</h2>
+            <p class="mt-1 text-sm text-slate-600">Generated from your recent attempts for {{ selected_company }}.</p>
 
-          <div class="mt-4 space-y-3">
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Readiness</p>
-              <p class="mt-1 text-base font-semibold text-slate-900">{{ analysis.readiness_label }}</p>
-              <p class="mt-1 text-sm text-slate-600">{{ analysis.readiness_note }}</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Trend</p>
-              <p class="mt-1 text-base font-semibold text-slate-900">{{ analysis.trend_label }}</p>
-              <p class="mt-1 text-sm text-slate-600">{{ analysis.trend_note }}</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Recommended Next Actions</p>
-              <ul class="mt-2 space-y-1.5 text-sm text-slate-700">
-                {% for point in analysis.recommendations %}
-                <li class="flex gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-[#0B3D91]"></span><span>{{ point }}</span></li>
-                {% endfor %}
-              </ul>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p class="text-xs uppercase tracking-[0.12em] text-slate-500">High-Impact Topics</p>
-              <div class="mt-2 flex flex-wrap gap-2">
-                {% for topic in resource_preview.aptitude_topics|slice:':4' %}
-                <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 border border-slate-200">{{ topic }}</span>
-                {% endfor %}
+            <div class="mt-4 grid gap-3">
+              <div class="analysis-block">
+                <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Readiness</p>
+                <p class="mt-1 text-base font-semibold text-slate-900">{{ analysis.readiness_label }}</p>
+                <p class="mt-1 text-sm text-slate-600">{{ analysis.readiness_note }}</p>
+              </div>
+              <div class="analysis-block">
+                <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Trend</p>
+                <p class="mt-1 text-base font-semibold text-slate-900">{{ analysis.trend_label }}</p>
+                <p class="mt-1 text-sm text-slate-600">{{ analysis.trend_note }}</p>
               </div>
             </div>
-          </div>
-        </article>
+          </article>
+
+          <article class="panel p-5">
+            <h3 class="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">Recommended Next Actions</h3>
+            <ul class="mt-3 space-y-2 text-sm text-slate-700">
+              {% for point in analysis.recommendations %}
+              <li class="flex gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-[#0B3D91]"></span><span>{{ point }}</span></li>
+              {% endfor %}
+            </ul>
+
+            <h3 class="mt-5 text-sm font-bold uppercase tracking-[0.12em] text-slate-500">High-Impact Topics</h3>
+            <div class="mt-2 flex flex-wrap gap-2">
+              {% for topic in resource_preview.aptitude_topics|slice:':4' %}
+              <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 border border-slate-200">{{ topic }}</span>
+              {% endfor %}
+            </div>
+          </article>
+        </aside>
       </section>
     </div>
   </main>

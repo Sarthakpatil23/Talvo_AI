@@ -1,113 +1,219 @@
 <style>
+  :root {
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #e2e8f0;
+    --sidebar-text: #0f172a;
+    --sidebar-text-muted: #64748b;
+    --sidebar-hover-bg: #f8fafc;
+    --sidebar-active-bg: #eff6ff;
+    --sidebar-active-text: #1d4ed8;
+    --brand-blue: #0B3D91;
+    --brand-purple: #7C4DFF;
+  }
+
+  .talvo-sidebar {
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+  }
+
   .tsb-nav-item {
-    border-left: 3px solid transparent;
-    color: #64748B;
-    font-size: 14px;
-    font-weight: 400;
-    padding: 10px 12px;
-    border-radius: 10px;
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    transition: all 150ms ease;
+    gap: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    color: var(--sidebar-text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    outline: none;
   }
 
   .tsb-nav-item:hover {
-    background: #F1F5F9;
-    color: #0D1117;
+    background-color: var(--sidebar-hover-bg);
+    color: var(--sidebar-text);
+  }
+
+  .tsb-nav-item:focus-visible {
+    box-shadow: 0 0 0 2px var(--sidebar-bg), 0 0 0 4px var(--brand-purple);
   }
 
   .tsb-nav-item.active {
-    border-left-color: #0B3D91;
-    color: #0B3D91;
+    color: var(--sidebar-active-text);
+    background-color: var(--sidebar-active-bg);
     font-weight: 600;
-    background: #F8FAFF;
   }
 
-  .tsb-notice-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: #EF4444;
+  /* Active indicator pip */
+  .tsb-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -1rem; /* Aligns to very edge of the container if container padding allows, adjust below */
+    height: 1.5rem;
+    width: 4px;
+    background-color: var(--brand-blue);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .tsb-icon {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  .tsb-nav-item:hover .tsb-icon {
+    transform: scale(1.1);
+  }
+  
+  .tsb-nav-item.active .tsb-icon {
+    color: var(--brand-blue);
+  }
+
+  .tsb-badge {
     margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 0.5rem;
+    width: 0.5rem;
+    background-color: #ef4444;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
   }
 
-  .tsb-link-button {
-    background: transparent;
-    border: 0;
+  .tsb-user-profile {
+    transition: background-color 0.2s ease;
+  }
+  
+  .tsb-user-profile:hover {
+    background-color: var(--sidebar-hover-bg);
+  }
+
+  .tsb-user-profile:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--brand-purple);
+    outline: none;
+  }
+
+  .tsb-quick-start {
+    background: linear-gradient(135deg, var(--brand-blue), var(--brand-purple));
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .tsb-quick-start::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  
+  .btn-logout {
+    color: var(--sidebar-text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: none;
+    border: none;
     padding: 0;
-    margin: 0;
-    font: inherit;
-    color: inherit;
     cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  
+  .btn-logout:hover,
+  .btn-logout:focus-visible {
+    color: #ef4444;
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tsb-nav-item, .tsb-icon, .tsb-user-profile, .btn-logout {
+      transition: none !important;
+      transform: none !important;
+    }
   }
 </style>
 
 {% with current=request.resolver_match.url_name %}
-<aside class="w-[240px] flex-shrink-0 bg-white border-r border-[#E2E8F0] hidden md:flex flex-col h-screen sticky top-0 z-40 shadow-sm">
-  <div class="h-16 flex items-center px-6 border-b border-[#E2E8F0]">
-    <a href="{% url 'dashboard' %}" class="flex items-center gap-3 text-xl font-bold tracking-tight text-[#0D1117]">
+<aside class="talvo-sidebar w-[260px] flex-shrink-0 hidden md:flex flex-col h-screen sticky top-0 z-40 shadow-[1px_0_10px_rgba(0,0,0,0.02)]" aria-label="Sidebar">
+  <!-- Brand Logo -->
+  <div class="h-16 flex items-center px-6 border-b border-[#e2e8f0]">
+    <a href="{% url 'dashboard' %}" class="flex items-center gap-3 text-xl font-bold tracking-tight text-[#0f172a] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C4DFF]" aria-label="TalvoAI Dashboard">
       {% include 'partials/talvo_mark.html' %}
       <span>Talvo<span class="text-[#7C4DFF]">AI</span></span>
     </a>
   </div>
 
-  <div class="flex-1 overflow-y-auto py-4 px-4 space-y-1">
-    <a href="{% url 'dashboard' %}" class="tsb-nav-item {% if current == 'dashboard' %}active{% endif %}">
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="{% if current == 'dashboard' %}currentColor{% else %}none{% endif %}" stroke="currentColor"><path d="M12 3l9 8h-3v9h-4v-6H10v6H6v-9H3l9-8z" stroke-width="1.8"/></svg>
-      Dashboard
+  <!-- Primary Navigation -->
+  <nav class="flex-1 overflow-y-auto py-5 px-4 space-y-1.5" aria-label="Main Navigation">
+    <a href="{% url 'dashboard' %}" class="tsb-nav-item {% if current == 'dashboard' %}active{% endif %}" {% if current == 'dashboard' %}aria-current="page"{% endif %}>
+      <svg class="tsb-icon" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+      <span>Dashboard</span>
     </a>
 
-    <a href="{% url 'interview_setup' %}" class="tsb-nav-item {% if current == 'interview_setup' %}active{% endif %}">
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="14" height="12" rx="2" stroke-width="1.8"/><path d="M17 10l4-2v8l-4-2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Interview Setup
+    <a href="{% url 'interview_setup' %}" class="tsb-nav-item {% if current == 'interview_setup' %}active{% endif %}" {% if current == 'interview_setup' %}aria-current="page"{% endif %}>
+      <svg class="tsb-icon" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14v-4z"/><rect x="3" y="6" width="12" height="12" rx="2" ry="2"/></svg>
+      <span>Interview Setup</span>
     </a>
 
-    <a href="{% url 'placement_hub' %}" class="tsb-nav-item {% if current == 'placement_hub' or current == 'placement_company' or current == 'aptitude_round' or current == 'company_resources' %}active{% endif %}">
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h16" stroke-width="1.8" stroke-linecap="round"/><path d="M6 20v-7m6 7V9m6 11v-4" stroke-width="1.8" stroke-linecap="round"/><path d="M6 9l6-4 6 4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Placement Hub
+    <a href="{% url 'placement_hub' %}" class="tsb-nav-item {% if current == 'placement_hub' or current == 'placement_company' or current == 'aptitude_round' or current == 'company_resources' %}active{% endif %}" {% if current == 'placement_hub' or current == 'placement_company' or current == 'aptitude_round' or current == 'company_resources' %}aria-current="page"{% endif %}>
+      <svg class="tsb-icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <span>Placement Hub</span>
     </a>
 
-    <a href="{% url 'history_page' %}" class="tsb-nav-item {% if current == 'history_page' or current == 'replay_page' or current == 'feedback_dashboard' or current == 'results_page' %}active{% endif %}">
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h12" stroke-width="1.8" stroke-linecap="round"/><path d="M7 20v-8M12 20V9M17 20v-5" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="7" r="3" stroke-width="1.8"/></svg>
-      Performance and History
-      <span class="tsb-notice-dot"></span>
+    <a href="{% url 'history_page' %}" class="tsb-nav-item {% if current == 'history_page' or current == 'replay_page' or current == 'feedback_dashboard' or current == 'results_page' %}active{% endif %}" {% if current == 'history_page' or current == 'replay_page' or current == 'feedback_dashboard' or current == 'results_page' %}aria-current="page"{% endif %}>
+      <svg class="tsb-icon" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+      <span>Performance & History</span>
+      <span class="tsb-badge" aria-label="New Activity Indicator"></span>
     </a>
 
-    <a href="{% url 'settings_page' %}" class="tsb-nav-item {% if current == 'settings_page' or current == 'profile_page' %}active{% endif %}">
-      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8.8A3.2 3.2 0 1112 15a3.2 3.2 0 010-6.2z" stroke-width="1.8"/><path d="M19.4 12a7.4 7.4 0 00-.1-1l2-1.6-2-3.5-2.5.8a7 7 0 00-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 00-1.7 1l-2.5-.8-2 3.5L4.7 11a7.4 7.4 0 000 2l-2 1.6 2 3.5 2.5-.8a7 7 0 001.7 1l.4 2.6h4l.4-2.6a7 7 0 001.7-1l2.5.8 2-3.5-2-1.6c.1-.3.1-.7.1-1z" stroke-width="1.4" stroke-linejoin="round"/></svg>
-      Preferences
+    <a href="{% url 'settings_page' %}" class="tsb-nav-item {% if current == 'settings_page' or current == 'profile_page' %}active{% endif %}" {% if current == 'settings_page' or current == 'profile_page' %}aria-current="page"{% endif %}>
+      <svg class="tsb-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Preferences</span>
     </a>
 
-    <div class="pt-4 px-1">
-      <p class="text-[11px] tracking-[0.08em] uppercase text-[#64748B]">Quick Start</p>
-      <div class="mt-2 rounded-xl p-3 text-white" style="background: linear-gradient(135deg, #0B3D91, #7C4DFF);">
-        <p class="text-sm font-semibold">Ready to practice?</p>
-        <p class="mt-1 text-xs text-white/75">Start a 15-min session</p>
-        <a href="{% url 'interview_setup' %}" class="mt-3 inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#0B3D91]">Start Now
-          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <!-- Quick Start Card -->
+    <div class="pt-6 px-1">
+      <h3 class="text-[0.6875rem] font-bold tracking-[0.1em] uppercase text-slate-400 mb-2 px-2" id="quick-start-heading">Quick Start</h3>
+      <div class="tsb-quick-start mt-1 py-4 px-4 rounded-xl text-white shadow-sm" aria-labelledby="quick-start-heading">
+        <p class="text-[0.875rem] font-bold leading-tight drop-shadow-sm">Ready to practice?</p>
+        <p class="mt-1 text-xs text-white/80 font-medium">Start a 15-min session</p>
+        <a href="{% url 'interview_setup' %}" class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 text-[0.8125rem] font-bold text-[#0B3D91] shadow-sm hover:shadow transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#7C4DFF] focus-visible:ring-white">
+          <span>Start Now</span>
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </a>
       </div>
     </div>
-  </div>
+  </nav>
 
-  <div class="border-t border-[#E2E8F0] px-4 py-4">
-    <a href="{% url 'profile_page' %}" class="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50">
-      <span class="inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white" style="background: linear-gradient(135deg, #0B3D91, #7C4DFF);">
+  <!-- User Account Foot -->
+  <div class="border-t border-[#e2e8f0] p-4">
+    <a href="{% url 'profile_page' %}" class="tsb-user-profile flex items-center gap-3 rounded-xl p-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-[#7C4DFF]" aria-label="View Profile for {{ request.user.get_full_name|default:request.user.email }}">
+      <span class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm" style="background: linear-gradient(135deg, #0B3D91, #7C4DFF);">
         {{ request.user.first_name|default:request.user.email|slice:':1'|upper }}
       </span>
-      <span class="min-w-0">
-        <span class="block truncate text-sm font-semibold text-[#0D1117]">{{ request.user.get_full_name|default:request.user.email|default:'User Account' }}</span>
-        <span class="block truncate text-xs text-[#64748B]">{{ request.user.email|default:'Signed in user' }}</span>
-      </span>
+      <div class="flex-1 min-w-0">
+        <span class="block truncate text-sm font-bold text-slate-900">{{ request.user.get_full_name|default:request.user.email|default:'User Account' }}</span>
+        <span class="block truncate text-[0.7rem] font-medium text-slate-500">{{ request.user.email|default:'Signed in user' }}</span>
+      </div>
     </a>
 
-    <div class="mt-2 text-xs text-[#64748B]">
-      <a href="{% url 'settings_page' %}" class="hover:text-[#0D1117]">Settings</a>
-      <span class="px-1">|</span>
+    <div class="mt-3 flex items-center gap-3 px-2 text-[0.75rem] font-medium text-slate-500">
+      <a href="{% url 'settings_page' %}" class="hover:text-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C4DFF] rounded px-1 -mx-1">Settings</a>
+      <span class="w-[3px] h-[3px] rounded-full bg-slate-300" aria-hidden="true"></span>
       <form method="post" action="{% url 'logout_user' %}" class="inline">
         {% csrf_token %}
-        <button type="submit" class="tsb-link-button hover:text-[#0D1117]">Sign out</button>
+        <button type="submit" class="btn-logout rounded px-1 -mx-1 focus-visible:ring-2 focus-visible:ring-[#ef4444]" aria-label="Sign out">Sign out</button>
       </form>
     </div>
   </div>

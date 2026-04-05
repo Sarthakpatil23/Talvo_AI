@@ -5,158 +5,276 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Talvo Placement Hub</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --primary: #0B3D91;
-      --accent: #00A89C;
-      --secondary: #7C4DFF;
-      --bg: #F4F6FA;
-      --border: #E2E8F0;
-      --muted: #64748B;
+      --talvo-primary: #0B3D91;
+      --talvo-teal: #00A89C;
+      --talvo-indigo: #27499f;
+      --talvo-bg: #f4f7fc;
+      --talvo-border: #dbe4f0;
+      --talvo-muted: #64748b;
     }
 
     body {
       font-family: 'DM Sans', sans-serif;
       background:
-        radial-gradient(circle at 8% 6%, rgba(11, 61, 145, 0.16), transparent 34%),
-        radial-gradient(circle at 90% 12%, rgba(0, 168, 156, 0.12), transparent 32%),
-        linear-gradient(180deg, #F8FAFF 0%, var(--bg) 100%);
+        radial-gradient(circle at 6% 8%, rgba(11, 61, 145, 0.2), transparent 32%),
+        radial-gradient(circle at 88% 14%, rgba(0, 168, 156, 0.16), transparent 28%),
+        linear-gradient(180deg, #f8fbff 0%, var(--talvo-bg) 100%);
+    }
+
+    .skip-link {
+      position: absolute;
+      left: 14px;
+      top: 12px;
+      z-index: 90;
+      border: 1px solid var(--talvo-primary);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #ffffff;
+      color: var(--talvo-primary);
+      transform: translateY(-140%);
+      transition: transform 160ms ease;
+    }
+
+    .skip-link:focus-visible {
+      transform: translateY(0);
+      outline: 2px solid var(--talvo-primary);
+      outline-offset: 2px;
+    }
+
+    .metric-card {
+      border: 1px solid var(--talvo-border);
+      border-radius: 16px;
+      background: #ffffff;
+      box-shadow: 0 12px 26px -26px rgba(15, 23, 42, 0.75);
     }
 
     .company-card {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      min-height: 84px;
-      padding: 12px 14px;
-      display: flex;
+      border: 1px solid var(--talvo-border);
+      border-radius: 14px;
+      min-height: 94px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: auto 1fr;
       align-items: center;
       gap: 12px;
       text-align: left;
-      transition: all 180ms ease;
-      background: #fff;
+      background: #ffffff;
       cursor: pointer;
       position: relative;
+      transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
     }
 
-    .company-card:hover {
-      border-color: rgba(11, 61, 145, 0.45);
+    .company-card:hover,
+    .company-card:focus-visible {
+      border-color: rgba(11, 61, 145, 0.42);
+      box-shadow: 0 20px 28px -24px rgba(11, 61, 145, 0.66);
       transform: translateY(-2px);
-      box-shadow: 0 14px 24px -22px rgba(11, 61, 145, 0.65);
+      outline: none;
     }
 
     .company-card.active {
       border-width: 2px;
-      border-color: #0B3D91;
-      background: #EEF2FF;
-      box-shadow: 0 14px 28px -20px rgba(11, 61, 145, 0.72);
+      border-color: var(--talvo-primary);
+      background: linear-gradient(180deg, #eef3ff 0%, #ffffff 100%);
+      box-shadow: 0 24px 30px -24px rgba(11, 61, 145, 0.74);
     }
 
     .selected-badge {
       position: absolute;
-      right: 8px;
       top: 8px;
+      right: 8px;
       width: 18px;
       height: 18px;
       border-radius: 999px;
-      background: #0B3D91;
-      color: #fff;
       display: none;
       align-items: center;
       justify-content: center;
       font-size: 11px;
       font-weight: 700;
+      background: var(--talvo-primary);
+      color: #ffffff;
     }
 
     .company-card.active .selected-badge {
       display: inline-flex;
     }
+
+    .selection-panel {
+      border: 1px solid var(--talvo-border);
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 24px 40px -34px rgba(15, 23, 42, 0.7);
+    }
+
+    .company-preview {
+      border: 1px solid var(--talvo-border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen flex">
+  <a href="#mainContent" class="skip-link">Skip to Main Content</a>
   {% include 'partials/sidebar.html' %}
 
-  <main class="flex-1 min-w-0 px-6 py-7 md:px-8 md:py-8">
-    <div class="mx-auto max-w-6xl space-y-6">
-      <header class="rounded-2xl border border-white/35 bg-gradient-to-br from-[#0B3D91] via-[#1f2f82] to-[#101c48] px-7 py-7 text-white shadow-[0_24px_48px_-30px_rgba(11,61,145,0.82)]">
-        <p class="text-xs uppercase tracking-[0.16em] text-white/70">Placement Journey</p>
-        <h1 class="mt-2 text-3xl font-bold tracking-tight">Placement Hub</h1>
-        <p class="mt-2 max-w-3xl text-sm text-white/80">Choose your target company first. After that, you will enter a dedicated company workspace with aptitude test, resources, attempt history, and candidate analysis.</p>
+  <main id="mainContent" class="flex-1 min-w-0 px-6 py-7 md:px-8 md:py-8">
+    <div class="mx-auto max-w-7xl space-y-6">
+      <header class="rounded-3xl border border-white/35 bg-gradient-to-br from-[#0B3D91] via-[#27499f] to-[#10224f] p-7 text-white shadow-[0_28px_52px_-34px_rgba(11,61,145,0.84)] md:p-8">
+        <div class="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <p class="text-xs uppercase tracking-[0.18em] text-white/75">Placement Journey</p>
+            <h1 class="mt-2 text-3xl font-bold tracking-tight text-balance">Placement Hub</h1>
+            <p class="mt-3 max-w-3xl text-sm leading-6 text-white/84">
+              Pick a target company to open a dedicated preparation workspace with aptitude round, curated resources, and performance tracking.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-white/30 bg-white/10 px-4 py-3 backdrop-blur">
+            <p class="text-[11px] uppercase tracking-[0.12em] text-white/70">Current Selection</p>
+            <p id="heroSelectionPill" class="mt-1 text-sm font-semibold text-white">{{ selected_company|default:'Not Selected Yet' }}</p>
+          </div>
+        </div>
       </header>
 
-      <section class="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <article class="metric-card p-4">
           <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Total Attempts</p>
-          <p class="mt-2 text-3xl font-bold text-[#0B3D91]">{{ total_aptitude_attempts }}</p>
+          <p class="mt-2 text-3xl font-bold text-[#0B3D91] tabular-nums">{{ total_aptitude_attempts }}</p>
+          <p class="mt-1 text-xs text-slate-500">Across all selected companies</p>
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <article class="metric-card p-4">
           <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Overall Avg Score</p>
-          <p class="mt-2 text-3xl font-bold text-[#7C4DFF]">{{ overall_avg_score }}</p>
+          <p class="mt-2 text-3xl font-bold text-[#27499f] tabular-nums">{{ overall_avg_score }}</p>
+          <p class="mt-1 text-xs text-slate-500">Mean score from all attempts</p>
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <article class="metric-card p-4">
           <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Latest Attempt</p>
           {% if latest_attempt %}
-          <p class="mt-2 text-lg font-semibold">{{ latest_attempt.company }}</p>
-          <p class="text-sm text-slate-600">{{ latest_attempt.score }}/{{ latest_attempt.total_questions }}</p>
+          <p class="mt-2 text-lg font-semibold text-slate-900">{{ latest_attempt.company }}</p>
+          <p class="text-sm text-slate-600 tabular-nums">{{ latest_attempt.score }}/{{ latest_attempt.total_questions }}</p>
           {% else %}
-          <p class="mt-2 text-sm text-slate-500">No attempts yet</p>
+          <p class="mt-2 text-sm font-medium text-slate-500">No attempts yet</p>
+          <p class="text-xs text-slate-500">Take your first aptitude round</p>
           {% endif %}
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <article class="metric-card p-4">
           <p class="text-xs uppercase tracking-[0.14em] text-slate-500">Best Attempt</p>
           {% if best_attempt %}
-          <p class="mt-2 text-lg font-semibold">{{ best_attempt.company }}</p>
-          <p class="text-sm text-emerald-600">{{ best_attempt.score }}/{{ best_attempt.total_questions }}</p>
+          <p class="mt-2 text-lg font-semibold text-slate-900">{{ best_attempt.company }}</p>
+          <p class="text-sm font-semibold text-emerald-700 tabular-nums">{{ best_attempt.score }}/{{ best_attempt.total_questions }}</p>
           {% else %}
-          <p class="mt-2 text-sm text-slate-500">No attempts yet</p>
+          <p class="mt-2 text-sm font-medium text-slate-500">No attempts yet</p>
+          <p class="text-xs text-slate-500">Best score appears after first attempt</p>
           {% endif %}
         </article>
       </section>
 
-      <form method="post" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" id="companySelectForm">
+      <form method="post" id="companySelectForm" class="selection-panel p-5 md:p-6">
         {% csrf_token %}
         <input type="hidden" name="selected_company" id="selectedCompanyInput" value="{{ selected_company }}"/>
 
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="text-[18px] font-semibold text-slate-900">Select Company</h2>
-            <p class="text-sm text-slate-600">Choose one company to continue to its dedicated placement dashboard.</p>
+            <h2 class="text-lg font-semibold text-slate-900">Choose Target Company</h2>
+            <p class="text-sm text-slate-600">Pick one company to continue to its dedicated placement dashboard.</p>
           </div>
-          <p class="rounded-full bg-[#EEF2FF] px-3 py-1 text-xs font-semibold text-[#0B3D91]">Step 1 of 2</p>
+          <p class="rounded-full border border-[#0B3D91]/20 bg-[#EEF2FF] px-3 py-1 text-xs font-semibold text-[#0B3D91]">Step 1 of 2</p>
         </div>
 
-        <div class="mt-4 grid gap-3 md:grid-cols-3 lg:grid-cols-4" id="companyCards">
-          {% for company in company_cards %}
-          <button type="button" class="company-card {% if selected_company and selected_company|lower == company.name|lower %}active{% endif %}" data-company="{{ company.name }}">
-            <span class="selected-badge">✓</span>
-            {% if company.logo_url %}
-            <img src="{{ company.logo_url }}" alt="{{ company.name }} logo" class="h-8 w-8 object-contain" loading="lazy"/>
-            {% else %}
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 text-xs font-bold">{{ company.name|slice:':2'|upper }}</span>
-            {% endif %}
-            <span>
-              <span class="block text-sm font-semibold text-slate-900">{{ company.name }}</span>
-              <span class="block text-xs text-slate-500">{{ company.focus }}</span>
-            </span>
-          </button>
-          {% endfor %}
-        </div>
+        <div class="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <section>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 md:p-4">
+              <label for="companyFilter" class="text-xs font-semibold uppercase tracking-[0.13em] text-slate-500">Quick Filter</label>
+              <input id="companyFilter" type="text" autocomplete="off" placeholder="Search by company or focus" class="mt-2 h-10 w-full rounded-xl border-slate-300 bg-white text-sm focus:border-[#0B3D91] focus:ring-[#0B3D91]"/>
+            </div>
 
-        <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-          <label for="targetCompany" class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Or Enter Custom Company</label>
-          <input id="targetCompany" list="companyOptions" class="mt-2 h-10 w-full rounded-xl border-slate-300 text-sm focus:border-[#0B3D91] focus:ring-[#0B3D91]" placeholder="Type custom company name"/>
-          <datalist id="companyOptions">
-            {% for company in company_options %}
-            <option value="{{ company }}"></option>
-            {% endfor %}
-          </datalist>
+            <div id="companyCards" class="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {% for company in company_cards %}
+              <button
+                type="button"
+                class="company-card {% if selected_company and selected_company|lower == company.name|lower %}active{% endif %}"
+                data-company="{{ company.name }}"
+                data-focus="{{ company.focus }}"
+                data-tagline="{{ company.tagline }}"
+                data-accent="{{ company.accent }}"
+                aria-label="Select {{ company.name }}"
+              >
+                <span class="selected-badge">✓</span>
+                {% if company.logo_url %}
+                <img src="{{ company.logo_url }}" alt="{{ company.name }} logo" class="h-9 w-9 object-contain" loading="lazy" width="36" height="36"/>
+                {% else %}
+                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">{{ company.name|slice:':2'|upper }}</span>
+                {% endif %}
+
+                <span class="min-w-0">
+                  <span class="block truncate text-sm font-semibold text-slate-900">{{ company.name }}</span>
+                  <span class="mt-0.5 block text-xs text-slate-500 line-clamp-2">{{ company.focus }}</span>
+                </span>
+              </button>
+              {% endfor %}
+            </div>
+
+            <p id="companyEmptyState" class="mt-3 hidden rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">No company cards match this filter.</p>
+
+            <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+              <label for="targetCompany" class="text-xs font-semibold uppercase tracking-[0.13em] text-slate-500">Or Enter Custom Company</label>
+              <input id="targetCompany" list="companyOptions" autocomplete="off" class="mt-2 h-10 w-full rounded-xl border-slate-300 bg-white text-sm focus:border-[#0B3D91] focus:ring-[#0B3D91]" placeholder="Type a custom company name"/>
+              <datalist id="companyOptions">
+                {% for company in company_options %}
+                <option value="{{ company }}"></option>
+                {% endfor %}
+              </datalist>
+            </div>
+          </section>
+
+          <aside class="company-preview p-4" aria-live="polite">
+            <p class="text-xs uppercase tracking-[0.13em] text-slate-500">Selection Preview</p>
+            <div class="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+              <div class="flex items-center gap-2">
+                <span id="previewAccent" class="inline-flex h-2.5 w-2.5 rounded-full bg-[#0B3D91]"></span>
+                <p id="selectedCompanyName" class="text-base font-semibold text-slate-900">{{ selected_company|default:'No company selected' }}</p>
+              </div>
+              <p id="selectedCompanyFocus" class="mt-2 text-sm text-slate-700">Select a company card to preview its focus area.</p>
+              <p id="selectedCompanyTagline" class="mt-1 text-xs text-slate-500">Your dedicated preparation workspace updates after selection.</p>
+            </div>
+
+            <div class="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+              <p class="text-xs font-semibold uppercase tracking-[0.13em] text-slate-500">What You Get Next</p>
+              <ul class="mt-2 space-y-2 text-sm text-slate-700">
+                <li class="flex items-start gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-[#0B3D91]"></span><span>Company-specific aptitude round</span></li>
+                <li class="flex items-start gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-[#00A89C]"></span><span>Curated preparation resources</span></li>
+                <li class="flex items-start gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-[#27499f]"></span><span>Attempt history and performance analysis</span></li>
+              </ul>
+            </div>
+          </aside>
         </div>
 
         <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
-          <p class="text-xs text-slate-500">After proceeding, you will get a dedicated company page with aptitude, resources, history, and analysis.</p>
-          <button id="proceedBtn" type="submit" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7C4DFF] to-[#0B3D91] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_14px_24px_-18px_rgba(124,77,255,0.9)] disabled:cursor-not-allowed disabled:opacity-50" {% if not selected_company %}disabled{% endif %}>
-            Proceed Further
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p class="text-xs text-slate-500">Proceed to open the company workspace for aptitude, resources, and analysis.</p>
+          <button id="proceedBtn" type="submit" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#27499f] to-[#0B3D91] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_14px_24px_-18px_rgba(11,61,145,0.9)] disabled:cursor-not-allowed disabled:opacity-50" {% if not selected_company %}disabled{% endif %}>
+            Open Company Workspace
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
       </form>
@@ -165,37 +283,117 @@
 
   <script>
     (function () {
+      var form = document.getElementById('companySelectForm');
       var cards = Array.prototype.slice.call(document.querySelectorAll('#companyCards .company-card'));
       var selectedInput = document.getElementById('selectedCompanyInput');
       var proceedBtn = document.getElementById('proceedBtn');
       var targetCompany = document.getElementById('targetCompany');
+      var companyFilter = document.getElementById('companyFilter');
+      var companyEmptyState = document.getElementById('companyEmptyState');
+      var selectedNameEl = document.getElementById('selectedCompanyName');
+      var selectedFocusEl = document.getElementById('selectedCompanyFocus');
+      var selectedTaglineEl = document.getElementById('selectedCompanyTagline');
+      var heroSelectionPill = document.getElementById('heroSelectionPill');
+      var previewAccent = document.getElementById('previewAccent');
+
+      if (!selectedInput || !proceedBtn || !cards.length) return;
+
+      var cardMetaByLower = {};
+      cards.forEach(function (card) {
+        var name = String(card.getAttribute('data-company') || '').trim();
+        var key = name.toLowerCase();
+        if (!key) return;
+        cardMetaByLower[key] = {
+          name: name,
+          focus: String(card.getAttribute('data-focus') || '').trim(),
+          tagline: String(card.getAttribute('data-tagline') || '').trim(),
+          accent: String(card.getAttribute('data-accent') || '').trim() || '#0B3D91'
+        };
+      });
+
+      function updatePreview(companyName) {
+        var clean = String(companyName || '').trim();
+        var meta = cardMetaByLower[clean.toLowerCase()] || null;
+
+        if (!clean) {
+          selectedNameEl.textContent = 'No company selected';
+          selectedFocusEl.textContent = 'Select a company card to preview its focus area.';
+          selectedTaglineEl.textContent = 'Your dedicated preparation workspace updates after selection.';
+          heroSelectionPill.textContent = 'Not Selected Yet';
+          previewAccent.style.background = '#0B3D91';
+          return;
+        }
+
+        selectedNameEl.textContent = meta ? meta.name : clean;
+        selectedFocusEl.textContent = meta && meta.focus ? meta.focus : 'Custom company selected. Workspace will include aptitude, resources, and analysis.';
+        selectedTaglineEl.textContent = meta && meta.tagline ? meta.tagline : 'You can continue with this custom company selection.';
+        heroSelectionPill.textContent = meta ? meta.name : clean;
+        previewAccent.style.background = meta && meta.accent ? meta.accent : '#0B3D91';
+      }
 
       function applySelection(companyName) {
-        var normalized = (companyName || '').trim();
+        var normalized = String(companyName || '').trim();
         selectedInput.value = normalized;
-        cards.forEach(function (card) {
-          card.classList.toggle('active', (card.getAttribute('data-company') || '') === normalized);
-        });
         proceedBtn.disabled = !normalized;
+
+        cards.forEach(function (card) {
+          var cardName = String(card.getAttribute('data-company') || '').trim().toLowerCase();
+          card.classList.toggle('active', !!normalized && cardName === normalized.toLowerCase());
+        });
+
+        updatePreview(normalized);
+      }
+
+      function filterCards(queryText) {
+        var query = String(queryText || '').trim().toLowerCase();
+        var visibleCount = 0;
+
+        cards.forEach(function (card) {
+          var company = String(card.getAttribute('data-company') || '').toLowerCase();
+          var focus = String(card.getAttribute('data-focus') || '').toLowerCase();
+          var tagline = String(card.getAttribute('data-tagline') || '').toLowerCase();
+          var match = !query || company.indexOf(query) !== -1 || focus.indexOf(query) !== -1 || tagline.indexOf(query) !== -1;
+          card.classList.toggle('hidden', !match);
+          if (match) visibleCount += 1;
+        });
+
+        if (companyEmptyState) {
+          companyEmptyState.classList.toggle('hidden', visibleCount > 0);
+        }
       }
 
       cards.forEach(function (card) {
         card.addEventListener('click', function () {
-          applySelection(card.getAttribute('data-company') || '');
-          if (targetCompany) targetCompany.value = '';
+          var name = card.getAttribute('data-company') || '';
+          applySelection(name);
+          if (targetCompany) targetCompany.value = name;
         });
       });
 
       if (targetCompany) {
         targetCompany.addEventListener('input', function () {
-          var typed = (targetCompany.value || '').trim();
-          if (typed) {
-            applySelection(typed);
+          applySelection(targetCompany.value || '');
+        });
+      }
+
+      if (companyFilter) {
+        companyFilter.addEventListener('input', function () {
+          filterCards(companyFilter.value || '');
+        });
+      }
+
+      if (form) {
+        form.addEventListener('submit', function () {
+          if (proceedBtn.disabled) {
+            return;
           }
+          proceedBtn.disabled = true;
+          proceedBtn.textContent = 'Opening Workspace...';
         });
       }
 
       applySelection(selectedInput.value || '');
+      filterCards('');
     })();
   </script>
 
