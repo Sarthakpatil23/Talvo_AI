@@ -1,0 +1,16 @@
+<svg width="256" height="256" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="talvoAccent" x1="16" y1="52" x2="50" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 18C27 12 37 12 44 18C51 24 52 34 46 41C41 47 33 49 26.5 46.5" stroke="#0F172A" stroke-width="4.5"/>
+    <path d="M44 46C37 52 27 52 20 46C13 40 12 30 18 23C23 17 31 15 37.5 17.5" stroke="url(#talvoAccent)" stroke-width="4.5"/>
+    <path d="M28 28V36" stroke="#0F172A" stroke-width="2.6" opacity="0.75"/>
+    <path d="M32 25V39" stroke="#0F172A" stroke-width="2.6" opacity="0.95"/>
+    <path d="M36 29V35" stroke="#0F172A" stroke-width="2.6" opacity="0.75"/>
+  </g>
+</svg>
