@@ -1,198 +1,275 @@
-<p align="center">
+﻿<div align="center">
   <img src="assets/readme-hero.svg" alt="Talvo AI Hero" width="100%" />
+</div>
+
+<div align="center">
+  <img src="assets/talvo-logo.svg" alt="Talvo Logo" width="80" style="margin-top: 20px; margin-bottom: 20px;" />
+</div>
+
+<h1 align="center">🚀 Talvo AI</h1>
+
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Inter&weight=600&size=20&pause=1000&color=2E8B57&center=true&vCenter=true&width=600&lines=Interview+simulation+that+feels+real.;Responds+fluently+in+voice.;Coaches+you+with+precision.;Conquer+your+next+tech+interview." alt="Typing effect description" />
 </p>
 
 <p align="center">
-  <img src="assets/talvo-logo.svg" alt="Talvo Website Logo" width="56" />
+  <a href="#-the-vibe"><strong>✨ Features</strong></a> ·
+  <a href="#-system-architecture"><strong>🏗️ Architecture</strong></a> ·
+  <a href="#-quick-start"><strong>⚡ Quick Start</strong></a> ·
+  <a href="#%EF%B8%8F-environment-variables"><strong>⚙️ Config</strong></a> ·
+  <a href="#-troubleshooting"><strong>🩺 Troubleshooting</strong></a>
 </p>
 
-<h1 align="center">Talvo AI</h1>
+<div align="center">
 
-<p align="center">
-  <strong>Interview simulation that feels real, responds in voice, and coaches with precision.</strong>
-</p>
+  <img alt="Django" src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green" />
+  <img alt="Python" src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img alt="React" src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" />
+  <br/>
+  <img alt="STT" src="https://img.shields.io/badge/STT-faster--whisper-1d4ed8?style=for-the-badge" />
+  <img alt="LLM" src="https://img.shields.io/badge/LLM-Groq%20Llama-6d28d9?style=for-the-badge" />
+  <img alt="TTS" src="https://img.shields.io/badge/TTS-Coqui-f97316?style=for-the-badge" />
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" />
 
-<p align="center">
-  <img alt="Django" src="https://img.shields.io/badge/Django-6-0f172a?style=flat-square" />
-  <img alt="Python" src="https://img.shields.io/badge/Python-3.13%20%2B%203.11-0f766e?style=flat-square" />
-  <img alt="STT" src="https://img.shields.io/badge/STT-faster--whisper-1d4ed8?style=flat-square" />
-  <img alt="LLM" src="https://img.shields.io/badge/LLM-Groq%20Llama-6d28d9?style=flat-square" />
-  <img alt="TTS" src="https://img.shields.io/badge/TTS-Coqui-f97316?style=flat-square" />
-</p>
+</div>
 
----
+<br/>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" />
 
-## The Vibe
+## ✨ The Vibe
 
-Talvo is built for candidates who want high-quality repetition under realistic interview pressure.
+Talvo is built for candidates who want high-quality repetition under realistic interview pressure. It’s not just about practicing questions; it's about conversing with an AI that actively listens and coaches you.
 
-- Dynamic follow-up questions, not generic scripts
-- Push-to-talk voice loop designed for natural speaking
-- Replay-ready stored interview sessions and turns
-- Instant coaching nudges you can use in the next answer
+<details>
+<summary><b>🎯 Dynamic Follow-Ups</b></summary>
+<br/>
+No generic scripts. The AI actively adapts to your answers, generating context-aware follow-up questions tailored specifically to what you just said.
+</details>
 
-## Live Flow
+<details>
+<summary><b>🎙️ Push-to-Talk Voice Loop</b></summary>
+<br/>
+Designed for natural speaking and precise input. Just like a walkie-talkie, providing you full control over when the AI listens.
+</details>
 
-1. AI asks the interview question.
-2. User holds the dock button to speak and releases to submit.
-3. Local Whisper transcribes voice.
-4. Groq Llama generates next interviewer response.
-5. Local Coqui synthesizes AI voice playback.
-6. Loop continues until the interview ends.
+<details>
+<summary><b>🔄 Replay-Ready Sessions</b></summary>
+<br/>
+Review stored interview sessions and turn-by-turn interactions anytime. Track your growth through detailed transcripts.
+</details>
 
-If Talvo cannot detect a response, it prompts the user to answer again.
+<details>
+<summary><b>💡 Instant Coaching</b></summary>
+<br/>
+Get real-time nudges and actionable feedback on the fly, empowering you to adjust and improve your next answer instantly.
+</details>
 
-## System Design
+<details>
+<summary><b>🧩 Aptitude & Technical Matches</b></summary>
+<br/>
+Not just behavioral! Specialized rounds including technical algorithms, system design, and rigorous aptitude quizzes.
+</details>
 
-```text
-Browser (push-to-talk)
-   |
-   v
-Django App (Python 3.13)
-  - auth, APIs, session persistence
-  - interview orchestration + Groq prompt logic
-   |
-   v
-Speech Worker (Python 3.11)
-  - /stt -> faster-whisper
-  - /tts -> Coqui TTS
-```
+<br/>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" />
 
-## Prompt Engineering + RAG
+## 🏗️ System Architecture
 
-Talvo now uses a two-layer interviewer intelligence stack:
+Talvo utilizes a dual-worker setup to handle realtime voice processing efficiently alongside typical web routing.
 
-- Prompt engineering layer: modular guidance by company, role, difficulty, and interview type
-- RAG layer: retrieves relevant interview examples from a local dataset and injects them into the LLM context
+`mermaid
+graph TD
+    User([Candidate]) -->|Push-to-Talk Voice| Browser
+    Browser -->|Audio Blob| STT
+    
+    subgraph "Python 3.13 - Django App"
+        WEB[Web Server]
+        Auth[OAuth & Session]
+        Orch[Interview Orchestration]
+        RAG[RAG + Prompt Eng]
+    end
+    
+    subgraph "Python 3.11 - Speech Worker"
+        STT[STT: faster-whisper]
+        TTS[TTS: Coqui]
+    end
+    
+    Browser <-->|HTTP / WebSocket| WEB
+    WEB <--> Auth
+    WEB <--> Orch
+    Orch <--> RAG
+    
+    RAG <-->|Fetch context| Groq[Groq Llama LLM]
+    STT -->|Transcribed Text| WEB
+    Orch -->|Response Text| TTS
+    TTS -->|Synthesized Audio| Browser
+`
 
-Current implementation files:
+<br/>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" />
 
-- talvo1/prompt_engineering.py
-- talvo1/rag_retriever.py
-- talvo1/data/interview_question_bank.json
+## 🧠 Intelligence Stack (Prompt Engineering & RAG)
 
-How it works:
+Talvo runs a state-of-the-art **two-layer interviewer intelligence stack**:
 
-1. User context is captured from interview setup.
-2. Retriever selects top-k relevant examples by metadata + context overlap.
-3. Prompt builder assembles layered system rules and retrieved examples.
-4. Groq model generates one grounded interviewer question plus concise coaching feedback.
+1. **Prompt Engineering Layer:** Modular guidance by company, role, difficulty, and interview type.
+2. **RAG (Retrieval-Augmented Generation) Layer:** Retrieves relevant interview examples from a local dataset and injects them into the LLM context.
 
-Phase-2 upgrades:
+### 🔍 How It Works
 
-- Candidate pool retrieval + MMR-style reranking for diversity
-- Configurable metadata and semantic weighting
-- Diversity control to avoid near-duplicate question retrieval
-- Scenario evaluator script for retrieval quality checks
+1. **Context Capture:** User context is captured from the interview setup form.
+2. **Retrieval:** The retriever selects top-*k* relevant examples based on metadata + semantic context overlap.
+3. **Prompt Assembly:** The builder constructs layered system rules combining standard guidelines and retrieved examples.
+4. **Generation:** The Groq model generates a deeply grounded interviewer question plus concise coaching feedback.
 
-Evaluator command:
+<details>
+<summary><b>🛠️ Click to see Phase-2 Upgrades</b></summary>
+<br/>
 
-```powershell
+- **MMR-Style Reranking:** Enhanced diversity for candidate pool retrieval.
+- **Configurable Weights:** Tune metadata and semantic weighting dynamically.
+- **Diversity Control:** Avoid near-duplicate question retrieval in the same session.
+- **Scenario Evaluator:** Built-in script for retrieval quality checks.
+
+*Run the Evaluator:*
+`powershell
 Set-Location c:/TALVO/talvo
-c:/TALVO/.venv/Scripts/python.exe scripts/evaluate_rag_phase2.py
-```
+../.venv/Scripts/python.exe scripts/evaluate_rag_phase2.py
+`
+</details>
 
-## Quick Start
+<br/>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" />
 
-### 1. Install Django-side dependencies
+## ⚡ Quick Start
 
-```powershell
+### 1. Prerequisites
+- **Python 3.13** (for the Django web app)
+- **Python 3.11** (for the Speech Worker)
+- **Node.js** (for frontend UI components / Tailwind)
+
+### 2. Setup Django App (Terminal A)
+
+`powershell
 Set-Location c:/TALVO/talvo
+# Create and activate your 3.13 virtual environment if you haven't yet
 c:/TALVO/.venv/Scripts/python.exe -m pip install -r requirements.txt
-```
-
-### 2. Install speech worker dependencies
-
-```powershell
-Set-Location c:/TALVO/talvo
-c:/TALVO/voiceenv311/Scripts/python.exe -m pip install -r speech_worker/requirements.txt
-```
-
-### 3. Apply migrations
-
-```powershell
-Set-Location c:/TALVO/talvo
 c:/TALVO/.venv/Scripts/python.exe manage.py migrate
-```
-
-### 4. Start speech worker (Terminal A)
-
-```powershell
-Set-Location c:/TALVO/talvo
-powershell -ExecutionPolicy Bypass -File scripts/start_speech_worker.ps1
-```
-
-### 5. Start Django server (Terminal B)
-
-```powershell
-Set-Location c:/TALVO/talvo
 c:/TALVO/.venv/Scripts/python.exe manage.py runserver 127.0.0.1:8000
-```
+`
 
-### 6. Validate health
+### 3. Setup Speech Worker (Terminal B)
 
-```powershell
+`powershell
+Set-Location c:/TALVO/talvo
+# Activate your 3.11 virtual environment (voiceenv311)
+c:/TALVO/voiceenv311/Scripts/python.exe -m pip install -r speech_worker/requirements.txt
+powershell -ExecutionPolicy Bypass -File scripts/start_speech_worker.ps1
+`
+
+### 4. Verify Services
+Check if the speech worker is healthy:
+`powershell
 Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8001/health | Select-Object -ExpandProperty Content
-```
+`
 
-## Environment
+<br/>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" />
 
-Use `.env` from `.env.example`.
+## ⚙️ Environment Variables
 
-Required:
+Copy .env.example to .env and fill in the required keys:
 
-- `GOOGLE_OAUTH_CLIENT_ID`
-- `GOOGLE_OAUTH_CLIENT_SECRET`
-- `GROQ_API_KEY`
-- `GROQ_MODEL_NAME`
-- `SPEECH_WORKER_URL` (default `http://127.0.0.1:8001`)
+### 🔐 Required
+`ini
+GOOGLE_OAUTH_CLIENT_ID=your_client_id
+GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL_NAME=llama3-70b-8192
+SPEECH_WORKER_URL=http://127.0.0.1:8001
+`
 
-Common tuning:
+<details>
+<summary><b>🎛️ Tuning Options (Optional)</b></summary>
+<br/>
 
-- `WHISPER_MODEL_SIZE=base`
-- `COQUI_TTS_MODEL=tts_models/en/ljspeech/vits`
-- `TTS_USE_GPU=0` (recommended on most Windows setups)
-- `INTERVIEW_RAG_DATA_PATH=talvo1/data/interview_question_bank.json`
-- `INTERVIEW_RAG_TOP_K=4`
-- `INTERVIEW_RAG_CANDIDATE_POOL=12`
-- `INTERVIEW_RAG_ENABLE_RERANK=1`
-- `INTERVIEW_RAG_DIVERSITY_LAMBDA=0.20`
-- `INTERVIEW_RAG_METADATA_WEIGHT=1.0`
-- `INTERVIEW_RAG_SEMANTIC_WEIGHT=1.1`
+`ini
+WHISPER_MODEL_SIZE=base
+COQUI_TTS_MODEL=tts_models/en/ljspeech/vits
+TTS_USE_GPU=0  # Recommended to keep 0 on most Windows setups unless CUDA is configured
 
-## OAuth Redirects
+# RAG Configuration
+INTERVIEW_RAG_DATA_PATH=talvo1/data/interview_question_bank.json
+INTERVIEW_RAG_TOP_K=4
+INTERVIEW_RAG_CANDIDATE_POOL=12
+INTERVIEW_RAG_ENABLE_RERANK=1
+INTERVIEW_RAG_DIVERSITY_LAMBDA=0.20
+INTERVIEW_RAG_METADATA_WEIGHT=1.0
+INTERVIEW_RAG_SEMANTIC_WEIGHT=1.1
+`
+</details>
 
-Configure both in Google Cloud Console:
+> **Note on OAuth Redirects:**
+> Make sure to configure http://127.0.0.1:8000/accounts/google/login/callback/ and http://localhost:8000/accounts/google/login/callback/ in your Google Cloud Console.
 
-- `http://127.0.0.1:8000/accounts/google/login/callback/`
-- `http://localhost:8000/accounts/google/login/callback/`
+<br/>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" />
 
-## Core Routes
+## 🧭 Core Routes
 
-- `GET /live-interview/`
-- `POST /api/live-interview/start/`
-- `POST /api/live-interview/turn/`
-- `GET /auth/login/`
+### Web
+- 🏠 **Landing:** GET /
+- 🎯 **Dashboard:** GET /dashboard/
+- 🎙️ **Live Interview:** GET /live-interview/
+- 📊 **Feedback & Analytics:** GET /post-interview-feedback/
 
-## Troubleshooting
+### API
+- 🏁 **Start Interview:** POST /api/live-interview/start/
+- 🔄 **Interview Turn:** POST /api/live-interview/turn/
 
-### Connection refused on STT (WinError 10061)
+<br/>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" />
 
-1. Ensure speech worker starts before Django interview turn requests.
-2. Confirm `/health` responds on port `8001`.
-3. Confirm `SPEECH_WORKER_URL` in `.env` points to the same host and port.
+## 🩺 Troubleshooting
 
-### Voice not captured
+<details>
+<summary><b>🔴 Connection refused on STT (WinError 10061)</b></summary>
+<br/>
 
-- Keep the Hold to Speak button pressed while speaking.
-- Release only after finishing the sentence.
-- Confirm browser mic permission and OS mic level are enabled.
+1. Ensure the Speech Worker is running before starting an interview turn.
+2. Confirm the /health endpoint responds on port 8001.
+3. Verify that SPEECH_WORKER_URL in your .env points to the correct host/port.
 
-### Coqui GPU issues
+</details>
 
-- Keep `TTS_USE_GPU=0` first.
-- Enable GPU only after CUDA/cuDNN compatibility is verified.
+<details>
+<summary><b>🎤 Voice not captured</b></summary>
+<br/>
 
-## License
+- Keep the **Hold to Speak** button pressed actively while speaking.
+- Release it **only after** you've finished your sentence.
+- Check browser microphone permissions and OS input levels.
 
-Licensed under the terms in [LICENSE](LICENSE).
+</details>
+
+<details>
+<summary><b>🐌 Slow TTS / Coqui GPU issues</b></summary>
+<br/>
+
+- Leave TTS_USE_GPU=0 by default.
+- Only enable GPU if you are certain your CUDA/cuDNN toolkit precisely matches PyTorch requirements in the oiceenv311 environment.
+
+</details>
+
+<br/>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" />
+
+## 📜 License
+
+Talvo is distributed under the terms in the [LICENSE](LICENSE) file.
+
+<br/>
+<div align="center">
+<p><i>Made with <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Heart" width="20" height="20" style="vertical-align:bottom" /> for better interviewing.</i></p>
+</div>
