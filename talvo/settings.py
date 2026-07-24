@@ -189,5 +189,7 @@ INTERVIEW_SOFTWARE_ALLOWED_TYPES = os.getenv(
     'INTERVIEW_SOFTWARE_ALLOWED_TYPES',
     'technical,coding,system design,debugging,behavioral',
 )
+TALVO_OFFLINE_MODE = os.getenv('TALVO_OFFLINE_MODE', '0') in {'1', 'true', 'True', 'yes', 'ON'}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+

@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 media/interviews/*.wav
 media/interviews/*.webm
+prompt.md

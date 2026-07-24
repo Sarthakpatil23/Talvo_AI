@@ -239,88 +239,167 @@
       50% { transform: scaleY(0.52); }
       75% { transform: scaleY(0.95); }
     }
-    .coding-drawer {
+    /* ── LeetCode Theme IDE Modal Backdrop ── */
+    .ide-backdrop {
       position: fixed;
-      right: 14px;
-      bottom: 84px;
-      height: min(82vh, 820px);
-      min-height: 420px;
-      max-height: calc(100vh - 104px);
-      width: min(74vw, 1320px);
-      min-width: 520px;
-      max-width: calc(100vw - 22px);
-      resize: both;
-      overflow: auto;
+      inset: 0;
+      z-index: 44;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.24s ease;
+    }
+    .ide-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ── LeetCode Theme IDE Modal Shell ── */
+    .coding-modal {
+      position: fixed;
+      inset: 0;
       z-index: 45;
-      transform: translateX(calc(100% + 20px));
-      transition: transform .24s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.97) translateY(8px);
+      transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .coding-drawer.open {
-      transform: translateX(0);
+    .coding-modal.open {
+      pointer-events: auto;
+      opacity: 1;
+      transform: scale(1) translateY(0);
     }
-    .coding-drawer.compact {
-      width: min(64vw, 1040px);
+    .coding-modal.compact .ide-modal-inner {
+      max-width: 1060px;
     }
-    .coding-drawer.wide {
-      width: min(84vw, 1480px);
+    .coding-modal.wide .ide-modal-inner {
+      max-width: 1520px;
     }
+    .ide-modal-inner {
+      width: 100%;
+      max-width: 1300px;
+      height: min(88vh, 880px);
+      min-height: 500px;
+      display: flex;
+      flex-direction: column;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #333333;
+      background: #1a1a1a;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* ── LeetCode Topbar ── */
     .ide-shell {
-      color: #e5e7eb;
-      border: 1px solid #1f2937;
-      background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
-      box-shadow: 0 34px 60px rgba(2, 6, 23, 0.7);
+      color: #eff1f6;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      background: #1a1a1a;
     }
     .ide-topbar {
-      border-bottom: 1px solid #1f2937;
-      background: #0b0f17;
+      border-bottom: 1px solid #282828;
+      background: #1a1a1a;
+      flex-shrink: 0;
     }
     .ide-chip {
-      border: 1px solid #303748;
-      background: #111827;
-      color: #cbd5e1;
-      border-radius: 9999px;
-      padding: 3px 10px;
+      border: 1px solid #3a3a3a;
+      background: #282828;
+      color: #eff1f6;
+      border-radius: 6px;
+      padding: 4px 11px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .ide-chip:hover {
+      border-color: #4a4a4a;
+      background: #333333;
     }
     .ide-chip.active {
-      border-color: #0e7490;
-      background: #083344;
-      color: #67e8f9;
+      border-color: #555555;
+      background: #383838;
+      color: #ffffff;
+    }
+
+    /* LeetCode Difficulty Pills */
+    .ide-difficulty-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+    .ide-difficulty-pill.easy   { background: rgba(0, 184, 163, 0.12); color: #00b8a3; border: 1px solid rgba(0, 184, 163, 0.3); }
+    .ide-difficulty-pill.medium { background: rgba(255, 184, 0, 0.12); color: #ffb800; border: 1px solid rgba(255, 184, 0, 0.3); }
+    .ide-difficulty-pill.hard   { background: rgba(255, 45, 85, 0.12); color: #ff2d55; border: 1px solid rgba(255, 45, 85, 0.3); }
+    .ide-difficulty-pill.default{ background: #282828; color: #8c8c8c; border: 1px solid #383838; }
+
+    .ide-source-tag {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 6px;
+      padding: 2px 9px;
+      font-size: 10px;
+      font-weight: 500;
+      background: #282828;
+      color: #909090;
+      border: 1px solid #383838;
+      flex-shrink: 0;
     }
     .ide-tab {
       border: 1px solid transparent;
-      border-radius: 8px;
-      padding: 6px 10px;
+      border-radius: 6px;
+      padding: 5px 12px;
       font-size: 12px;
-      color: #94a3b8;
+      font-weight: 500;
+      color: #8c8c8c;
+      cursor: pointer;
+      transition: all 0.14s ease;
     }
+    .ide-tab:hover { color: #eff1f6; }
     .ide-tab.active {
-      border-color: #303748;
-      background: #151c2b;
-      color: #f8fafc;
+      border-color: #383838;
+      background: #282828;
+      color: #ffffff;
     }
+
+    /* ── LeetCode Body ── */
     .ide-split {
       display: grid;
       min-height: 0;
       flex: 1;
-      grid-template-columns: minmax(300px, 1fr) minmax(360px, 1fr);
+      grid-template-columns: minmax(320px, 1fr) minmax(400px, 1.1fr);
       gap: 10px;
       padding: 10px;
+      background: #1a1a1a;
     }
     .ide-problem-pane,
     .ide-code-pane {
       min-height: 0;
-      border: 1px solid #1f2937;
-      border-radius: 12px;
-      background: #0a0f1a;
+      border: 1px solid #282828;
+      border-radius: 8px;
+      background: #262626;
       display: flex;
       flex-direction: column;
     }
     .ide-problem-pane { overflow: hidden; }
     .ide-code-pane { overflow: hidden; }
     .ide-divider {
-      border-bottom: 1px solid #1f2937;
+      border-bottom: 1px solid #333333;
+      background: #262626;
     }
     .ide-scroll {
       overflow: auto;
@@ -328,130 +407,221 @@
     }
     .ide-section-title {
       font-size: 11px;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #60a5fa;
-      font-weight: 700;
+      color: #eff1f6;
+      font-weight: 600;
     }
     .ide-muted {
-      color: #93a1b8;
+      color: #8c8c8c;
     }
     .ide-problem-copy {
-      color: #f1f5f9;
-      line-height: 1.75;
+      color: #eff1f6;
+      line-height: 1.7;
+      font-size: 13px;
       white-space: pre-wrap;
     }
     .ide-constraint-box {
-      margin-top: 12px;
-      border: 1px solid #253047;
-      background: #0b1220;
-      border-radius: 10px;
-      padding: 10px 12px;
+      margin-top: 14px;
+      border: 1px solid #383838;
+      background: #282828;
+      border-radius: 8px;
+      padding: 12px 14px;
       font-size: 12px;
-      color: #cbd5e1;
+      color: #d4d4d4;
       white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .ide-example-card {
-      border: 1px solid #23314a;
-      background: #0b1323;
-      border-radius: 12px;
-      padding: 10px 12px;
+      border: 1px solid #383838;
+      background: #282828;
+      border-radius: 8px;
+      padding: 12px 14px;
     }
     .ide-example-title {
       font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
+      font-weight: 600;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: #7dd3fc;
+      color: #eff1f6;
       margin-bottom: 8px;
     }
     .ide-example-row {
       margin-bottom: 6px;
       font-size: 12px;
-      color: #dbeafe;
+      color: #d4d4d4;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       white-space: pre-wrap;
       word-break: break-word;
     }
     .ide-example-row:last-child {
       margin-bottom: 0;
-      color: #93c5fd;
+      color: #8c8c8c;
       font-style: italic;
+      font-family: inherit;
     }
+
+    /* ── Code Editor (Monaco/VSCode Dark Palette) ── */
     .ide-editor-wrap {
       flex: 1;
       min-height: 0;
       padding: 10px;
-      background: #020617;
+      background: #1e1e1e;
     }
     #codingEditor {
-      border: 1px solid #1e293b;
-      border-radius: 10px;
-      background: #020617;
-      color: #e2e8f0;
+      border: 1px solid #333333;
+      border-radius: 6px;
+      background: #1e1e1e;
+      color: #d4d4d4;
       min-height: 240px;
       height: 100%;
-      box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.3);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      tab-size: 4;
     }
     #codingEditor:focus {
-      border-color: #22d3ee;
-      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+      border-color: #00b8a3;
+      box-shadow: 0 0 0 2px rgba(0, 184, 163, 0.25);
       outline: none;
     }
+
+    /* ── LeetCode Action Buttons ── */
     .ide-action-btn {
-      border-radius: 8px;
-      padding: 8px 12px;
+      border-radius: 6px;
+      padding: 6px 14px;
       font-size: 12px;
-      font-weight: 700;
-      border: 1px solid #334155;
-      color: #dbeafe;
-      background: #0f172a;
-      transition: all 0.16s ease;
+      font-weight: 600;
+      border: 1px solid #3a3a3a;
+      color: #eff1f6;
+      background: #282828;
+      transition: all 0.15s ease;
+      cursor: pointer;
     }
     .ide-action-btn:hover {
-      border-color: #475569;
-      background: #1e293b;
+      border-color: #4a4a4a;
+      background: #333333;
     }
     .ide-action-btn.primary {
-      border-color: #14532d;
-      background: #16a34a;
-      color: #f0fdf4;
+      border-color: #2cbb5d;
+      background: #2cbb5d;
+      color: #ffffff;
     }
     .ide-action-btn.primary:hover {
-      background: #22c55e;
+      background: #28a745;
+      border-color: #28a745;
     }
+
+    /* ── LeetCode Status Banner ── */
+    .ide-status-banner {
+      margin: 12px 10px 10px;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      flex-shrink: 0;
+    }
+    .ide-status-banner.idle {
+      border: 1px solid #383838;
+      background: #282828;
+      color: #8c8c8c;
+    }
+    .ide-status-banner.running {
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      background: rgba(59, 130, 246, 0.12);
+      color: #60a5fa;
+    }
+    .ide-status-banner.passed {
+      border: 1px solid rgba(0, 184, 163, 0.3);
+      background: rgba(0, 184, 163, 0.12);
+      color: #00b8a3;
+    }
+    .ide-status-banner.failed {
+      border: 1px solid rgba(255, 45, 85, 0.3);
+      background: rgba(255, 45, 85, 0.12);
+      color: #ff2d55;
+    }
+    @keyframes ideBannerPulse {
+      0%   { opacity: 1; }
+      40%  { opacity: 0.55; }
+      100% { opacity: 1; }
+    }
+    .ide-status-banner.animate {
+      animation: ideBannerPulse 0.45s ease;
+    }
+    .ide-spinner {
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(96, 165, 250, 0.3);
+      border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── LeetCode Test Pills ── */
     .test-pill {
-      border: 1px solid #334155;
-      background: #0f172a;
-      border-radius: 9999px;
+      border: 1px solid #383838;
+      background: #282828;
+      border-radius: 6px;
       padding: 3px 10px;
       font-size: 11px;
-      font-weight: 600;
-      color: #cbd5e1;
+      font-weight: 500;
+      color: #eff1f6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .test-pill.pass {
-      border-color: #166534;
-      background: #052e16;
-      color: #86efac;
+      border-color: rgba(0, 184, 163, 0.3);
+      background: rgba(0, 184, 163, 0.12);
+      color: #00b8a3;
     }
     .test-pill.fail {
-      border-color: #881337;
-      background: #4c0519;
-      color: #fda4af;
+      border-color: rgba(255, 45, 85, 0.3);
+      background: rgba(255, 45, 85, 0.12);
+      color: #ff2d55;
     }
+
+    /* ── LeetCode Custom Dark Scrollbars ── */
+    .ide-scroll::-webkit-scrollbar,
+    #codingEditor::-webkit-scrollbar,
+    #codingRunOutput::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .ide-scroll::-webkit-scrollbar-track,
+    #codingEditor::-webkit-scrollbar-track,
+    #codingRunOutput::-webkit-scrollbar-track {
+      background: #1e1e1e;
+    }
+    .ide-scroll::-webkit-scrollbar-thumb,
+    #codingEditor::-webkit-scrollbar-thumb,
+    #codingRunOutput::-webkit-scrollbar-thumb {
+      background: #383838;
+      border-radius: 3px;
+    }
+    .ide-scroll::-webkit-scrollbar-thumb:hover,
+    #codingEditor::-webkit-scrollbar-thumb:hover,
+    #codingRunOutput::-webkit-scrollbar-thumb:hover {
+      background: #4a4a4a;
+    }
+
     @media (max-width: 1100px) {
-      .coding-drawer {
-        right: 10px;
-        left: 10px;
-        min-width: 0;
-        width: auto;
-        max-width: none;
-        height: min(78vh, 760px);
-        resize: none;
+      .ide-modal-inner {
+        height: min(92vh, 860px);
       }
       .ide-split {
         grid-template-columns: 1fr;
-        grid-template-rows: minmax(180px, 1fr) minmax(260px, 1fr);
+        grid-template-rows: minmax(180px, 1fr) minmax(280px, 1fr);
       }
+    }
+    @media (max-width: 640px) {
+      .coding-modal { padding: 10px; }
+      .ide-modal-inner { border-radius: 10px; }
     }
   </style>
 </head>
@@ -570,81 +740,107 @@
         </div>
       </footer>
 
-      <aside id="codingDrawer" class="coding-drawer wide">
-        <div class="ide-shell flex h-full min-h-0 flex-col overflow-hidden rounded-2xl">
-          <div class="ide-topbar px-3 py-2">
-            <div class="flex items-center justify-between gap-3">
-              <div class="min-w-0">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Problem List</p>
-                <h3 id="codingTitle" class="truncate text-sm font-semibold text-slate-100">Loading question...</h3>
-                <p id="codingMeta" class="truncate text-[11px] text-slate-400">AI-selected coding prompt for this interview session.</p>
+      <!-- IDE Modal Backdrop -->
+      <div id="ideBackdrop" class="ide-backdrop"></div>
+
+      <!-- IDE Modal -->
+      <div id="codingModal" class="coding-modal compact">
+        <div class="ide-modal-inner">
+          <div class="ide-shell">
+
+            <!-- Topbar -->
+            <div class="ide-topbar px-4 py-3">
+              <div class="flex min-w-0 items-center justify-between gap-3">
+                <!-- Title + pills -->
+                <div class="flex min-w-0 items-center gap-2">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h3 id="codingTitle" class="truncate text-sm font-semibold text-[#eff1f6]" title="">Loading question...</h3>
+                      <span id="codingDifficultyPill" class="ide-difficulty-pill default">--</span>
+                      <span id="codingSourceTag" class="ide-source-tag">AI Selected</span>
+                    </div>
+                    <p id="codingMeta" class="mt-0.5 truncate text-[11px] text-[#8c8c8c]">AI-selected coding prompt for this interview session.</p>
+                  </div>
+                </div>
+                <!-- Controls -->
+                <div class="flex flex-shrink-0 items-center gap-1.5">
+                  <button id="codingLayoutCompact" type="button" class="ide-chip">Compact</button>
+                  <button id="codingLayoutWide" type="button" class="ide-chip">Wide</button>
+                  <button id="closeCodingDrawer" type="button" class="ide-chip" style="border-color:#3a3a3a;color:#eff1f6">Close ✕</button>
+                </div>
               </div>
-              <div class="flex items-center gap-1.5">
-                <button id="codingLayoutCompact" type="button" class="ide-chip">Compact</button>
-                <button id="codingLayoutWide" type="button" class="ide-chip">Wide</button>
-                <button id="closeCodingDrawer" type="button" class="ide-chip">Close</button>
+              <!-- Tab row -->
+              <div class="mt-2.5 flex flex-wrap items-center gap-1">
+                <span class="ide-tab active">Description</span>
               </div>
             </div>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-              <span class="ide-tab active">Description</span>
-              <span class="ide-tab">Editorial</span>
-              <span class="ide-tab">Solutions</span>
-              <span class="ide-tab">Submissions</span>
-              <span class="ml-auto text-[11px] text-slate-500">Resize panel from bottom-right corner</span>
-            </div>
-          </div>
 
-          <div class="ide-split">
-            <section class="ide-problem-pane">
-              <div class="ide-divider px-4 py-2">
-                <p class="ide-section-title">Description</p>
-              </div>
-              <div class="ide-scroll space-y-4 px-4 py-3 text-sm leading-6 text-slate-200">
-                <div>
-                  <p id="codingPrompt" class="ide-problem-copy">Preparing coding prompt...</p>
-                  <div id="codingConstraints" class="ide-constraint-box hidden"></div>
-                </div>
-                <div>
-                  <p class="ide-section-title">Examples</p>
-                  <div id="codingExamples" class="mt-2 space-y-2"></div>
-                </div>
-                <div>
-                  <p class="ide-section-title">Visible Tests</p>
-                  <div id="codingVisibleTests" class="mt-2 flex flex-wrap gap-2"></div>
-                </div>
-                <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-3">
-                  <p id="codingStatus" class="text-xs ide-muted">IDE appears when the interviewer asks a coding problem.</p>
-                  <div id="codingResults" class="mt-2 flex flex-wrap gap-2"></div>
-                </div>
-              </div>
-            </section>
+            <!-- Body: two-column split -->
+            <div class="ide-split">
 
-            <section class="ide-code-pane">
-              <div class="ide-divider flex items-center justify-between px-3 py-2">
-                <div class="flex items-center gap-2 text-xs text-slate-300">
-                  <span class="rounded-md bg-slate-700/70 px-2 py-1">Python</span>
-                  <span class="rounded-md bg-slate-800 px-2 py-1 text-slate-400">Auto</span>
+              <!-- Left: Problem description -->
+              <section class="ide-problem-pane">
+                <div class="ide-divider px-5 py-2.5">
+                  <p class="ide-section-title">Description</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <button id="runOutputBtn" type="button" class="ide-action-btn">Run Output</button>
-                  <button id="runCodingBtn" type="button" class="ide-action-btn">Run Tests</button>
-                  <button id="submitCodingBtn" type="button" class="ide-action-btn primary">Submit</button>
+                <div class="ide-scroll space-y-5 px-5 py-4 text-sm leading-6 text-[#eff1f6]">
+                  <div>
+                    <p id="codingPrompt" class="ide-problem-copy">Preparing coding prompt...</p>
+                    <div id="codingConstraints" class="ide-constraint-box hidden"></div>
+                  </div>
+                  <div>
+                    <p class="ide-section-title">Examples</p>
+                    <div id="codingExamples" class="mt-3 space-y-3"></div>
+                  </div>
+                  <div>
+                    <p class="ide-section-title">Visible Tests</p>
+                    <div id="codingVisibleTests" class="mt-2 flex flex-wrap gap-2"></div>
+                  </div>
+                  <div class="rounded-lg border border-[#383838] bg-[#282828] p-3.5">
+                    <p id="codingStatus" class="text-xs ide-muted">IDE appears when the interviewer asks a coding problem.</p>
+                    <div id="codingResults" class="mt-2 flex flex-wrap gap-2"></div>
+                  </div>
                 </div>
-              </div>
+              </section>
 
-              <div class="ide-editor-wrap">
-                <label for="codingEditor" class="sr-only">Write Python Code</label>
-                <textarea id="codingEditor" spellcheck="false" class="w-full resize-none px-3 py-3 font-mono text-xs leading-6"></textarea>
-              </div>
+              <!-- Right: Code editor -->
+              <section class="ide-code-pane">
+                <!-- Language selector + action buttons -->
+                <div class="ide-divider flex items-center justify-between px-4 py-2.5">
+                  <div class="flex items-center gap-2 text-xs">
+                    <span class="rounded-md bg-[#282828] border border-[#383838] px-2.5 py-1 font-medium text-[#eff1f6]">Python 3</span>
+                    <span class="rounded-md bg-[#282828] border border-[#383838] px-2 py-1 text-[#8c8c8c]">Auto</span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button id="runOutputBtn" type="button" class="ide-action-btn">Run Output</button>
+                    <button id="runCodingBtn" type="button" class="ide-action-btn">Run Tests</button>
+                    <button id="submitCodingBtn" type="button" class="ide-action-btn primary">Submit</button>
+                  </div>
+                </div>
 
-              <div class="ide-divider px-3 py-2">
-                <p class="ide-section-title">Test Result</p>
-                <pre id="codingRunOutput" class="mt-2 hidden max-h-36 overflow-auto rounded-md border border-slate-700 bg-black/40 px-3 py-2 font-mono text-[11px] text-slate-100"></pre>
-              </div>
-            </section>
-          </div>
-        </div>
-      </aside>
+                <!-- Status Banner — always visible, no scroll needed -->
+                <div id="ideStatusBanner" class="ide-status-banner idle">
+                  <span id="ideStatusIcon">○</span>
+                  <span id="ideStatusText">Not run yet.</span>
+                </div>
+
+                <!-- Editor -->
+                <div class="ide-editor-wrap">
+                  <label for="codingEditor" class="sr-only">Write Python Code</label>
+                  <textarea id="codingEditor" spellcheck="false" class="w-full resize-none px-3.5 py-3 font-mono text-xs leading-6"></textarea>
+                </div>
+
+                <!-- Detailed test results (scrollable) -->
+                <div class="ide-divider px-4 py-2.5">
+                  <p class="ide-section-title">Test Result</p>
+                  <pre id="codingRunOutput" class="mt-3 hidden max-h-36 overflow-auto rounded-md border border-[#383838] bg-[#1e1e1e] px-3 py-2 font-mono text-xs text-[#d4d4d4]"></pre>
+                </div>
+              </section>
+
+            </div><!-- /ide-split -->
+          </div><!-- /ide-shell -->
+        </div><!-- /ide-modal-inner -->
+      </div><!-- /coding-modal -->
     </main>
   </div>
 
@@ -687,7 +883,13 @@
       var aiPulse = document.getElementById('aiPulse');
       var avatarStage = document.getElementById('avatarStage');
       var voiceVisualizer = document.getElementById('voiceVisualizer');
-      var codingDrawer = document.getElementById('codingDrawer');
+      var codingDrawer = document.getElementById('codingModal');
+      var ideBackdrop = document.getElementById('ideBackdrop');
+      var ideStatusBanner = document.getElementById('ideStatusBanner');
+      var ideStatusIcon = document.getElementById('ideStatusIcon');
+      var ideStatusText = document.getElementById('ideStatusText');
+      var codingDifficultyPill = document.getElementById('codingDifficultyPill');
+      var codingSourceTag = document.getElementById('codingSourceTag');
       var closeCodingDrawer = document.getElementById('closeCodingDrawer');
       var codingLayoutCompact = document.getElementById('codingLayoutCompact');
       var codingLayoutWide = document.getElementById('codingLayoutWide');
@@ -1192,16 +1394,6 @@
       function updateCodingIdeAvailability(shouldOffer, aiQuestionText) {
         if (!toggleCodingIde) return;
 
-        if (isFinalRound) {
-          shouldOfferCodingIde = false;
-          toggleCodingIde.classList.add('hidden');
-          if (codingDrawerOpen) {
-            setCodingDrawerOpen(false);
-          }
-          setCodingStatus('Final round selected: IDE is disabled for this session.');
-          return;
-        }
-
         toggleCodingIde.classList.remove('hidden');
         shouldOfferCodingIde = true;
 
@@ -1311,8 +1503,38 @@
         codingDrawerOpen = !!isOpen;
         if (!codingDrawer || !toggleCodingIde) return;
         codingDrawer.classList.toggle('open', codingDrawerOpen);
+        if (ideBackdrop) ideBackdrop.classList.toggle('open', codingDrawerOpen);
+        // Prevent body scroll when modal open
+        document.body.style.overflow = codingDrawerOpen ? 'hidden' : '';
         toggleCodingIde.classList.toggle('active', codingDrawerOpen);
         toggleCodingIde.textContent = codingDrawerOpen ? 'Close IDE' : 'Code IDE';
+      }
+
+      /* ── Status Banner ── */
+      var _bannerAnimTimer = null;
+      function setIdeStatusBanner(state, text) {
+        if (!ideStatusBanner || !ideStatusIcon || !ideStatusText) return;
+        ideStatusBanner.classList.remove('idle', 'running', 'passed', 'failed', 'animate');
+        void ideStatusBanner.offsetWidth; // force reflow to restart animation
+        ideStatusBanner.classList.add(state, 'animate');
+        if (_bannerAnimTimer) clearTimeout(_bannerAnimTimer);
+        _bannerAnimTimer = setTimeout(function () {
+          if (ideStatusBanner) ideStatusBanner.classList.remove('animate');
+        }, 500);
+        ideStatusText.textContent = text || '';
+        // Icon / spinner
+        ideStatusIcon.innerHTML = '';
+        if (state === 'running') {
+          var spinner = document.createElement('div');
+          spinner.className = 'ide-spinner';
+          ideStatusIcon.appendChild(spinner);
+        } else if (state === 'passed') {
+          ideStatusIcon.textContent = '✓';
+        } else if (state === 'failed') {
+          ideStatusIcon.textContent = '✗';
+        } else {
+          ideStatusIcon.textContent = '○';
+        }
       }
 
       function renderCodingEvaluation(payload) {
@@ -1342,8 +1564,22 @@
       }
 
       function populateCodingQuestion(data) {
-        if (codingTitle) codingTitle.textContent = data.title || 'Coding Question';
-        if (codingMeta) codingMeta.textContent = (data.company || '') + ' | ' + (data.difficulty || '') + ' | ' + (data.selection_reason || 'AI selected question');
+        var title = data.title || 'Coding Question';
+        if (codingTitle) {
+          codingTitle.textContent = title;
+          codingTitle.title = title; // tooltip for truncated text
+        }
+        if (codingMeta) codingMeta.textContent = (data.company || '') + (data.selection_reason ? ' · ' + data.selection_reason : ' · AI selected question');
+        // Difficulty pill
+        if (codingDifficultyPill) {
+          var diff = (data.difficulty || '').toLowerCase();
+          codingDifficultyPill.textContent = data.difficulty || '--';
+          codingDifficultyPill.className = 'ide-difficulty-pill ' + (diff === 'easy' ? 'easy' : diff === 'medium' ? 'medium' : diff === 'hard' ? 'hard' : 'default');
+        }
+        // Source tag
+        if (codingSourceTag && data.company) {
+          codingSourceTag.textContent = data.company;
+        }
         if (codingPrompt) codingPrompt.textContent = data.prompt || 'Solve the given coding problem.';
         if (codingConstraints) {
           var constraintsText = (data.constraints || '').trim();
@@ -1357,10 +1593,6 @@
       }
 
       async function loadCodingQuestion() {
-        if (isFinalRound) {
-          setCodingStatus('Final round selected: coding IDE question pack is not used.');
-          return null;
-        }
         if (!activeSessionId) {
           setCodingStatus('Interview session is initializing. Please wait a moment.');
           return null;
@@ -1403,11 +1635,9 @@
         }
 
         setCodingBusy(true);
-        if (action === 'run_output') {
-          setCodingStatus('Running code and capturing stdout/stderr output...');
-        } else {
-          setCodingStatus(action === 'submit' ? 'Running full hidden + visible test suite...' : 'Running visible tests...');
-        }
+        var runLabel = action === 'run_output' ? 'Running code…' : (action === 'submit' ? 'Running full test suite…' : 'Running visible tests…');
+        setCodingStatus(runLabel);
+        setIdeStatusBanner('running', runLabel);
 
         try {
           var response = await fetch(codingEvaluateApiUrl, {
@@ -1429,11 +1659,23 @@
           if (action === 'run_output') {
             resetCodingResults();
             renderRunOutput(data);
-            setCodingStatus(data.run_ok ? 'Code executed successfully.' : 'Code execution finished with errors.');
+            var runOkMsg = data.run_ok ? 'Code executed successfully.' : 'Code execution finished with errors.';
+            setCodingStatus(runOkMsg);
+            setIdeStatusBanner(data.run_ok ? 'passed' : 'failed', runOkMsg);
           } else {
             resetCodingOutput();
             renderCodingEvaluation(data);
-            setCodingStatus(data.all_passed ? 'Great work. All tests passed.' : 'Some tests failed. Refine and run again.');
+            var passedCount = (data.passed_count !== undefined ? data.passed_count : '?');
+            var totalCount  = (data.total_count  !== undefined ? data.total_count  : '?');
+            if (data.all_passed) {
+              var passMsg = 'All tests passed (' + passedCount + '/' + totalCount + ')';
+              setCodingStatus('Great work. ' + passMsg);
+              setIdeStatusBanner('passed', passMsg);
+            } else {
+              var failMsg = 'Some tests failed (' + passedCount + '/' + totalCount + ')';
+              setCodingStatus(failMsg + '. Refine and run again.');
+              setIdeStatusBanner('failed', failMsg);
+            }
             if (!isFinalRound && action === 'submit' && data.all_passed) {
               technicalSolved = true;
               technicalSolveGate = false;
@@ -1453,7 +1695,9 @@
             }
           }
         } catch (error) {
-          setCodingStatus(error && error.message ? error.message : 'Evaluation failed.');
+          var errMsg = (error && error.message) ? error.message : 'Evaluation failed.';
+          setCodingStatus(errMsg);
+          setIdeStatusBanner('failed', errMsg);
           resetCodingResults();
           if (action === 'run_output') {
             resetCodingOutput();
@@ -1804,7 +2048,7 @@
         appendTranscript('AI', data.ai_question);
         setPipelineStatus('Interview live. Speak naturally in short 6-8 second chunks.');
 
-        if (codingDrawerOpen && !codingQuestionLoaded) {
+        if (!codingQuestionLoaded) {
           loadCodingQuestion();
         }
 
@@ -2150,6 +2394,20 @@
         });
       }
 
+      // Close modal on backdrop click
+      if (ideBackdrop) {
+        ideBackdrop.addEventListener('click', function () {
+          setCodingDrawerOpen(false);
+        });
+      }
+
+      // Close modal on Escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && codingDrawerOpen) {
+          setCodingDrawerOpen(false);
+        }
+      });
+
       if (codingLayoutCompact) {
         codingLayoutCompact.addEventListener('click', function () {
           applyCodingLayout('compact');
@@ -2231,6 +2489,7 @@
       setCodingDrawerOpen(false);
       updateCodingIdeAvailability(false, '');
       resetCodingOutput();
+      setIdeStatusBanner('idle', 'Not run yet.');
       updatePushToTalkState();
       setInterval(tickTimer, 1000);
 
