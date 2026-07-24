@@ -806,55 +806,58 @@ def _aptitude_coach_fallback(question_payload: dict, user_prompt: str) -> str:
 
 def _aptitude_coach_answer(selected_company: str, question_payload: dict, user_prompt: str, chat_history: list | None = None) -> str:
 	question_text = str(question_payload.get('question') or '').strip()
+	options = question_payload.get('options') or []
+	options_str = ' | '.join([f"Option {i+1}: {opt}" for i, opt in enumerate(options)]) if options else ''
 	selected_option = str(question_payload.get('selected_option') or '').strip()
-	answer_option = str(question_payload.get('answer_option') or '').strip()
 	category = str(question_payload.get('category') or 'Aptitude').strip()
-	is_correct = bool(question_payload.get('is_correct'))
 	user_prompt = str(user_prompt or '').strip()[:600]
 
 	if not question_text:
-		return 'Please select a question first so I can explain what went wrong and how to improve.'
+		return 'Please select a question first so I can analyze it and help you.'
 
 	try:
 		pipeline = InterviewPipeline.instance()
 		pipeline._ensure_models()
 		model_name = getattr(settings, 'GROQ_MODEL_NAME', 'llama-3.1-8b-instant')
 
-		history_lines = []
-		for turn in list(chat_history or [])[-6:]:
-			role = str(turn.get('role') or '').strip().lower()
-			content = str(turn.get('content') or '').strip()
-			if role not in {'user', 'assistant'} or not content:
-				continue
-			history_lines.append(f"{role}: {content}")
+		if pipeline._groq is not None:
+			history_lines = []
+			for turn in list(chat_history or [])[-6:]:
+				role = str(turn.get('role') or '').strip().lower()
+				content = str(turn.get('content') or '').strip()
+				if role not in {'user', 'assistant'} or not content:
+					continue
+				history_lines.append(f"{role}: {content}")
 
-		prompt = (
-			"You are Talvo Aptitude AI Coach. Be concise, practical, and beginner-friendly. "
-			"For wrong answers: explain where mistake usually happens, then give a corrected approach and one quick tip. "
-			"Do not invent facts outside the question details.\n\n"
-			f"Company context: {selected_company}\n"
-			f"Category: {category}\n"
-			f"Question: {question_text}\n"
-			f"User selected option: {selected_option or 'Not attempted'}\n"
-			f"Correct option: {answer_option or 'Unavailable'}\n"
-			f"Is user correct: {is_correct}\n"
-			f"Prior chat (optional): {' | '.join(history_lines) if history_lines else 'None'}\n"
-			f"User asks: {user_prompt or 'What went wrong in this question?'}\n\n"
-			"Return plain text in under 180 words."
-		)
+			prompt = (
+				"You are Talvo AI Assistant, an expert competitive exam tutor (like Gemini/Claude for JEE/CAT/NQT aptitude). "
+				"The candidate is currently preparing for an online aptitude assessment.\n\n"
+				f"Target Company: {selected_company}\n"
+				f"Category/Topic: {category}\n"
+				f"Question: {question_text}\n"
+				f"Options: {options_str if options_str else 'Not specified'}\n"
+				f"Candidate's Current Selected Option: {selected_option if selected_option else 'None selected yet'}\n"
+				f"Prior Conversation: {' | '.join(history_lines) if history_lines else 'None'}\n"
+				f"User's Question/Request: {user_prompt if user_prompt else 'Scan this question and provide a quick overview, key concept, and helpful hint.'}\n\n"
+				"Instructions:\n"
+				"1. Analyze the question statement and options thoroughly.\n"
+				"2. Provide a clean, structured, and helpful response without directly spoiling the final answer if they asked for a hint.\n"
+				"3. Use bold headers (e.g., **Key Concept**, **Step-by-Step Approach**, **Hint**).\n"
+				"4. Keep the explanation concise (under 180 words).\n"
+			)
 
-		resp = pipeline._groq.chat.completions.create(
-			model=model_name,
-			temperature=0.2,
-			max_tokens=260,
-			messages=[
-				{'role': 'system', 'content': 'You are an aptitude correction coach.'},
-				{'role': 'user', 'content': prompt},
-			],
-		)
-		content = str(resp.choices[0].message.content or '').strip()
-		if content:
-			return content
+			resp = pipeline._groq.chat.completions.create(
+				model=model_name,
+				temperature=0.25,
+				max_tokens=320,
+				messages=[
+					{'role': 'system', 'content': 'You are an expert aptitude examination tutor and AI coach.'},
+					{'role': 'user', 'content': prompt},
+				],
+			)
+			content = str(resp.choices[0].message.content or '').strip()
+			if content:
+				return content
 	except Exception:
 		pass
 
@@ -1109,11 +1112,25 @@ def aptitude_coach_api(request):
 		return JsonResponse({'ok': False, 'error': 'Invalid JSON payload'}, status=400)
 
 	selected_company = _normalize_company_name(payload.get('company') or '') or 'General'
-	question_payload = payload.get('question') if isinstance(payload.get('question'), dict) else {}
-	user_prompt = str(payload.get('prompt') or '').strip()
+	
+	raw_q = payload.get('question')
+	if isinstance(raw_q, dict):
+		question_payload = raw_q
+	elif isinstance(raw_q, str) and raw_q.strip():
+		question_payload = {'question': raw_q.strip()}
+	else:
+		question_payload = {
+			'id': str(payload.get('question_id') or '').strip(),
+			'question': str(payload.get('question_text') or '').strip(),
+			'options': payload.get('options') if isinstance(payload.get('options'), list) else [],
+			'category': str(payload.get('category') or 'Aptitude').strip(),
+			'selected_option': str(payload.get('selected_option') or '').strip()
+		}
+
+	user_prompt = str(payload.get('user_prompt') or payload.get('prompt') or '').strip()
 	chat_history = payload.get('history') if isinstance(payload.get('history'), list) else []
 
-	if not isinstance(question_payload, dict) or not str(question_payload.get('question') or '').strip():
+	if not str(question_payload.get('question') or '').strip():
 		return JsonResponse({'ok': False, 'error': 'Question context is required'}, status=400)
 
 	answer = _aptitude_coach_answer(selected_company, question_payload, user_prompt, chat_history)

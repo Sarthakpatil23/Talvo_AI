@@ -940,21 +940,23 @@
         }
 
         var companyLogoMap = {
-          google: 'https://cdn.simpleicons.org/google/4285F4',
-          amazon: 'https://cdn.simpleicons.org/amazon/FF9900',
-          microsoft: 'https://cdn.simpleicons.org/microsoft/5E5E5E',
-          meta: 'https://cdn.simpleicons.org/meta/0866FF',
-          apple: 'https://cdn.simpleicons.org/apple/111111',
-          netflix: 'https://cdn.simpleicons.org/netflix/E50914',
-          uber: 'https://cdn.simpleicons.org/uber/111111',
-          oracle: 'https://cdn.simpleicons.org/oracle/F80000',
-          adobe: 'https://cdn.simpleicons.org/adobe/FF0000',
-          salesforce: 'https://cdn.simpleicons.org/salesforce/00A1E0',
-          ibm: 'https://cdn.simpleicons.org/ibm/0F62FE',
-          infosys: 'https://cdn.simpleicons.org/infosys/007CC3',
-          wipro: 'https://cdn.simpleicons.org/wipro/341C53',
-          accenture: 'https://cdn.simpleicons.org/accenture/A100FF',
-          tcs: 'https://cdn.simpleicons.org/tata/2563EB'
+          google: '/static/talvo1/images/companies/google.svg',
+          amazon: '/static/talvo1/images/companies/amazon.svg',
+          microsoft: '/static/talvo1/images/companies/microsoft.svg',
+          meta: '/static/talvo1/images/companies/meta.svg',
+          apple: '/static/talvo1/images/companies/apple.svg',
+          netflix: '/static/talvo1/images/companies/netflix.svg',
+          uber: '/static/talvo1/images/companies/uber.svg',
+          oracle: '/static/talvo1/images/companies/oracle.svg',
+          adobe: '/static/talvo1/images/companies/adobe.svg',
+          salesforce: '/static/talvo1/images/companies/salesforce.svg',
+          ibm: '/static/talvo1/images/companies/ibm.svg',
+          infosys: '/static/talvo1/images/companies/infosys.svg',
+          wipro: '/static/talvo1/images/companies/wipro.svg',
+          accenture: '/static/talvo1/images/companies/accenture.svg',
+          tcs: '/static/talvo1/images/companies/tcs.svg',
+          tech_mahindra: '/static/talvo1/images/companies/tech_mahindra.svg',
+          startup: '/static/talvo1/images/companies/startup.svg'
         };
 
         function normalizeCompanyKey(company) {
@@ -963,7 +965,7 @@
 
         function logoUrlForCompany(company) {
           var key = normalizeCompanyKey(company);
-          if (!key) return '';
+          if (!key) return companyLogoMap.startup;
           if (key.indexOf('google') !== -1) return companyLogoMap.google;
           if (key.indexOf('amazon') !== -1) return companyLogoMap.amazon;
           if (key.indexOf('microsoft') !== -1) return companyLogoMap.microsoft;
@@ -978,17 +980,15 @@
           if (key.indexOf('infosys') !== -1) return companyLogoMap.infosys;
           if (key.indexOf('wipro') !== -1) return companyLogoMap.wipro;
           if (key.indexOf('accenture') !== -1) return companyLogoMap.accenture;
-          if (key === 'tcs' || key.indexOf('tata consultancy') !== -1) return companyLogoMap.tcs;
-          return '';
+          if (key.indexOf('mahindra') !== -1) return companyLogoMap.tech_mahindra;
+          if (key === 'tcs' || key.indexOf('tata') !== -1) return companyLogoMap.tcs;
+          return companyLogoMap.startup;
         }
 
         function companyLogoMarkup(company, small) {
           var url = logoUrlForCompany(company);
-          var initials = String(company || 'P').slice(0, 1).toUpperCase();
-          if (!url) {
-            return '<span class="logo-dot"' + (small ? ' style="width:24px;height:24px;font-size:11px;"' : '') + '>' + initials + '</span>';
-          }
-          return '<img class="' + (small ? 'company-logo-sm' : 'company-logo') + '" src="' + url + '" alt="' + company + ' logo" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';"/><span class="logo-dot" style="display:none;' + (small ? 'width:24px;height:24px;font-size:11px;' : '') + '">' + initials + '</span>';
+          var imgClass = small ? 'h-6 w-6 object-contain rounded-md' : 'h-8 w-8 object-contain rounded-md';
+          return '<img class="' + imgClass + '" src="' + url + '" alt="' + company + ' logo" loading="lazy" />';
         }
 
         function cleanText(value, fallback) {
