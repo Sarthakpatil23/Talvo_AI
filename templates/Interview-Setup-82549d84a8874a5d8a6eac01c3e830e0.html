@@ -35,56 +35,17 @@
 
     .setup-section {
       position: relative;
-      padding-left: 56px;
-      isolation: isolate;
-      animation: fadeInUp 420ms ease both;
+      padding: 24px;
+      background: #ffffff;
+      border: 1px solid var(--talvo-border);
+      border-radius: 20px;
+      box-shadow: 0 4px 20px -8px rgba(15, 23, 42, 0.08);
+      animation: fadeInUp 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    .setup-section:nth-of-type(1) { animation-delay: 40ms; }
-    .setup-section:nth-of-type(2) { animation-delay: 120ms; }
-    .setup-section:nth-of-type(3) { animation-delay: 200ms; }
-    .setup-section:nth-of-type(4) { animation-delay: 280ms; }
-    .setup-section:nth-of-type(5) { animation-delay: 360ms; }
-
-    .step-rail {
-      position: absolute;
-      left: 15px;
-      top: 6px;
-      bottom: -28px;
-      width: 2px;
-      background: #d7deeb;
-      z-index: 0;
+    .step-rail, .step-dot {
+      display: none !important;
     }
-
-    .step-dot {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: #d7deeb;
-      color: #64748B;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      transition: all 200ms ease;
-      z-index: 2;
-    }
-
-    .step-dot.done {
-      background: var(--talvo-primary);
-      color: #fff;
-      animation: popDone 260ms ease;
-    }
-
-    .step-dot.done .num { display: none; }
-    .step-dot.done .check { display: block; }
-    .step-dot .check { display: none; font-size: 13px; }
-
-    .setup-section:last-of-type .step-rail { display: none; }
 
     .progress-fill {
       height: 100%;
@@ -454,13 +415,30 @@
     <main class="setup-shell mx-auto w-full px-4 py-6 md:px-6 md:py-8">
       <div class="grid gap-6 lg:grid-cols-[minmax(0,65%)_minmax(0,35%)]">
         <section class="space-y-5">
-          <div class="sticky top-3 z-20 rounded-xl border border-[var(--talvo-border)] bg-white/95 px-4 py-3 backdrop-blur glass-shadow">
-            <div class="mb-2 flex items-center justify-between gap-3 text-sm">
-              <p id="progressLabel" class="font-semibold text-[var(--talvo-text)]">0 of 5 steps configured</p>
-              <p id="progressPct" class="text-xs font-medium text-[var(--talvo-muted)]">0%</p>
-            </div>
-            <div class="h-2 overflow-hidden rounded-full bg-[#dbe3ef]">
-              <div id="topProgressFill" class="progress-fill"></div>
+          <!-- Segmented Wizard Stepper Header -->
+          <div class="sticky top-3 z-20 rounded-2xl border border-[var(--talvo-border)] bg-white/95 p-3 backdrop-blur glass-shadow">
+            <!-- Segmented Wizard Step Pills -->
+            <div id="wizardTabNav" class="flex items-center justify-between gap-2 text-xs font-medium overflow-x-auto">
+              <button type="button" class="wizard-tab-btn active flex-1 min-w-[85px] py-2 px-3 rounded-xl border border-[var(--talvo-primary)] bg-[#EEF2FF] text-[var(--talvo-primary)] font-bold flex items-center justify-center gap-2 transition" data-step-target="1">
+                <span class="step-tab-num h-5 w-5 rounded-full bg-[var(--talvo-primary)] text-white text-[10px] font-bold flex items-center justify-center">1</span>
+                <span>Round</span>
+              </button>
+              <button type="button" class="wizard-tab-btn flex-1 min-w-[85px] py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-medium flex items-center justify-center gap-2 transition hover:bg-slate-100" data-step-target="2">
+                <span class="step-tab-num h-5 w-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">2</span>
+                <span>Company</span>
+              </button>
+              <button type="button" class="wizard-tab-btn flex-1 min-w-[85px] py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-medium flex items-center justify-center gap-2 transition hover:bg-slate-100" data-step-target="3">
+                <span class="step-tab-num h-5 w-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">3</span>
+                <span>Role</span>
+              </button>
+              <button type="button" class="wizard-tab-btn flex-1 min-w-[85px] py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-medium flex items-center justify-center gap-2 transition hover:bg-slate-100" data-step-target="4">
+                <span class="step-tab-num h-5 w-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">4</span>
+                <span>Difficulty</span>
+              </button>
+              <button type="button" class="wizard-tab-btn flex-1 min-w-[85px] py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-medium flex items-center justify-center gap-2 transition hover:bg-slate-100" data-step-target="5">
+                <span class="step-tab-num h-5 w-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">5</span>
+                <span>Style</span>
+              </button>
             </div>
           </div>
 
@@ -469,7 +447,7 @@
               <div class="space-y-2">
                 <p class="text-xs font-medium text-white/70">Dashboard &gt; Interview Setup</p>
                 <h1 class="text-2xl font-bold text-white">Prepare for your Interview</h1>
-                <p class="text-sm text-white/70">Configure your session - takes less than a minute</p>
+                <p class="text-sm text-white/70">Configure your session step-by-step</p>
               </div>
               <div class="flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white/90">
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#00A89C]/20 text-[#00A89C]">
@@ -487,9 +465,8 @@
           </header>
 
           <form id="launchForm" class="space-y-6">
+            <!-- Step 1: Interview Round -->
             <article class="setup-section" data-step="1">
-              <span class="step-dot" id="stepDot1"><span class="num">1</span><span class="check">✓</span></span>
-              <span class="step-rail"></span>
               <div class="space-y-1">
                 <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Interview Round</h2>
                 <p class="text-[13px] text-[var(--talvo-muted)]">Choose the type of session you want to practice</p>
@@ -515,11 +492,16 @@
                 </button>
               </div>
               <p id="roundPreviewText" class="mt-3 text-[13px] text-[var(--talvo-muted)]">Coding questions solved on IDE with AI evaluation.</p>
+
+              <!-- Step 1 Nav -->
+              <div class="mt-6 flex items-center justify-between gap-3 border-t border-[var(--talvo-border)] pt-4">
+                <div></div>
+                <button type="button" class="wizard-next-btn rounded-xl bg-[var(--talvo-primary)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#093278] transition shadow-md flex items-center gap-2" data-next-step="2">Next <span class="text-base">→</span></button>
+              </div>
             </article>
 
+            <!-- Resume Option Card (Inside Step 1 when Final round active) -->
             <article id="resumeOptionCard" class="setup-section hidden" data-step="1" data-has-resume="{{ has_resume|yesno:'1,0' }}">
-              <span class="step-dot" id="stepDotResume"><span class="num">1</span><span class="check">✓</span></span>
-              <span class="step-rail"></span>
               <div class="rounded-2xl border border-[var(--talvo-border)] bg-white p-5 card-shadow">
                 <p class="text-sm font-semibold text-[var(--talvo-text)]">Resume-Based Questions</p>
                 <label class="mt-3 inline-flex items-start gap-3">
@@ -531,9 +513,8 @@
               </div>
             </article>
 
-            <article class="setup-section" data-step="2">
-              <span class="step-dot" id="stepDot2"><span class="num">2</span><span class="check">✓</span></span>
-              <span class="step-rail"></span>
+            <!-- Step 2: Select Company -->
+            <article class="setup-section" data-step="2" style="display:none;">
               <div class="space-y-1">
                 <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Select Company</h2>
                 <p class="text-[13px] text-[var(--talvo-muted)]">Pick your target panel style and company context</p>
@@ -609,11 +590,16 @@
                 </div>
                 <input id="customCompanyOther" class="mt-2 hidden w-full px-3 text-sm" placeholder="Enter company name"/>
               </div>
+
+              <!-- Step 2 Nav -->
+              <div class="mt-6 flex items-center justify-between gap-3 border-t border-[var(--talvo-border)] pt-4">
+                <button type="button" class="wizard-prev-btn rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition" data-prev-step="1">← Back</button>
+                <button type="button" class="wizard-next-btn rounded-xl bg-[var(--talvo-primary)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#093278] transition shadow-md flex items-center gap-2" data-next-step="3">Next <span class="text-base">→</span></button>
+              </div>
             </article>
 
-            <article class="setup-section" data-step="3">
-              <span class="step-dot" id="stepDot3"><span class="num">3</span><span class="check">✓</span></span>
-              <span class="step-rail"></span>
+            <!-- Step 3: Role and Context -->
+            <article class="setup-section" data-step="3" style="display:none;">
               <div class="space-y-1">
                 <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Role and Context</h2>
                 <p class="text-[13px] text-[var(--talvo-muted)]">Set role expectations and interview framing</p>
@@ -651,11 +637,16 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Step 3 Nav -->
+              <div class="mt-6 flex items-center justify-between gap-3 border-t border-[var(--talvo-border)] pt-4">
+                <button type="button" class="wizard-prev-btn rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition" data-prev-step="2">← Back</button>
+                <button type="button" class="wizard-next-btn rounded-xl bg-[var(--talvo-primary)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#093278] transition shadow-md flex items-center gap-2" data-next-step="4">Next <span class="text-base">→</span></button>
+              </div>
             </article>
 
-            <article class="setup-section" data-step="4">
-              <span class="step-dot" id="stepDot4"><span class="num">4</span><span class="check">✓</span></span>
-              <span class="step-rail"></span>
+            <!-- Step 4: Difficulty -->
+            <article class="setup-section" data-step="4" style="display:none;">
               <div class="space-y-1">
                 <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Difficulty</h2>
                 <p class="text-[13px] text-[var(--talvo-muted)]">Tune depth and follow-up intensity</p>
@@ -666,10 +657,16 @@
                 <button type="button" class="difficulty-pill active" data-difficulty="Medium" data-index="1"><span class="icon-label text-sm font-semibold"><svg class="icon-14 text-amber-500" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>Medium</span><span class="meta">5-6 questions · Balanced depth</span></button>
                 <button type="button" class="difficulty-pill" data-difficulty="Hard" data-index="2"><span class="icon-label text-sm font-semibold"><svg class="icon-14 text-rose-500" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>Hard</span><span class="meta">6-8 questions · Deep follow-ups</span></button>
               </div>
+
+              <!-- Step 4 Nav -->
+              <div class="mt-6 flex items-center justify-between gap-3 border-t border-[var(--talvo-border)] pt-4">
+                <button type="button" class="wizard-prev-btn rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition" data-prev-step="3">← Back</button>
+                <button type="button" class="wizard-next-btn rounded-xl bg-[var(--talvo-primary)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#093278] transition shadow-md flex items-center gap-2" data-next-step="5">Next <span class="text-base">→</span></button>
+              </div>
             </article>
 
-            <article class="setup-section" data-step="5">
-              <span class="step-dot" id="stepDot5"><span class="num">5</span><span class="check">✓</span></span>
+            <!-- Step 5: Session Style -->
+            <article class="setup-section" data-step="5" style="display:none;">
               <div class="space-y-1">
                 <h2 class="text-[15px] font-semibold text-[var(--talvo-text)]">Session Style</h2>
                 <p class="text-[13px] text-[var(--talvo-muted)]">Set length, topics, and response mode</p>
@@ -723,16 +720,10 @@
                   </div>
                 </div>
               </div>
-            </article>
 
-            <article class="sticky-start">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div id="startSummaryChips" class="flex flex-wrap items-center gap-2 text-xs text-[var(--talvo-muted)]">
-                  <span class="rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1">Google</span>
-                  <span class="rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1">Technical</span>
-                  <span class="rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1">Medium</span>
-                  <span class="rounded-full border border-[var(--talvo-border)] bg-[#F8FAFF] px-2.5 py-1">20 min</span>
-                </div>
+              <!-- Step 5 Nav -->
+              <div class="mt-6 flex items-center justify-between gap-3 border-t border-[var(--talvo-border)] pt-4">
+                <button type="button" class="wizard-prev-btn rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition" data-prev-step="4">← Back</button>
                 <button id="startInterviewBtn" type="button" class="start-btn">Start Interview <span class="start-arrow">→</span></button>
               </div>
             </article>
@@ -1046,34 +1037,102 @@
         });
       }
 
-      function updateProgress() {
-        var done = 0;
-        var step1 = !!stepInteraction[1];
-        var step2 = !!stepInteraction[2];
-        var step3 = !!stepInteraction[3];
-        var step4 = !!stepInteraction[4];
-        var step5 = !!stepInteraction[5];
+      var currentWizardStep = 1;
+      var stepNames = {
+        1: 'Interview Round',
+        2: 'Target Company',
+        3: 'Role & Context',
+        4: 'Difficulty Level',
+        5: 'Session Style & Start'
+      };
 
-        if (step1) done += 1;
-        if (step2) done += 1;
-        if (step3) done += 1;
-        if (step4) done += 1;
-        if (step5) done += 1;
+      function showWizardStep(stepNum) {
+        if (stepNum < 1) stepNum = 1;
+        if (stepNum > 5) stepNum = 5;
+        currentWizardStep = stepNum;
 
-        [1, 2, 3, 4, 5].forEach(function (idx) {
-          var ok = (idx === 1 && step1) || (idx === 2 && step2) || (idx === 3 && step3) || (idx === 4 && step4) || (idx === 5 && step5);
-          if (stepDots[idx]) stepDots[idx].classList.toggle('done', ok);
+        var allStepArticles = Array.prototype.slice.call(document.querySelectorAll('.setup-section'));
+        allStepArticles.forEach(function (article) {
+          var s = Number(article.getAttribute('data-step') || '0');
+          if (article.id === 'resumeOptionCard') {
+            article.style.display = (selectedRound === 'final' && currentWizardStep === 1) ? 'block' : 'none';
+            return;
+          }
+          if (s === currentWizardStep) {
+            article.style.display = 'block';
+          } else {
+            article.style.display = 'none';
+          }
         });
 
-        var pct = Math.round((done / 5) * 100);
-        progressLabel.textContent = done + ' of 5 steps configured';
-        progressPct.textContent = pct + '%';
-        topProgressFill.style.width = pct + '%';
+        var tabBtns = Array.prototype.slice.call(document.querySelectorAll('.wizard-tab-btn'));
+        tabBtns.forEach(function (btn) {
+          var target = Number(btn.getAttribute('data-step-target') || '1');
+          var isActive = target === currentWizardStep;
+          var isDone = target < currentWizardStep || !!stepInteraction[target];
+          var numBadge = btn.querySelector('.step-tab-num');
+
+          if (isActive) {
+            btn.className = 'wizard-tab-btn flex-1 min-w-[85px] py-2 px-3 rounded-xl border border-[var(--talvo-primary)] bg-[#EEF2FF] text-[var(--talvo-primary)] font-bold flex items-center justify-center gap-2 transition shadow-sm';
+            if (numBadge) {
+              numBadge.className = 'step-tab-num h-5 w-5 rounded-full bg-[var(--talvo-primary)] text-white text-[10px] font-bold flex items-center justify-center';
+              numBadge.textContent = String(target);
+            }
+          } else if (isDone) {
+            btn.className = 'wizard-tab-btn flex-1 min-w-[85px] py-2 px-3 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold flex items-center justify-center gap-2 transition hover:bg-emerald-100';
+            if (numBadge) {
+              numBadge.className = 'step-tab-num h-5 w-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center';
+              numBadge.textContent = '✓';
+            }
+          } else {
+            btn.className = 'wizard-tab-btn flex-1 min-w-[85px] py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-medium flex items-center justify-center gap-2 transition hover:bg-slate-100';
+            if (numBadge) {
+              numBadge.className = 'step-tab-num h-5 w-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center';
+              numBadge.textContent = String(target);
+            }
+          }
+        });
+
+        stepInteraction[currentWizardStep] = true;
+        updateProgress();
+      }
+
+      document.addEventListener('click', function (e) {
+        var nextBtn = e.target.closest('.wizard-next-btn');
+        if (nextBtn) {
+          var targetStep = Number(nextBtn.getAttribute('data-next-step') || '2');
+          showWizardStep(targetStep);
+          return;
+        }
+        var prevBtn = e.target.closest('.wizard-prev-btn');
+        if (prevBtn) {
+          var targetStep = Number(prevBtn.getAttribute('data-prev-step') || '1');
+          showWizardStep(targetStep);
+          return;
+        }
+        var tabBtn = e.target.closest('.wizard-tab-btn');
+        if (tabBtn) {
+          var targetStep = Number(tabBtn.getAttribute('data-step-target') || '1');
+          showWizardStep(targetStep);
+          return;
+        }
+      });
+
+      function updateProgress() {
+        var done = 0;
+        [1, 2, 3, 4, 5].forEach(function (idx) {
+          if (stepInteraction[idx]) done += 1;
+        });
+
+        var pct = Math.round((currentWizardStep / 5) * 100);
+        if (progressLabel) progressLabel.textContent = 'Step ' + currentWizardStep + ' of 5: ' + (stepNames[currentWizardStep] || 'Configuration');
+        if (progressPct) progressPct.textContent = pct + '%';
+        if (topProgressFill) topProgressFill.style.width = pct + '%';
 
         updateStartSummary();
 
-        setChecklistStatus(checkCompany, step2, 'Company selected');
-        setChecklistStatus(checkDifficulty, step4, 'Difficulty set');
+        setChecklistStatus(checkCompany, !!stepInteraction[2], 'Company selected');
+        setChecklistStatus(checkDifficulty, !!stepInteraction[4], 'Difficulty set');
       }
 
       function getTopicCount() {
@@ -1260,7 +1319,7 @@
       setDifficulty(difficultyButtons[1]);
       setSessionLength(20);
       setInterviewTypeLabel('Technical Coding');
-      updateProgress();
+      showWizardStep(1);
 
       var chartTarget = document.querySelector('#setupReadinessChart');
       if (chartTarget && typeof ApexCharts !== 'undefined') {
