@@ -52,16 +52,20 @@ class InterviewPipeline:
                 self._groq = self._load_groq()
 
     def _load_groq(self):
+        if getattr(settings, 'TALVO_OFFLINE_MODE', False):
+            return None
+
+        api_key = str(getattr(settings, 'GROQ_API_KEY', '') or '').strip()
+        if not api_key or api_key in {'your-groq-api-key', 'offline-local-mode'}:
+            return None
+
         try:
             groq_module = importlib.import_module('groq')
             Groq = getattr(groq_module, 'Groq')
+            return Groq(api_key=api_key)
         except Exception as exc:
-            raise PipelineUnavailableError(f"groq import failed: {exc}") from exc
+            return None
 
-        api_key = str(getattr(settings, 'GROQ_API_KEY', '') or '').strip()
-        if not api_key or api_key == 'your-groq-api-key':
-            raise PipelineUnavailableError('Missing or placeholder GROQ_API_KEY in .env. Set a real key and restart server.')
-        return Groq(api_key=api_key)
 
     @staticmethod
     def _software_only_enabled() -> bool:
@@ -325,33 +329,6 @@ class InterviewPipeline:
             candidate_name=candidate_name,
         )
 
-        try:
-            result = self._groq.chat.completions.create(
-                model=model_name,
-                temperature=0.35,
-                max_tokens=170,
-                messages=[
-                    {'role': 'system', 'content': prompt_bundle.system_prompt},
-                    {'role': 'user', 'content': prompt_bundle.user_prompt},
-                ],
-            )
-        except Exception as exc:
-            message = str(exc)
-            lower_message = message.lower()
-            if 'invalid_api_key' in lower_message or 'invalid api key' in lower_message:
-                raise PipelineUnavailableError(
-                    'Invalid GROQ_API_KEY in .env. Replace it with a valid key and restart server.'
-                ) from exc
-            raise PipelineUnavailableError(f'Groq API request failed: {message}') from exc
-
-        text = (result.choices[0].message.content or '').strip()
-        parsed = self._parse_llm_json(text)
-
-        ai_question = parsed.get('ai_question', '').strip()
-        ai_feedback = parsed.get('ai_feedback', '').strip()
-        if not ai_question:
-            ai_question = 'Can you walk me through your reasoning and the measurable outcome?'
-
         debug_items: List[Dict[str, str]] = []
         for item in retrieved[:4]:
             debug_items.append(
@@ -366,11 +343,51 @@ class InterviewPipeline:
                 }
             )
 
-        return {
-            'ai_question': ai_question,
-            'ai_feedback': ai_feedback,
-            'retrieved_examples': debug_items,
-        }
+        if self._groq is None:
+            top_item = retrieved[0] if retrieved else {}
+            ai_q = str(top_item.get('question', '') or '').strip()
+            if not ai_q:
+                ai_q = 'Can you walk me through your reasoning, key trade-offs, and measurable outcome?'
+            ai_fb = str(top_item.get('rationale', '') or '').strip()
+            if not ai_fb:
+                ai_fb = 'Good points. Ensure you detail measurable impact and architecture trade-offs.'
+            return {
+                'ai_question': ai_q,
+                'ai_feedback': ai_fb,
+                'retrieved_examples': debug_items,
+            }
+
+        try:
+            result = self._groq.chat.completions.create(
+                model=model_name,
+                temperature=0.35,
+                max_tokens=170,
+                messages=[
+                    {'role': 'system', 'content': prompt_bundle.system_prompt},
+                    {'role': 'user', 'content': prompt_bundle.user_prompt},
+                ],
+            )
+            text = (result.choices[0].message.content or '').strip()
+            parsed = self._parse_llm_json(text)
+            ai_question = parsed.get('ai_question', '').strip()
+            ai_feedback = parsed.get('ai_feedback', '').strip()
+            if not ai_question:
+                ai_question = 'Can you walk me through your reasoning and the measurable outcome?'
+            return {
+                'ai_question': ai_question,
+                'ai_feedback': ai_feedback,
+                'retrieved_examples': debug_items,
+            }
+        except Exception:
+            top_item = retrieved[0] if retrieved else {}
+            ai_q = str(top_item.get('question', '') or '').strip() or 'Can you walk me through your reasoning and the measurable outcome?'
+            ai_fb = str(top_item.get('rationale', '') or '').strip() or 'Focus on technical depth and measurable outcomes.'
+            return {
+                'ai_question': ai_q,
+                'ai_feedback': ai_fb,
+                'retrieved_examples': debug_items,
+            }
+
 
     @staticmethod
     def _parse_llm_json(raw_text: str) -> Dict[str, str]:

@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "soundFile": "D:\\Talvo_AI\\media\\interviews\\session_214\\ai_turn_1.wav",
+    "duration": 6.49
+  },
+  "mouthCues": [
+    { "start": 0.00, "end": 0.03, "value": "X" },
+    { "start": 0.03, "end": 0.13, "value": "B" },
+    { "start": 0.13, "end": 0.20, "value": "C" },
+    { "start": 0.20, "end": 0.87, "value": "B" },
+    { "start": 0.87, "end": 0.99, "value": "A" },
+    { "start": 0.99, "end": 1.81, "value": "B" },
+    { "start": 1.81, "end": 2.23, "value": "F" },
+    { "start": 2.23, "end": 2.30, "value": "C" },
+    { "start": 2.30, "end": 2.44, "value": "E" },
+    { "start": 2.44, "end": 2.65, "value": "B" },
+    { "start": 2.65, "end": 2.72, "value": "C" },
+    { "start": 2.72, "end": 2.79, "value": "H" },
+    { "start": 2.79, "end": 2.86, "value": "G" },
+    { "start": 2.86, "end": 2.93, "value": "C" },
+    { "start": 2.93, "end": 3.14, "value": "B" },
+    { "start": 3.14, "end": 3.35, "value": "C" },
+    { "start": 3.35, "end": 3.49, "value": "F" },
+    { "start": 3.49, "end": 3.57, "value": "A" },
+    { "start": 3.57, "end": 3.82, "value": "C" },
+    { "start": 3.82, "end": 4.03, "value": "B" },
+    { "start": 4.03, "end": 4.10, "value": "C" },
+    { "start": 4.10, "end": 4.17, "value": "E" },
+    { "start": 4.17, "end": 4.52, "value": "B" },
+    { "start": 4.52, "end": 4.59, "value": "E" },
+    { "start": 4.59, "end": 4.80, "value": "G" },
+    { "start": 4.80, "end": 4.94, "value": "C" },
+    { "start": 4.94, "end": 5.08, "value": "B" },
+    { "start": 5.08, "end": 5.22, "value": "C" },
+    { "start": 5.22, "end": 5.36, "value": "B" },
+    { "start": 5.36, "end": 5.43, "value": "C" },
+    { "start": 5.43, "end": 5.92, "value": "B" },
+    { "start": 5.92, "end": 6.49, "value": "X" }
+  ]
+}

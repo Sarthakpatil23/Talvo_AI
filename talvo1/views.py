@@ -2213,38 +2213,88 @@ def _resolve_repo_company(target_company: str) -> str:
 
 def _load_company_questions(company: str) -> list:
 	resolved = _resolve_repo_company(company)
-	raw_url = f"https://raw.githubusercontent.com/liquidslr/interview-company-wise-problems/main/{quote(resolved)}/5.%20All.csv"
-
-	response = requests.get(raw_url, timeout=20)
-	response.raise_for_status()
-	reader = csv.DictReader(io.StringIO(response.text))
 	rows = []
+	try:
+		raw_url = f"https://raw.githubusercontent.com/liquidslr/interview-company-wise-problems/main/{quote(resolved)}/5.%20All.csv"
+		response = requests.get(raw_url, timeout=6)
+		response.raise_for_status()
+		reader = csv.DictReader(io.StringIO(response.text))
+		for row in reader:
+			title = str(row.get('Title', '') or '').strip()
+			if not title:
+				continue
+			try:
+				frequency = float(row.get('Frequency', 0) or 0)
+			except Exception:
+				frequency = 0.0
+			try:
+				acceptance_rate = float(row.get('Acceptance Rate', 0) or 0)
+			except Exception:
+				acceptance_rate = 0.0
+			rows.append(
+				{
+					'title': title,
+					'difficulty': str(row.get('Difficulty', 'Medium') or 'Medium').strip().title(),
+					'frequency': frequency,
+					'acceptance_rate': acceptance_rate,
+					'link': str(row.get('Link', '') or '').strip(),
+					'topics': str(row.get('Topics', '') or '').strip(),
+					'company': resolved,
+				}
+			)
+		rows.sort(key=lambda item: item.get('frequency', 0), reverse=True)
+	except Exception:
+		pass
 
-	for row in reader:
-		title = str(row.get('Title', '') or '').strip()
-		if not title:
-			continue
-		try:
-			frequency = float(row.get('Frequency', 0) or 0)
-		except Exception:
-			frequency = 0.0
-		try:
-			acceptance_rate = float(row.get('Acceptance Rate', 0) or 0)
-		except Exception:
-			acceptance_rate = 0.0
-		rows.append(
+	if not rows:
+		rows = [
 			{
-				'title': title,
-				'difficulty': str(row.get('Difficulty', 'Medium') or 'Medium').strip().title(),
-				'frequency': frequency,
-				'acceptance_rate': acceptance_rate,
-				'link': str(row.get('Link', '') or '').strip(),
-				'topics': str(row.get('Topics', '') or '').strip(),
-				'company': resolved,
-			}
-		)
+				'title': 'Two Sum',
+				'difficulty': 'Easy',
+				'frequency': 100.0,
+				'acceptance_rate': 52.4,
+				'link': 'https://leetcode.com/problems/two-sum/',
+				'topics': 'Array, Hash Table',
+				'company': resolved or 'Google',
+			},
+			{
+				'title': 'Valid Anagram',
+				'difficulty': 'Easy',
+				'frequency': 95.0,
+				'acceptance_rate': 64.1,
+				'link': 'https://leetcode.com/problems/valid-anagram/',
+				'topics': 'Hash Table, String',
+				'company': resolved or 'Google',
+			},
+			{
+				'title': 'Reverse Linked List',
+				'difficulty': 'Easy',
+				'frequency': 90.0,
+				'acceptance_rate': 76.2,
+				'link': 'https://leetcode.com/problems/reverse-linked-list/',
+				'topics': 'Linked List',
+				'company': resolved or 'Google',
+			},
+			{
+				'title': 'Container With Most Water',
+				'difficulty': 'Medium',
+				'frequency': 85.0,
+				'acceptance_rate': 55.0,
+				'link': 'https://leetcode.com/problems/container-with-most-water/',
+				'topics': 'Array, Two Pointers',
+				'company': resolved or 'Google',
+			},
+			{
+				'title': 'Merge Intervals',
+				'difficulty': 'Medium',
+				'frequency': 82.0,
+				'acceptance_rate': 47.1,
+				'link': 'https://leetcode.com/problems/merge-intervals/',
+				'topics': 'Array, Sorting',
+				'company': resolved or 'Google',
+			},
+		]
 
-	rows.sort(key=lambda item: item.get('frequency', 0), reverse=True)
 	return rows
 
 
@@ -2312,12 +2362,157 @@ def _normalize_tests(raw_tests, max_count: int, default_tests: list) -> list:
 	return normalized
 
 
-def _default_starter_code(function_name: str) -> str:
-	name = function_name if isinstance(function_name, str) and function_name.isidentifier() else 'solve'
+LEETCODE_PRESET_PACKS = {
+	'two sum': {
+		'prompt': 'Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
+		'function_name': 'twoSum',
+		'starter_code': (
+			"class Solution:\n"
+			"    def twoSum(self, nums: list[int], target: int) -> list[int]:\n"
+			"        # Write your solution here\n"
+			"        pass\n"
+		),
+		'constraints': '• 2 <= nums.length <= 10^4\n• -10^9 <= nums[i] <= 10^9\n• -10^9 <= target <= 10^9\n• Only one valid answer exists.',
+		'visible_tests': [
+			{'args': [[2, 7, 11, 15], 9], 'expected': [0, 1]},
+			{'args': [[3, 2, 4], 6], 'expected': [1, 2]},
+			{'args': [[3, 3], 6], 'expected': [0, 1]},
+		],
+		'hidden_tests': [
+			{'args': [[1, 5, 8, 10], 13], 'expected': [1, 2]},
+			{'args': [[-1, -8, 0, 5, 7], 6], 'expected': [0, 4]},
+			{'args': [[11, 15, 2, 7], 9], 'expected': [2, 3]},
+		],
+	},
+	'valid anagram': {
+		'prompt': 'Given two strings `s` and `t`, return `True` if `t` is an anagram of `s`, and `False` otherwise.\n\nAn Anagram is a word or phrase formed by rearranging the letters of a different word or phrase.',
+		'function_name': 'isAnagram',
+		'starter_code': (
+			"class Solution:\n"
+			"    def isAnagram(self, s: str, t: str) -> bool:\n"
+			"        # Write your solution here\n"
+			"        pass\n"
+		),
+		'constraints': '• 1 <= s.length, t.length <= 5 * 10^4\n• s and t consist of lowercase English letters.',
+		'visible_tests': [
+			{'args': ['anagram', 'nagaram'], 'expected': True},
+			{'args': ['rat', 'car'], 'expected': False},
+			{'args': ['listen', 'silent'], 'expected': True},
+		],
+		'hidden_tests': [
+			{'args': ['a', 'ab'], 'expected': False},
+			{'args': ['aacc', 'ccac'], 'expected': False},
+			{'args': ['fluster', 'restful'], 'expected': True},
+		],
+	},
+	'reverse linked list': {
+		'prompt': 'Given the head of a singly linked list represented as an array of integers, reverse the list and return the reversed list as an array.',
+		'function_name': 'reverseList',
+		'starter_code': (
+			"class Solution:\n"
+			"    def reverseList(self, head: list[int]) -> list[int]:\n"
+			"        # Write your solution here\n"
+			"        pass\n"
+		),
+		'constraints': '• The number of nodes in the list is in the range [0, 5000].\n• -5000 <= Node.val <= 5000',
+		'visible_tests': [
+			{'args': [[1, 2, 3, 4, 5]], 'expected': [5, 4, 3, 2, 1]},
+			{'args': [[1, 2]], 'expected': [2, 1]},
+			{'args': [[]], 'expected': []},
+		],
+		'hidden_tests': [
+			{'args': [[10]], 'expected': [10]},
+			{'args': [[1, 2, 3]], 'expected': [3, 2, 1]},
+		],
+	},
+	'container with most water': {
+		'prompt': 'Given an integer array `height` of length `n`. Find two lines that together with the x-axis form a container that contains the most water.\n\nReturn the maximum amount of water a container can store.',
+		'function_name': 'maxArea',
+		'starter_code': (
+			"class Solution:\n"
+			"    def maxArea(self, height: list[int]) -> int:\n"
+			"        # Write your solution here\n"
+			"        pass\n"
+		),
+		'constraints': '• n == height.length\n• 2 <= n <= 10^5\n• 0 <= height[i] <= 10^4',
+		'visible_tests': [
+			{'args': [[1, 8, 6, 2, 5, 4, 8, 3, 7]], 'expected': 49},
+			{'args': [[1, 1]], 'expected': 1},
+		],
+		'hidden_tests': [
+			{'args': [[4, 3, 2, 1, 4]], 'expected': 16},
+			{'args': [[1, 2, 1]], 'expected': 2},
+		],
+	},
+	'merge intervals': {
+		'prompt': 'Given an array of `intervals` where `intervals[i] = [start_i, end_i]`, merge all overlapping intervals, and return an array of the non-overlapping intervals.',
+		'function_name': 'merge',
+		'starter_code': (
+			"class Solution:\n"
+			"    def merge(self, intervals: list[list[int]]) -> list[list[int]]:\n"
+			"        # Write your solution here\n"
+			"        pass\n"
+		),
+		'constraints': '• 1 <= intervals.length <= 10^4\n• 0 <= start_i <= end_i <= 10^4',
+		'visible_tests': [
+			{'args': [[[1, 3], [2, 6], [8, 10], [15, 18]]], 'expected': [[1, 6], [8, 10], [15, 18]]},
+			{'args': [[[1, 4], [4, 5]]], 'expected': [[1, 5]]},
+		],
+		'hidden_tests': [
+			{'args': [[[1, 4], [2, 3]]], 'expected': [[1, 4]]},
+			{'args': [[[1, 4], [0, 4]]], 'expected': [[0, 4]]},
+		],
+	},
+}
+
+
+def _build_leetcode_starter_code(title: str, function_name: str = '', visible_tests: list = None) -> str:
+	title_text = str(title or '').strip()
+	fn_name = function_name.strip() if (function_name and function_name != 'solve' and function_name.isidentifier()) else _title_to_function_name(title_text)
+	if not fn_name.isidentifier() or fn_name == 'solve':
+		fn_name = _title_to_function_name(title_text)
+
+	sample_args = visible_tests[0].get('args', []) if (visible_tests and len(visible_tests) > 0 and isinstance(visible_tests[0], dict)) else []
+
+	param_specs = []
+	if isinstance(sample_args, list) and len(sample_args) > 0:
+		for idx, arg in enumerate(sample_args):
+			pname = f"arg{idx+1}"
+			ptype = ""
+			if isinstance(arg, list):
+				if arg and isinstance(arg[0], list):
+					ptype = ": list[list[int]]"
+					pname = "matrix" if idx == 0 else "intervals"
+				else:
+					ptype = ": list[int]"
+					pname = "nums" if idx == 0 else f"list{idx+1}"
+			elif isinstance(arg, str):
+				ptype = ": str"
+				pname = "s" if idx == 0 else ("t" if idx == 1 else f"str{idx+1}")
+			elif isinstance(arg, int):
+				ptype = ": int"
+				pname = "target" if idx == 1 else ("val" if idx == 0 else f"n{idx+1}")
+			elif isinstance(arg, bool):
+				ptype = ": bool"
+				pname = "flag"
+			param_specs.append(f"{pname}{ptype}")
+	else:
+		title_lower = title_text.lower()
+		if 'two sum' in title_lower or 'sum' in title_lower:
+			param_specs = ["nums: list[int]", "target: int"]
+		elif 'string' in title_lower or 'anagram' in title_lower or 'parenthes' in title_lower:
+			param_specs = ["s: str"]
+		elif 'linked' in title_lower or 'list' in title_lower:
+			param_specs = ["head: list[int]"]
+		else:
+			param_specs = ["nums: list[int]"]
+
+	params_str = ", ".join(["self"] + param_specs)
 	return (
-		f"def {name}(*args, **kwargs):\n"
-		"    # Write your solution here.\n"
-		"    pass\n"
+		"class Solution:\n"
+		f"    def {fn_name}({params_str}):\n"
+		"        # Write your solution here\n"
+		"        pass\n"
 	)
 
 
@@ -2417,6 +2612,11 @@ def _choose_question_with_llm(session: InterviewSession, candidates: list) -> di
 
 
 def _build_python_pack_with_llm(question_item: dict) -> dict:
+	title_lower = str(question_item.get('title', '') or '').strip().lower()
+	for key in LEETCODE_PRESET_PACKS:
+		if key in title_lower or title_lower in key:
+			return dict(LEETCODE_PRESET_PACKS[key])
+
 	pipeline = InterviewPipeline.instance()
 	try:
 		pipeline._ensure_models()
@@ -2427,8 +2627,9 @@ def _build_python_pack_with_llm(question_item: dict) -> dict:
 			f"Difficulty: {question_item.get('difficulty', 'Medium')}\n"
 			f"Topics: {question_item.get('topics', '')}\n"
 			"Return strict JSON only with keys: "
-			"prompt, function_name, starter_code, constraints, visible_tests, hidden_tests. "
-			"Each test must be JSON object {args: [...], expected: <json value>}. "
+			"prompt, function_name, starter_code, constraints, visible_tests, hidden_tests.\n"
+			"starter_code MUST be a Python class Solution template (e.g. 'class Solution:\\n    def functionName(self, arg1: type, arg2: type) -> return_type:\\n        pass').\n"
+			"Each test must be JSON object {args: [...], expected: <json value>}.\n"
 			"Use 3 visible_tests and 5 hidden_tests. Return only raw JSON, no markdown fences."
 		)
 
@@ -2447,10 +2648,9 @@ def _build_python_pack_with_llm(question_item: dict) -> dict:
 		if not isinstance(parsed, dict):
 			raise ValueError('Invalid coding pack JSON')
 
-		function_name = str(parsed.get('function_name', 'solve') or 'solve').strip()
-		if not function_name.isidentifier():
-			function_name = 'solve'
-		starter_code = _default_starter_code(function_name)
+		function_name = str(parsed.get('function_name', '') or '').strip()
+		if not function_name or not function_name.isidentifier() or function_name == 'solve':
+			function_name = _title_to_function_name(question_item.get('title', ''))
 
 		visible_defaults = [
 			{'args': [[2, 7, 11, 15], 9], 'expected': [0, 1]},
@@ -2463,6 +2663,12 @@ def _build_python_pack_with_llm(question_item: dict) -> dict:
 		visible = _normalize_tests(parsed.get('visible_tests'), 4, visible_defaults)
 		hidden = _normalize_tests(parsed.get('hidden_tests'), 8, hidden_defaults)
 
+		raw_starter = str(parsed.get('starter_code', '') or '').strip()
+		if raw_starter and ('def ' in raw_starter or 'class ' in raw_starter) and '*args, **kwargs' not in raw_starter and 'solve(' not in raw_starter:
+			starter_code = raw_starter
+		else:
+			starter_code = _build_leetcode_starter_code(question_item.get('title', ''), function_name, visible)
+
 		return {
 			'prompt': str(parsed.get('prompt', '') or question_item.get('title', 'Solve the coding question.')),
 			'function_name': function_name,
@@ -2472,15 +2678,17 @@ def _build_python_pack_with_llm(question_item: dict) -> dict:
 			'hidden_tests': hidden[:8],
 		}
 	except Exception:
+		fn_name = _title_to_function_name(question_item.get('title', ''))
+		visible_tests = [
+			{'args': [[2, 7, 11, 15], 9], 'expected': [0, 1]},
+			{'args': [[3, 2, 4], 6], 'expected': [1, 2]},
+		]
 		return {
-			'prompt': f"Implement a Python function named solve for: {question_item.get('title', 'Coding Problem')}. Return deterministic output for the given inputs.",
-			'function_name': 'solve',
-			'starter_code': _default_starter_code('solve'),
-			'constraints': 'Prototype fallback question pack. This will be replaced by LLM-generated packs when available.',
-			'visible_tests': [
-				{'args': [[2, 7, 11, 15], 9], 'expected': [0, 1]},
-				{'args': [[3, 2, 4], 6], 'expected': [1, 2]},
-			],
+			'prompt': f"Implement a solution for: {question_item.get('title', 'Coding Problem')}.",
+			'function_name': fn_name,
+			'starter_code': _build_leetcode_starter_code(question_item.get('title', ''), fn_name, visible_tests),
+			'constraints': 'Return deterministic output for all visible and hidden test cases.',
+			'visible_tests': visible_tests,
 			'hidden_tests': [
 				{'args': [[3, 3], 6], 'expected': [0, 1]},
 			],
@@ -2506,8 +2714,18 @@ def _run_python_evaluator(source_code: str, function_name: str, tests: list) -> 
 			raise SystemExit(0)
 
 		fn = namespace.get(function_name)
+
+		# Support LeetCode `class Solution:` style
+		if not callable(fn) and 'Solution' in namespace:
+			sol_cls = namespace['Solution']
+			try:
+				instance = sol_cls()
+				fn = getattr(instance, function_name, None)
+			except Exception:
+				pass
+
 		if not callable(fn):
-			print(json.dumps({{'ok': False, 'error': f"Function '{{function_name}}' not found."}}))
+			print(json.dumps({{'ok': False, 'error': f"Function or Solution method '{{function_name}}' not found. Ensure method name is '{{function_name}}'."}}))
 			raise SystemExit(0)
 
 		results = []
@@ -2605,14 +2823,48 @@ def _run_python_output(source_code: str) -> dict:
 def _get_or_create_coding_pack(session: InterviewSession) -> dict:
 	key = str(session.id)
 	if key in _CODING_SESSION_PACKS:
-		return _CODING_SESSION_PACKS[key]
+		cached = _CODING_SESSION_PACKS[key]
+		if '*args, **kwargs' in cached.get('starter_code', '') or cached.get('function_name') == 'solve':
+			fn_name = cached.get('function_name', '')
+			if not fn_name or fn_name == 'solve':
+				fn_name = _title_to_function_name(cached.get('title', ''))
+				cached['function_name'] = fn_name
+			cached['starter_code'] = _build_leetcode_starter_code(cached.get('title', ''), fn_name, cached.get('visible_tests', []))
+		return cached
 
-	candidates = _load_company_questions(session.target_company)
+	try:
+		candidates = _load_company_questions(session.target_company)
+	except Exception:
+		candidates = []
+
 	if not candidates:
-		raise RuntimeError('Could not load company problem bank from GitHub repository.')
+		candidates = [
+			{
+				'title': 'Two Sum',
+				'difficulty': session.difficulty or 'Medium',
+				'frequency': 100.0,
+				'acceptance_rate': 52.4,
+				'link': 'https://leetcode.com/problems/two-sum/',
+				'topics': 'Array, Hash Table',
+				'company': session.target_company or 'Google',
+			}
+		]
 
-	chosen = _choose_question_with_llm(session, candidates)
-	pack = _build_python_pack_with_llm(chosen)
+	try:
+		chosen = _choose_question_with_llm(session, candidates)
+		pack = _build_python_pack_with_llm(chosen)
+	except Exception:
+		chosen = candidates[0]
+		pack = _build_python_pack_with_llm(chosen)
+
+	final_function_name = pack.get('function_name', '')
+	if not final_function_name or final_function_name == 'solve':
+		final_function_name = _title_to_function_name(chosen.get('title', ''))
+
+	final_starter_code = pack.get('starter_code', '')
+	if not final_starter_code or '*args, **kwargs' in final_starter_code or 'solve(' in final_starter_code:
+		final_starter_code = _build_leetcode_starter_code(chosen.get('title', ''), final_function_name, pack.get('visible_tests', []))
+
 	final_pack = {
 		'session_id': session.id,
 		'company': chosen.get('company', session.target_company),
@@ -2623,8 +2875,8 @@ def _get_or_create_coding_pack(session: InterviewSession) -> dict:
 		'selection_reason': chosen.get('selection_reason', 'AI selected this coding prompt for your current interview context.'),
 		'prompt': pack.get('prompt', ''),
 		'constraints': pack.get('constraints', ''),
-		'function_name': pack.get('function_name', 'solve'),
-		'starter_code': pack.get('starter_code', ''),
+		'function_name': final_function_name,
+		'starter_code': final_starter_code,
 		'visible_tests': pack.get('visible_tests', []),
 		'hidden_tests': pack.get('hidden_tests', []),
 	}

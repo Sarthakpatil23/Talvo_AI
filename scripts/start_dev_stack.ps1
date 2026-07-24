@@ -2,9 +2,9 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
 $pythonCandidates = @(
-    'C:/TALVO/voiceenv311/Scripts/python.exe',
+    (Join-Path $root '.venv/Scripts/python.exe'),
     (Join-Path (Split-Path -Parent $root) '.venv/Scripts/python.exe'),
-    (Join-Path $root '.venv/Scripts/python.exe')
+    'C:/TALVO/voiceenv311/Scripts/python.exe'
 )
 
 $py = $pythonCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
