@@ -27,6 +27,6 @@ Start-Process -FilePath 'powershell' -ArgumentList @(
 ) -WorkingDirectory $root | Out-Null
 
 Start-Sleep -Seconds 2
-Write-Host 'Starting Django on http://127.0.0.1:8000 ...'
+Write-Host 'Starting Django on http://127.0.0.1:8000 (0.0.0.0:8000) ...'
 Set-Location $root
-& $py manage.py runserver 127.0.0.1:8000
+& $py manage.py runserver 0.0.0.0:8000
